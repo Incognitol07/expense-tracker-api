@@ -1,0 +1,66 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environment variables and sensitive configurations
+.env
+
+# FastAPI and database configurations
+app/config.py
+
+# Alembic
+alembic/versions/*.pyc
+alembic/versions/__pycache__/
+
+# Database files (if using SQLite for local dev/testing)
+*.db
+*.sqlite3
+
+# Jupyter Notebook checkpoints (if applicable)
+.ipynb_checkpoints
+
+# Pytest cache
+.pytest_cache/
+
+# Testing outputs and coverage reports
+.coverage
+htmlcov/
+.cache
+*.cover
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Logs and debugging files
+*.log
+
+# IDE-specific settings (VSCode, PyCharm, etc.)
+.vscode/
+.idea/
+*.swp
+
+# Python egg and wheel distribution
+*.egg-info/
+dist/
+build/
+*.egg
+
+# macOS files
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Node (if frontend is included)
+node_modules/
+
+# Other common files
+*.bak
+*.orig
+*.rej
