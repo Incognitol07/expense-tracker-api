@@ -23,14 +23,14 @@ app.include_router(categories.router, prefix="/categories", tags=["Categories"])
 app.include_router(budget.router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 
-# CORS settings
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,   # Use origins from configuration
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# # CORS settings
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=settings.CORS_ORIGINS,   # Use origins from configuration
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # Root endpoint for health check
 @app.get("/")

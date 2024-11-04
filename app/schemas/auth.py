@@ -1,8 +1,20 @@
-class UserCreate:
-    ...
+# app/schemas/auth.py
 
-class UserLogin:
-    ...
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
-class UserResponse:
-    ...
+class UserBase(BaseModel):
+    email: EmailStr
+    username: str
+
+class UserCreate(UserBase):
+    password: str
+
+class UserLogin(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+
+    class Config:
+        from_attributes = True
