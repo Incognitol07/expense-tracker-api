@@ -41,7 +41,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     
     hashed_password = hash_password(user.password)
-    new_user = User(username=user.username, hashed_password=hashed_password)
+    new_user = User(username=user.username, email=user.email,hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

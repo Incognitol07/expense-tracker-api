@@ -4,10 +4,10 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class UserBase(BaseModel):
-    email: EmailStr
     username: str
 
 class UserCreate(UserBase):
+    email: EmailStr
     password: str
 
 class UserLogin(UserBase):

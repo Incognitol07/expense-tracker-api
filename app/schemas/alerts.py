@@ -10,7 +10,7 @@ class AlertResponse(AlertBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NotificationSchema(BaseModel):
     title: str
@@ -18,4 +18,4 @@ class NotificationSchema(BaseModel):
     user_id: int  # The user related to the notification
 
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -16,4 +16,4 @@ class ExpenseResponse(ExpenseBase):
     user_id: int  # The user who created the expense
 
     class Config:
-        orm_mode = True
+        from_attributes = True
