@@ -1,7 +1,6 @@
-# app/models/budget.py
-
-from sqlalchemy import Column, Integer, Float, ForeignKey, Date
+from sqlalchemy import Column, Integer, Float, ForeignKey, Date, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 from app.database import Base
 
 class Budget(Base):
@@ -12,6 +11,7 @@ class Budget(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.now().strftime("%d-%m-%Y"), nullable=False)
 
     # Relationship back to the user
     owner = relationship("User", back_populates="budgets")

@@ -1,10 +1,10 @@
 from pydantic import BaseModel
-from datetime import date
-from typing import Literal
+from datetime import date, datetime
 
 class BudgetBase(BaseModel):
-    amount: float
-    period: Literal["monthly", "weekly"]
+    amount_limit: float
+    start_date: date
+    end_date: date
 
 class BudgetCreate(BudgetBase):
     pass
@@ -14,15 +14,15 @@ class BudgetUpdate(BudgetBase):
 
 class BudgetResponse(BudgetBase):
     id: int
-    user_id: int
 
     class Config:
         from_attributes = True
 
 class BudgetStatus(BaseModel):
     remaining_amount: float
-    limit: float
-    period: str
+    start_date: date
+    end_date: date
 
 class BudgetHistory(BudgetResponse):
-    date_created: date
+    # Optional: Include only if `created_at` is part of the database model.
+    created_at: date
