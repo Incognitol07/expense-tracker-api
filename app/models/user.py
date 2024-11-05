@@ -15,3 +15,4 @@ class User(Base):
     # Relationship with expenses and budget
     expenses = relationship("Expense", back_populates="owner")
     budgets = relationship("Budget", back_populates="owner")
+    category = relationship("Category", back_populates="owner")
