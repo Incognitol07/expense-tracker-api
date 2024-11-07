@@ -57,7 +57,7 @@ def update_alert(
     return alert
 
 # DELETE /alerts/{alert_id}: Delete a specific alert
-@router.delete("/alerts/{alert_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/alerts/{alert_id}")
 def delete_alert(
     alert_id: int,
     db: Session = Depends(get_db),
