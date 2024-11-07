@@ -1,8 +1,9 @@
 # app/database.py
-import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 DB_HOST: str = os.getenv("DB_HOST", "localhost")  

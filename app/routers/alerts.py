@@ -5,9 +5,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
-from app.models.alert import Alert  # Assuming you have an Alert model
+from app.models.alert import Alert
 from app.schemas.alerts import AlertCreate, AlertUpdate, AlertResponse
-from app.utils.notifications import send_email_notification
 
 router = APIRouter()
 
@@ -23,13 +22,6 @@ def create_alert(
     db.add(alert)
     db.commit()
     db.refresh(alert)
-
-    # Optionally, send a notification email on alert setup
-    send_email_notification(
-        to_email=current_user.email,
-        subject="New Budget Alert Created",
-        body=f"Your alert has been set up for a budget threshold of {alert_data.threshold}."
-    )
     
     return alert
 
