@@ -1,5 +1,7 @@
+# app/main.py
+
 from fastapi import FastAPI
-from app.routers import auth, expenses, categories, budget, analytics  # Import routers
+from app.routers import auth, expenses, categories, budget, analytics, alerts, admin  # Import routers
 from app.database import engine, Base  # Database connection and metadata
 from app.config import settings  # Configuration settings (e.g., environment variables)
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +24,8 @@ app.include_router(expenses.router, prefix="/expenses", tags=["Expenses"])
 app.include_router(categories.router, prefix="/categories", tags=["Categories"])
 app.include_router(budget.router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+app.include_router(alerts.router, prefix="/alerts", tags=["Alerts"])
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 # CORS settings
 app.add_middleware(

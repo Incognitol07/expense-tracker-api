@@ -3,7 +3,6 @@
 import os
 import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from pydantic import ValidationError
@@ -55,9 +54,3 @@ def verify_access_token(token: str):
             detail="Malformed token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-# Dependency to extract and verify the current user
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    return verify_access_token(token)

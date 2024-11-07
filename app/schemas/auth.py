@@ -15,6 +15,9 @@ class UserLogin(UserBase):
 
 class UserResponse(UserBase):
     id: int
-
+    message: Optional[str]
     class Config:
         from_attributes = True
+
+class AdminCreate(UserCreate):
+    master_key: str

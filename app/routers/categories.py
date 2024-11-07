@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas.categories import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.models.category import Category
 from app.database import get_db
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, verify_password
 from app.models.user import User
 
 router = APIRouter()
@@ -18,6 +18,9 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
 
 @router.get("/categories", response_model=list[CategoryResponse])
 def get_categories(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
     categories = db.query(Category).filter(Category.user_id == user.id).all()
     return categories
 

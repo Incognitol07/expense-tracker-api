@@ -13,6 +13,6 @@ class Category(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     
     # Relationship with expenses
-    expenses = relationship("Expense", back_populates="category")
+    expenses = relationship("Expense", back_populates="categories")
 
-    owner = relationship("User", back_populates="category")
+    owner = relationship("User", back_populates="categories")

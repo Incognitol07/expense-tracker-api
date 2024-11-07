@@ -18,4 +18,4 @@ class Expense(Base):
     owner = relationship("User", back_populates="expenses")
     
     # Relationship back to the category
-    category = relationship("Category", back_populates="expenses")
+    categories = relationship("Category", back_populates="expenses")
