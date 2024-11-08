@@ -17,7 +17,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 - **Expense Tracking**: Add, update, and categorize expenses.
 - **Budget Management**: Set and adjust budgets, track expenses against limits, and receive alerts.
 - **Data Analytics**: Summarize expenses, view detailed breakdowns by category, and export data.
-- **Automated Alerts**: Email and/or SMS notifications when spending approaches or exceeds budget limits.
+- **Real-time Notifications**: WebSocket support for live notifications of budget alerts.
 - **Secure Access**: JWT-based authentication and password hashing for secure access to the system.
 
 ## Tech Stack
@@ -25,8 +25,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 - **Backend Framework**: FastAPI
 - **Database**: PostgreSQL with SQLAlchemy ORM
 - **Authentication**: JWT, OAuth2
-- **Migrations**: Alembic
-- **Notifications**: Customizable email and SMS alerts
+- **Notifications**: WebSocket-based live notifications
 - **Data Visualization**: Integration with front-end for trends and expense tracking
 
 ## Installation
@@ -64,7 +63,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    JWT_SECRET_KEY=your_jwt_secret_key
    ```
 
-6. Start the application:
+5. Start the application:
    ```bash
    uvicorn app.main:app --reload
    ```
@@ -106,10 +105,10 @@ The application will be available at `http://localhost:8000`.
 
 ### Alerts and Notifications
 
-- **POST /alerts**: Set up alerts for when a budget threshold is near or exceeded.
-- **GET /alerts**: Retrieve all alert settings.
-- **PUT /alerts/{alert_id}**: Update an existing alert.
-- **DELETE /alerts/{alert_id}**: Delete a specific alert.
+- **POST /alert**: Set up alerts for when a budget threshold is near or exceeded.
+- **GET /alert**: Retrieve all alert settings.
+- **PUT /alert**: Update an existing alert.
+- **DELETE /alert**: Delete a specific alert.
 
 ### Data Analytics
 
@@ -119,12 +118,19 @@ The application will be available at `http://localhost:8000`.
 - **GET /analytics/trends**: Trend analysis for expenses over time.
 - **GET /analytics/export**: Export data in CSV or JSON format.
 
+### Real-Time Notifications
+
+- **WebSocket Endpoint**: `/ws/notifications/{user_id}` - Connects to WebSocket for live notifications of budget alerts and spending updates.
+
+This feature allows users to stay updated with budget notifications in real-time, improving their ability to manage finances instantly.
+
 ## Project Structure
 
 ```plaintext
 expense-tracker-api/
 ├── app/
 │   ├── main.py              # Application entry point
+│   ├── websocket_manager.py  # WebSocket connection management
 │   ├── routers/             # API endpoint routers
 │   ├── schemas/             # Pydantic models for request validation
 │   ├── utils/               # Utility functions (e.g., security, notifications)
@@ -138,7 +144,7 @@ expense-tracker-api/
 
 ## Testing the API
 
-You can test the API using **curl**, **Postman**,**Bruno**, or FastAPI's interactive docs available at `http://localhost:8000/docs`.
+You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's interactive docs available at `http://localhost:8000/docs`.
 
 ### Example Request
 
@@ -148,9 +154,12 @@ To register a new user:
 curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser", "password": "password123"}'
 ```
 
-## Notifications and Alerts
+### WebSocket Notifications
 
-The API provides an alert system for both budget limits and financial health monitoring
+To test real-time notifications via WebSocket:
+
+1. Connect to `/ws/notifications/{user_id}`.
+2. Upon spending updates or threshold alerts, the connected WebSocket will receive messages in real time.
 
 ## Running with Docker
 
