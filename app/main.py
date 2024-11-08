@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+# app/main.py
+
+import asyncio
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from app.websocket_manager import manager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from app.database import get_db, SessionLocal
@@ -16,6 +20,21 @@ app = FastAPI(
     version="1.0.0",
     debug=settings.DEBUG  # Enable debug mode if in development
 )
+
+# WebSocket endpoint for real-time notifications
+@app.websocket("/ws/notifications/{user_id}")
+async def websocket_notifications(websocket: WebSocket, user_id: int):
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            print(f"Received data from user {user_id}: {data}")
+            await websocket.send_text("ping")  # Optionally ping to keep the connection alive
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, user_id)
+        print(f"User {user_id} disconnected")
+
+
 
 # Initialize the scheduler
 scheduler = BackgroundScheduler()
@@ -73,6 +92,7 @@ def read_root():
 @app.on_event("startup")
 async def startup_event():
     start_scheduler()
+    asyncio.create_task(manager.keep_alive())
     print("Starting up the application...")
     # Any other startup logic (e.g., cache initialization) can go here
 

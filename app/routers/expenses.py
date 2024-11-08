@@ -1,12 +1,13 @@
 # app/routers/expenses.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.schemas.expenses import ExpenseCreate, ExpenseResponse, ExpenseUpdate
 from app.models.expense import Expense
 from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
+from app.routers.alerts import check_thresholds, check_budget
 
 # Create an instance of APIRouter for expense-related routes
 router = APIRouter()
@@ -14,6 +15,7 @@ router = APIRouter()
 # Route to create a new expense
 @router.post("/expenses", response_model=ExpenseResponse)
 def create_expense(
+    background_tasks: BackgroundTasks,
     expense: ExpenseCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -36,6 +38,8 @@ def create_expense(
     db.add(new_expense)  # Add the new expense to the session
     db.commit()  # Commit the transaction to the database
     db.refresh(new_expense)  # Refresh to get the latest state of the expense
+    background_tasks.add_task(check_budget, current_user.id)
+    background_tasks.add_task(check_thresholds, current_user.id)
     return new_expense
 
 # Route to get all expenses of the authenticated user

@@ -8,11 +8,13 @@ from app.models import User, Alert, Expense, Budget
 from app.models.notification import Notification  # New import for notifications
 from app.schemas.alerts import AlertCreate, AlertUpdate, AlertResponse
 from fastapi import BackgroundTasks
+from app.websocket_manager import manager
 
 router = APIRouter()
 
+
 # Background task to check thresholds
-def check_thresholds(user_id: int):
+async def check_thresholds(user_id: int):
     """
     Background task to check if the user's expenses exceed their set alert threshold.
 
@@ -48,11 +50,12 @@ def check_thresholds(user_id: int):
                 )
                 db.add(notification)
                 db.commit()  # Commit the session to persist the notification in the database
+                await manager.send_notification(user_id, message)
     finally:
         db.close()  # Close the session after use
 
 # Background task to check thresholds
-def check_budget(user_id: int):
+async def check_budget(user_id: int):
     """
     Background task to check if the user's expenses exceed their set alert threshold.
 
@@ -70,8 +73,6 @@ def check_budget(user_id: int):
             Expense.date <= budget.end_date
         ).all()
 
-        total_expenses = sum(expense.amount for expense in user_expenses)
-
         expenses = [
         expense.amount
         for expense in budget.owner.expenses
@@ -83,7 +84,9 @@ def check_budget(user_id: int):
         if remaining_amount < 0:
             message = f"You've exceeded your budget of {budget.amount_limit} by {abs(remaining_amount)}."
             existing_notification = db.query(Notification).filter(
-                Notification.user_id == user_id, Notification.message == message, Notification.is_read == False
+                Notification.user_id == user_id,
+                Notification.message == message, 
+                Notification.is_read == False
             ).first()
 
             # Create a new notification if not already present
@@ -91,6 +94,7 @@ def check_budget(user_id: int):
                 notification = Notification(user_id=user_id, message=message)
                 db.add(notification)
                 db.commit()
+                await manager.send_notification(user_id, message)
     finally:
         db.close()
 
@@ -142,6 +146,7 @@ def create_alert(
 
 @router.get("/alerts", response_model=list[AlertResponse])
 def get_alerts(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -156,10 +161,12 @@ def get_alerts(
         list[AlertResponse]: A list of all alerts for the user.
     """
     alerts = db.query(Alert).filter(Alert.user_id == current_user.id).all()
+    background_tasks.add_task(check_thresholds, current_user.id)
     return alerts
 
 @router.put("/alerts/{alert_id}", response_model=AlertResponse)
 def update_alert(
+    background_tasks: BackgroundTasks,
     alert_id: int,
     alert_data: AlertUpdate,
     db: Session = Depends(get_db),
@@ -190,7 +197,7 @@ def update_alert(
         setattr(alert, key, value)
     db.commit()
     db.refresh(alert)
-    
+    background_tasks.add_task(check_thresholds, current_user.id)
     return alert
 
 @router.delete("/alerts/{alert_id}")

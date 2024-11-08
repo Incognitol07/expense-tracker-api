@@ -1,19 +1,21 @@
 # app/routers/budget.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 from app.schemas.budget import BudgetCreate, BudgetUpdate, BudgetResponse, BudgetStatus, BudgetHistory
 from app.models import Budget, Notification
 from app.database import get_db
 from app.routers.auth import get_current_user
-from app.models.user import User
+from app.models import User
+from app.routers.alerts import check_budget
 
 # Create an instance of APIRouter to handle budget-related routes
 router = APIRouter()
 
 # Route to set a new budget for the user
 @router.post("/budget", response_model=BudgetResponse, status_code=status.HTTP_201_CREATED)
-def set_budget(budget_data: BudgetCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def set_budget(background_tasks: BackgroundTasks,budget_data: BudgetCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Creates a new budget for the authenticated user.
     
@@ -38,7 +40,7 @@ def set_budget(budget_data: BudgetCreate, db: Session = Depends(get_db), user: U
     db.add(new_budget)
     db.commit()
     db.refresh(new_budget)
-    
+    background_tasks.add_task(check_budget, user.id)
     return new_budget
 
 # Route to get the current budget of the user
@@ -64,7 +66,7 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
 
 # Route to update the user's existing budget
 @router.put("/budget", response_model=BudgetResponse)
-def update_budget(budget_data: BudgetUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Updates the existing budget of the authenticated user and resets notifications if needed.
     """
@@ -87,7 +89,7 @@ def update_budget(budget_data: BudgetUpdate, db: Session = Depends(get_db), user
     
     db.commit()
     db.refresh(budget)
-    
+    background_tasks.add_task(check_budget, user.id)
     return budget
 
 # Route to get the current budget status for the user (remaining budget)
