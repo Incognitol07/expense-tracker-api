@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from datetime import date
+from typing import Optional
 
 # Base schema for Budget-related attributes
 class BudgetBase(BaseModel):

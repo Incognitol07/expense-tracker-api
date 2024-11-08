@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.schemas.budget import BudgetCreate, BudgetUpdate, BudgetResponse, BudgetStatus, BudgetHistory
-from app.models.budget import Budget
+from app.models import Budget, Notification
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
@@ -66,23 +66,20 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
 @router.put("/budget", response_model=BudgetResponse)
 def update_budget(budget_data: BudgetUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
-    Updates the existing budget of the authenticated user.
-    
-    Args:
-        budget_data (BudgetUpdate): The updated budget information.
-        db (Session): The database session for querying and updating the budget.
-        user (User): The authenticated user whose budget is to be updated.
-        
-    Raises:
-        HTTPException: If no budget is set for the user.
-        
-    Returns:
-        BudgetResponse: The updated budget information.
+    Updates the existing budget of the authenticated user and resets notifications if needed.
     """
     # Check if the user has an existing budget
     budget = db.query(Budget).filter(Budget.user_id == user.id).first()
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
+    
+    # Reset notifications for this budget
+    db.query(Notification).filter(
+    Notification.user_id == user.id,
+    Notification.message.ilike("%budget%"),
+    Notification.is_read == False
+    ).update({"is_read": True})
+    db.commit()
     
     # Update the budget fields with the provided data
     for key, value in budget_data.model_dump(exclude_unset=True).items():

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from app.database import get_db, SessionLocal
-from app.routers.alerts import check_thresholds  # Import the function to be scheduled
+from app.routers.alerts import check_thresholds, check_budget  # Import the function to be scheduled
 from app.models import User
 from app.routers import auth, expenses, categories, budget, analytics, alerts, admin, notifications
 from app.database import engine, Base
@@ -20,21 +20,27 @@ app = FastAPI(
 # Initialize the scheduler
 scheduler = BackgroundScheduler()
 
+
 def start_scheduler():
     """
-    This function will be used to start a scheduled job for checking thresholds.
-    It will be executed when the app starts and will run the `check_thresholds`
-    job for each user every 5 seconds.
+    This function will start the scheduler and run the threshold check job for all users.
+    """
+    scheduler.add_job(check_all_thresholds, IntervalTrigger(seconds=5))  # Run every 5 minutes
+    scheduler.start()
+
+def check_all_thresholds():
+    """
+    Checks budget and alert thresholds for all users in a single job.
     """
     db = SessionLocal()
     try:
-        users = db.query(User).all()  # Get all users
+        users = db.query(User).all()
         for user in users:
-            # Schedule check_thresholds function for each user
-            scheduler.add_job(check_thresholds, IntervalTrigger(seconds=30), args=[user.id])
+            check_thresholds(user.id)  # Check thresholds for each user
+            check_budget(user.id)      # Check budget for each user
     finally:
         db.close()
-    scheduler.start()  # Start the background scheduler
+
 
 # Initialize database (create tables if they don't exist)
 Base.metadata.create_all(bind=engine)
