@@ -5,6 +5,21 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 class Expense(Base):
+    """
+    Represents an expense record associated with a user and category.
+
+    Attributes:
+        id (Integer): Unique identifier for each expense.
+        amount (Float): The amount spent in this expense.
+        description (String): Optional description or details about the expense.
+        date (Date): Date on which the expense was made.
+        user_id (Integer): Foreign key linking to the user who made the expense.
+        category_id (Integer): Foreign key linking to the category this expense belongs to.
+
+    Relationships:
+        owner (User): Reference to the User who made the expense, with a back-populated 'expenses' attribute.
+        categories (Category): Reference to the Category of the expense, with a back-populated 'expenses' attribute.
+    """
     __tablename__ = "expenses"
     
     id = Column(Integer, primary_key=True, index=True)

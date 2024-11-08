@@ -14,6 +14,19 @@ router = APIRouter()
 
 # Dependency to retrieve and verify the current admin user
 async def get_admin_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl="admin/login")), db: Session = Depends(get_db)):
+    """
+    Retrieves and verifies the current admin user based on the access token.
+
+    Args:
+        token (str): The access token passed in the request header.
+        db (Session): Database session for querying the database.
+
+    Raises:
+        HTTPException: If token validation fails or admin user is not found.
+    
+    Returns:
+        Admin: The admin user object if valid.
+    """
     payload = verify_access_token(token)
     if payload is None:
         raise HTTPException(
@@ -41,6 +54,19 @@ async def get_admin_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl="adm
 
 @router.post("/login")
 async def login(user: UserLogin, db: Session = Depends(get_db)):
+    """
+    Authenticates an admin user and generates an access token.
+
+    Args:
+        user (UserLogin): Admin login credentials (username and password).
+        db (Session): Database session for querying the database.
+
+    Raises:
+        HTTPException: If credentials are invalid.
+    
+    Returns:
+        dict: Access token and token type for authentication.
+    """
     db_admin = db.query(Admin).filter(Admin.username == user.username).first()
     if not db_admin or not verify_password(user.password, db_admin.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
@@ -50,6 +76,19 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=UserResponse)
 async def register(user: AdminCreate, db: Session = Depends(get_db)):
+    """
+    Registers a new admin user.
+
+    Args:
+        user (AdminCreate): Admin registration data (username, email, password, master key).
+        db (Session): Database session for querying the database.
+
+    Raises:
+        HTTPException: If master key is incorrect or username is already registered.
+    
+    Returns:
+        dict: Success message with admin user details.
+    """
     if user.master_key != settings.MASTER_KEY:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect master key")
     
@@ -65,16 +104,50 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
 
 @router.get("/users")
 def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
+    """
+    Retrieves a list of all users.
+
+    Args:
+        db (Session): Database session for querying the database.
+        admin (Admin): The current admin user.
+
+    Returns:
+        list: List of all users in the database.
+    """
     users = db.query(User).all()
     return users
 
 @router.get("/expenses")
 def get_all_expenses(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
+    """
+    Retrieves a list of all expenses.
+
+    Args:
+        db (Session): Database session for querying the database.
+        admin (Admin): The current admin user.
+
+    Returns:
+        list: List of all expenses in the database.
+    """
     expenses = db.query(Expense).all()
     return expenses
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
+    """
+    Deletes a user along with their related expenses, budgets, alerts, and categories.
+
+    Args:
+        user_id (int): The ID of the user to be deleted.
+        db (Session): Database session for querying and modifying the database.
+        admin (Admin): The current admin user.
+
+    Raises:
+        HTTPException: If the user does not exist.
+
+    Returns:
+        dict: Success message confirming the user deletion.
+    """
     target_user = db.query(User).filter(User.id == user_id).first()
     target_expenses = db.query(Expense).filter(Expense.user_id == user_id).all()
     target_budgets = db.query(Budget).filter(Budget.user_id == user_id).all()

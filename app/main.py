@@ -1,14 +1,11 @@
-# app/main.py
-
 from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from fastapi import FastAPI
 from app.database import get_db, SessionLocal
 from app.routers.alerts import check_thresholds  # Import the function to be scheduled
 from app.models import User
-from app.routers import auth, expenses, categories, budget, analytics, alerts, admin, notifications  # Import routers
-from app.database import engine, Base  # Database connection and metadata
+from app.routers import auth, expenses, categories, budget, analytics, alerts, admin, notifications
+from app.database import engine, Base
 from app.config import settings  # Configuration settings (e.g., environment variables)
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,22 +21,22 @@ app = FastAPI(
 scheduler = BackgroundScheduler()
 
 def start_scheduler():
-    # Create a new database session
+    """
+    This function will be used to start a scheduled job for checking thresholds.
+    It will be executed when the app starts and will run the `check_thresholds`
+    job for each user every 5 seconds.
+    """
     db = SessionLocal()
     try:
-        # Fetch all users from the database
-        users = db.query(User).all()
+        users = db.query(User).all()  # Get all users
         for user in users:
-            # Schedule the check_thresholds function for each user
-            scheduler.add_job(check_thresholds, IntervalTrigger(seconds=5), args=[user.id])
+            # Schedule check_thresholds function for each user
+            scheduler.add_job(check_thresholds, IntervalTrigger(seconds=30), args=[user.id])
     finally:
         db.close()
-    # Start the scheduler
-    scheduler.start()
-
+    scheduler.start()  # Start the background scheduler
 
 # Initialize database (create tables if they don't exist)
-# This is typically handled by migrations, but useful for testing or initial setup
 Base.metadata.create_all(bind=engine)
 
 # Include routers
@@ -55,10 +52,10 @@ app.include_router(notifications.router, prefix="/notifications", tags=["Notific
 # CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,   # Use origins from configuration
+    allow_origins=settings.CORS_ORIGINS,  # Allow origins from config
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all HTTP headers
 )
 
 # Root endpoint for health check
@@ -71,10 +68,10 @@ def read_root():
 async def startup_event():
     start_scheduler()
     print("Starting up the application...")
-    # You can initialize other resources here, like a cache or background tasks
+    # Any other startup logic (e.g., cache initialization) can go here
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    scheduler.shutdown()
+    scheduler.shutdown()  # Shutdown the scheduler when the app shuts down
     print("Shutting down the application...")
-    # Cleanup logic can be placed here, such as closing database connections
+    # Any cleanup logic (e.g., closing database connections) can go here
