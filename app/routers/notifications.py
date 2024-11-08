@@ -72,3 +72,40 @@ def mark_notification_as_read(
     db.refresh(notification)  # Refresh the notification object to get the updated state
     
     return notification
+
+# Route to mark all unread notifications as read
+@router.put("/notifications/mark-all-as-read", response_model=list[NotificationResponse])
+def mark_all_notifications_as_read(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Marks all unread notifications as read for the authenticated user.
+
+    Args:
+        db (Session): The database session to interact with the database.
+        current_user (User): The currently authenticated user.
+
+    Returns:
+        list[NotificationResponse]: A list of notifications that were marked as read.
+    
+    Raises:
+        HTTPException: If no unread notifications are found.
+    """
+    # Query all unread notifications for the user
+    notifications = db.query(Notification).filter(
+        Notification.user_id == current_user.id,
+        Notification.is_read == False
+    ).all()
+    
+    if not notifications:
+        raise HTTPException(status_code=404, detail="No unread notifications found")
+
+    # Mark all fetched notifications as read
+    for notification in notifications:
+        notification.is_read = True
+
+    db.commit()  # Commit the updates to the database
+    
+    # Return the list of updated notifications
+    return notifications
