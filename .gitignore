@@ -9,8 +9,6 @@ __pycache__/
 # Environment variables and sensitive configurations
 .env
 
-# FastAPI and database configurations
-app/config.py
 
 # Alembic
 alembic/versions/*.pyc
