@@ -98,7 +98,7 @@ async def check_budget(user_id: int):
     finally:
         db.close()
 
-@router.post("/alerts", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/alert", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
 def create_alert(
     alert_data: AlertCreate,
     background_tasks: BackgroundTasks,
@@ -144,7 +144,7 @@ def create_alert(
 
     return alert
 
-@router.get("/alerts", response_model=list[AlertResponse])
+@router.get("/alert", response_model=list[AlertResponse])
 def get_alerts(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -164,10 +164,9 @@ def get_alerts(
     background_tasks.add_task(check_thresholds, current_user.id)
     return alerts
 
-@router.put("/alerts/{alert_id}", response_model=AlertResponse)
+@router.put("/alert/", response_model=AlertResponse)
 def update_alert(
     background_tasks: BackgroundTasks,
-    alert_id: int,
     alert_data: AlertUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -188,7 +187,7 @@ def update_alert(
         HTTPException: If the alert does not exist.
     """
     # Retrieve the alert to be updated
-    alert = db.query(Alert).filter(Alert.id == alert_id, Alert.user_id == current_user.id).first()
+    alert = db.query(Alert).filter(Alert.user_id == current_user.id).first()
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
 
@@ -200,9 +199,8 @@ def update_alert(
     background_tasks.add_task(check_thresholds, current_user.id)
     return alert
 
-@router.delete("/alerts/{alert_id}")
+@router.delete("/alert/")
 def delete_alert(
-    alert_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -221,7 +219,7 @@ def delete_alert(
         HTTPException: If the alert does not exist.
     """
     # Retrieve the alert to be deleted
-    alert = db.query(Alert).filter(Alert.id == alert_id, Alert.user_id == current_user.id).first()
+    alert = db.query(Alert).filter(Alert.user_id == current_user.id).first()
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
     

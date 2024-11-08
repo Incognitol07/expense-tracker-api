@@ -70,7 +70,7 @@ app.include_router(expenses.router, prefix="/expenses", tags=["Expenses"])
 app.include_router(categories.router, prefix="/categories", tags=["Categories"])
 app.include_router(budget.router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
-app.include_router(alerts.router, prefix="/alerts", tags=["Alerts"])
+app.include_router(alerts.router, prefix="/alert", tags=["Alerts"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 
