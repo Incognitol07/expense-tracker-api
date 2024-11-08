@@ -17,3 +17,4 @@ class User(Base):
     budgets = relationship("Budget", back_populates="owner")
     categories = relationship("Category", back_populates="owner")
     alerts = relationship("Alert", back_populates="owner")
+    notifications = relationship("Notification", back_populates="owner")
