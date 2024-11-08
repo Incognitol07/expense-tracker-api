@@ -138,7 +138,7 @@ expense-tracker-api/
 
 ## Testing the API
 
-You can test the API using **curl**, **Postman**, or FastAPI's interactive docs available at `http://localhost:8000/docs`.
+You can test the API using **curl**, **Postman**,**Bruno**, or FastAPI's interactive docs available at `http://localhost:8000/docs`.
 
 ### Example Request
 
@@ -150,10 +150,7 @@ curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json"
 
 ## Notifications and Alerts
 
-The API provides an alert system for both budget limits and financial health monitoring. Alerts can be sent via:
-
-- **Email**: Through an SMTP server.
-- **SMS**: Via an SMS provider's API.
+The API provides an alert system for both budget limits and financial health monitoring
 
 ## Running with Docker
 
