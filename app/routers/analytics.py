@@ -168,3 +168,48 @@ def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get
             expenses_by_category=[]
         )
     }
+
+@router.get("/analytics/date_range", response_model=ExpenseSummary)
+def get_expense_summary_for_range(
+    start_date: date, 
+    end_date: date, 
+    db: Session = Depends(get_db), 
+    user: User = Depends(get_current_user)
+):
+    """
+    Retrieve expense summary and budget adherence for a specific date range.
+    The user provides start and end dates for the analysis period.
+    """
+    
+    # Calculate total expenses for the date range
+    total_expenses = db.query(func.sum(Expense.amount)).filter(
+        Expense.user_id == user.id,
+        Expense.date >= start_date,
+        Expense.date <= end_date
+    ).scalar() or 0.0
+    
+    # Expenses by category for the date range
+    expenses_by_category = [
+        CategorySummary(category_id=category_id, total=total)
+        for category_id, total in db.query(Expense.category_id, func.sum(Expense.amount).label("total"))
+            .filter(Expense.user_id == user.id, Expense.date >= start_date, Expense.date <= end_date)
+            .group_by(Expense.category_id)
+            .all()
+    ]
+    
+    # Fetch user's budget for the date range
+    budget = db.query(Budget).filter(
+        Budget.user_id == user.id,
+        Budget.start_date <= end_date,
+        Budget.end_date >= start_date
+    ).first()
+    
+    budget_limit = budget.amount_limit if budget else 0
+    adherence = (total_expenses / budget_limit) * 100 if budget_limit else None
+    
+    return ExpenseSummary(
+        total_expenses=total_expenses,
+        budget_limit=budget_limit,
+        adherence=adherence,
+        expenses_by_category=expenses_by_category
+    )
