@@ -1,13 +1,13 @@
 # Expense Tracking and Budgeting API
 
-The **Expense Tracking and Budgeting API** is designed to help individuals manage their finances effectively by tracking expenses, setting and managing budgets, and generating real-time alerts for better financial control. The API supports user authentication, secure data management, and easy integration with third-party services.
+The **Expense Tracking and Budgeting API** helps individuals manage their finances by tracking expenses, setting and managing budgets, and generating real-time alerts. The API supports user authentication, secure data management, and easy integration with third-party services.
 
 ## Problem Solved
 
 Managing personal finances can be overwhelming. This API simplifies the process by enabling users to:
 
 - **Track expenses**: Categorize and store expenses with various attributes.
-- **Set budgets**: Create, update, and monitor budgets, ensuring that users stay within their spending limits.
+- **Set budgets**: Create, update, and monitor budgets, ensuring users stay within their spending limits.
 - **Automate alerts**: Get notified when spending exceeds or approaches predefined limits.
 - **Visualize data**: Gain insights into spending habits with analytics and visual breakdowns.
 
@@ -44,24 +44,32 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    cd expense-tracker-api
    ```
 
-2. Set up a virtual environment:
+2. Set up a `Pipenv` environment:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   pipenv install
    ```
 
-3. Install dependencies:
+   This command will create a virtual environment and install the dependencies specified in the `Pipfile`.
+
+3. Activate the `Pipenv` shell:
    ```bash
-   pip install -r requirements.txt
+   pipenv shell
    ```
 
-4. Set up environment variables:
-   Create a `.env` file in the root directory and add the following:
-   ```plaintext
-   DATABASE_URL=postgresql://username:password@localhost:5432/expense_tracker
-   SECRET_KEY=your_secret_key
-   JWT_SECRET_KEY=your_jwt_secret_key
-   ```
+4. Set up environment variables
+   - In the root directory of the project, you'll find a file named `.env.example`.
+   - **Rename** the `.env.example` file to `.env`.
+   - Open the `.env` file and edit it with your own values for the following variables:
+      ```plaintext
+      ENVIRONMENT=development
+      DB_HOST=localhost
+      DB_NAME=expense_tracker
+      DB_USER=postgres
+      DB_PASSWORD=password
+      JWT_SECRET_KEY=myjwtsecretkey
+      MASTER_KEY=master_key
+      ```
+
 
 5. Start the application:
    ```bash
@@ -72,7 +80,7 @@ The application will be available at `http://localhost:8000`.
 
 ### Real-Time Notifications
 
-- **WebSocket Endpoint**: `/ws/notifications/{user_id}` - Connects to WebSocket for live notifications of budget alerts and spending updates.
+- **WebSocket Endpoint**: `/ws/notifications/{user_id}` - Connect to this WebSocket endpoint for live notifications about budget alerts and spending updates.
 
 This feature allows users to stay updated with budget notifications in real-time, improving their ability to manage finances instantly.
 
@@ -89,7 +97,8 @@ expense-tracker-api/
 │   ├── models/              # SQLAlchemy models
 │   ├── database.py          # Database connection and session handling
 │   └── config.py            # Configuration settings
-├── requirements.txt         # Project dependencies
+├── Pipfile                  # Pipenv configuration file
+├── Pipfile.lock             # Locked versions of installed packages
 ├── .env                     # Environment variables
 └── README.md                # Project documentation
 ```
@@ -131,7 +140,7 @@ To run the application in Docker:
 
 ## Conclusion
 
-The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, and comprehensive data tracking, this API can help users make informed decisions about their finances.
+The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, and comprehensive data tracking, this API helps users make informed decisions about their finances.
 
 ## License
 
