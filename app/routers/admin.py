@@ -149,26 +149,10 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: Admin = Depe
         dict: Success message confirming the user deletion.
     """
     target_user = db.query(User).filter(User.id == user_id).first()
-    target_expenses = db.query(Expense).filter(Expense.user_id == user_id).all()
-    target_budgets = db.query(Budget).filter(Budget.user_id == user_id).all()
-    target_alerts = db.query(Alert).filter(Alert.user_id == user_id).all()
-    target_categories = db.query(Category).filter(Category.user_id == user_id).all()
 
     if not target_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    if target_expenses:
-        for expense in target_expenses:
-            db.delete(expense)
-    if target_budgets:
-        for budget in target_budgets:
-            db.delete(budget)
-    if target_alerts:
-        for alert in target_alerts:
-            db.delete(alert)
-    if target_categories:
-        for category in target_categories:
-            db.delete(category)
     db.delete(target_user)
 
     db.commit()

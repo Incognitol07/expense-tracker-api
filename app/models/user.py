@@ -29,8 +29,8 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     
     # Relationship with expenses and budget
-    expenses = relationship("Expense", back_populates="owner")
-    budgets = relationship("Budget", back_populates="owner")
-    categories = relationship("Category", back_populates="owner")
-    alerts = relationship("Alert", back_populates="owner")
-    notifications = relationship("Notification", back_populates="owner")
+    expenses = relationship("Expense", back_populates="owner", cascade="all, delete-orphan")
+    budgets = relationship("Budget", back_populates="owner", cascade="all, delete-orphan")
+    categories = relationship("Category", back_populates="owner", cascade="all, delete-orphan")
+    alerts = relationship("Alert", back_populates="owner", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="owner", cascade="all, delete-orphan")
