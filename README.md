@@ -70,54 +70,6 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 The application will be available at `http://localhost:8000`.
 
-## API Endpoints
-
-### User Authentication
-
-- **POST /auth/register**: Register a new user.
-- **POST /auth/login**: Log in and receive a JWT token.
-- **POST /auth/logout**: Invalidate the user's token (optional).
-- **GET /auth/refresh**: Refresh the JWT token (optional).
-
-### Expense Management
-
-- **POST /expenses**: Create a new expense.
-- **GET /expenses**: Retrieve all expenses for the authenticated user.
-- **GET /expenses/{expense_id}**: Retrieve a specific expense.
-- **PUT /expenses/{expense_id}**: Update a specific expense.
-- **DELETE /expenses/{expense_id}**: Delete a specific expense.
-
-### Category Management
-
-- **POST /categories**: Create a new expense category.
-- **GET /categories**: Retrieve all expense categories.
-- **GET /categories/{category_id}**: Retrieve a specific category.
-- **PUT /categories/{category_id}**: Update a category.
-- **DELETE /categories/{category_id}**: Delete a category.
-
-### Budget Management
-
-- **POST /budget**: Set or update a budget.
-- **GET /budget**: Retrieve the current budget.
-- **PUT /budget**: Update the budget limits.
-- **GET /budget/status**: Retrieve the status of the current budget (e.g., remaining balance).
-- **GET /budget/history**: Retrieve historical budget data.
-
-### Alerts and Notifications
-
-- **POST /alert**: Set up alerts for when a budget threshold is near or exceeded.
-- **GET /alert**: Retrieve all alert settings.
-- **PUT /alert**: Update an existing alert.
-- **DELETE /alert**: Delete a specific alert.
-
-### Data Analytics
-
-- **GET /analytics/summary**: Summary of expenses and budget adherence.
-- **GET /analytics/monthly**: Monthly expense breakdown by category.
-- **GET /analytics/weekly**: Weekly expense breakdown by category.
-- **GET /analytics/trends**: Trend analysis for expenses over time.
-- **GET /analytics/export**: Export data in CSV or JSON format.
-
 ### Real-Time Notifications
 
 - **WebSocket Endpoint**: `/ws/notifications/{user_id}` - Connects to WebSocket for live notifications of budget alerts and spending updates.
