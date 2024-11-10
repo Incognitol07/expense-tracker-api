@@ -72,9 +72,9 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": db_admin.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "username":user.username, "user_id":db_admin.id}
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 async def register(user: AdminCreate, db: Session = Depends(get_db)):
     """
     Registers a new admin user.
@@ -100,7 +100,7 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
     db.add(new_admin)
     db.commit()
     db.refresh(new_admin)
-    return {"id": new_admin.id, "username": new_admin.username, "message": "Registered successfully!"}
+    return { "username": new_admin.username, "email":user.email, "message": "Registered successfully!"}
 
 @router.get("/users")
 def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):

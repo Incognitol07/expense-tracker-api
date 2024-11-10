@@ -82,7 +82,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     
-    return new_user
+    return {"username":user.username, "email":user.email, "message":"Registered successfully"}
 
 # Login route for user authentication and token generation
 @router.post("/login")
@@ -108,7 +108,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "username":user.username, "user_id": db_user.id}
 
 # Protected route example requiring authentication
 @router.get("/protected-route")
