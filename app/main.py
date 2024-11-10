@@ -44,7 +44,7 @@ def start_scheduler():
     """
     This function will start the scheduler and run the threshold check job for all users.
     """
-    scheduler.add_job(check_all_thresholds, IntervalTrigger(seconds=5))  # Run every 5 minutes
+    scheduler.add_job(check_all_thresholds, IntervalTrigger(minutes=5))  # Run every 5 minutes
     scheduler.start()
 
 def check_all_thresholds():
