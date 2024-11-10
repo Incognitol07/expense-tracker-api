@@ -43,19 +43,24 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    cd expense-tracker-api
    ```
 
-2. Set up a `Pipenv` environment:
+2. Install **Pipenv** (if you haven't already):
+   ```bash
+   pip install pipenv
+   ```
+
+3. Set up a `Pipenv` environment:
    ```bash
    pipenv install
    ```
 
    This command will create a virtual environment and install the dependencies specified in the `Pipfile`.
 
-3. Activate the `Pipenv` shell:
+4. Activate the `Pipenv` shell:
    ```bash
    pipenv shell
    ```
 
-4. Set up environment variables
+5. Set up environment variables
    - In the root directory of the project, you'll find a file named `.env.example`.
    - **Rename** the `.env.example` file to `.env`.
    - Open the `.env` file and edit it with your own values for the following variables:
@@ -70,7 +75,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
       ```
 
 
-5. Start the application:
+6. Start the application:
    ```bash
    uvicorn app.main:app --reload
    ```
