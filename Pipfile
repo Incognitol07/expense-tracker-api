@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = {extras = ["all"], version = "*"}
+sqlalchemy = "*"
+python-dotenv = "*"
+pyjwt = "*"
+passlib = {extras = ["bcrypt"], version = "*"}
+apscheduler = "*"
+databases = "*"
+"psycopg2.binary" = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"

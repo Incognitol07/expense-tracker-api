@@ -1,8 +1,0 @@
-fastapi[all]
-sqlalchemy
-python-dotenv
-pyjwt
-passlib[bcrypt]
-apscheduler
-databases
-psycopg2.binary
