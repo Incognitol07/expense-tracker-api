@@ -115,6 +115,8 @@ def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admi
         list: List of all users in the database.
     """
     users = db.query(User).all()
+    for user in users:
+        user.hashed_password = "Not permitted to view"
     return users
 
 @router.get("/expenses")
