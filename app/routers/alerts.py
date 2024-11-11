@@ -29,11 +29,11 @@ async def check_thresholds(user_id: int):
         user_expenses = db.query(Expense).filter(Expense.user_id == user_id).all()
         total_expenses = sum(expense.amount for expense in user_expenses)
 
-        adherence = total_expenses / alert.threshold
+        adherence = total_expenses - alert.threshold 
 
         # Condition to check if adherence exceeds the threshold
-        if adherence > 1:
-            message = f"Your alert threshold of {alert.threshold} has been exceeded by {adherence * 100 - 100:.2f}."
+        if adherence:
+            message = f"Your alert threshold of {alert.threshold} has been exceeded by {adherence:.2f}"
             
             # Check for existing unread notifications with the same message
             existing_notification = db.query(Notification).filter(
