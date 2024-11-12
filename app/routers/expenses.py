@@ -39,7 +39,7 @@ def create_expense(
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="The provided category_id does not exist."
+            detail="Please create the provided category first"
         )
 
     # Proceed with creating the expense if category_id is valid
