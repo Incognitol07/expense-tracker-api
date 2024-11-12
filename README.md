@@ -1,6 +1,6 @@
 # Expense Tracking and Budgeting API
 
-The **Expense Tracking and Budgeting API** helps individuals manage their finances by tracking expenses, setting and managing budgets, and generating real-time alerts. The API supports user authentication, secure data management, and easy integration with third-party services.
+The **Expense Tracking and Budgeting API** helps individuals manage their finances by tracking expenses, setting budgets, and generating real-time alerts. The API supports user authentication, secure data management, and easy integration with third-party services.
 
 ## Problem Solved
 
@@ -23,7 +23,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 ## Tech Stack
 
 - **Backend Framework**: FastAPI
-- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Database**: PostgreSQL with SQLAlchemy ORM (SQLite also available as an alternative)
 - **Authentication**: JWT, OAuth2
 - **Notifications**: WebSocket-based live notifications
 - **Data Visualization**: Integration with front-end for trends and expense tracking
@@ -33,7 +33,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 ### Prerequisites
 
 - **Python 3.9+**
-- **PostgreSQL Database**
+- **PostgreSQL Database** (optional if using SQLite)
 
 ### Setup
 
@@ -60,7 +60,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    pipenv shell
    ```
 
-5. Set up environment variables
+5. Set up environment variables:
    - In the root directory of the project, you'll find a file named `.env.example`.
    - **Rename** the `.env.example` file to `.env`.
    - Open the `.env` file and edit it with your own values for the following variables:
@@ -74,8 +74,11 @@ Managing personal finances can be overwhelming. This API simplifies the process 
       MASTER_KEY=master_key
       ```
 
+6. Choose your database:
+   - **PostgreSQL**: Ensure you have a PostgreSQL database set up and running.
+   - **SQLite**: If you prefer SQLite, open `app/config.py` and `app/database.py`, and uncomment the SQLite database URL while commenting out the PostgreSQL connection line. SQLite does not require additional setup.
 
-6. Start the application:
+7. Start the application:
    ```bash
    uvicorn app.main:app --reload
    ```
@@ -125,7 +128,6 @@ To test real-time notifications via WebSocket:
 
 1. Connect to `/ws/notifications/{user_id}`.
 2. Upon spending updates or threshold alerts, the connected WebSocket will receive messages in real time.
-
 
 ## Conclusion
 
