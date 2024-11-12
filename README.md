@@ -97,7 +97,7 @@ This feature allows users to stay updated with budget notifications in real-time
 expense-tracker-api/
 ├── app/
 │   ├── main.py              # Application entry point
-│   ├── websocket_manager.py  # WebSocket connection management
+│   ├── websocket_manager.py # WebSocket connection management
 │   ├── routers/             # API endpoint routers
 │   ├── schemas/             # Pydantic models for request validation
 │   ├── utils/               # Utility functions (e.g., security, notifications)
