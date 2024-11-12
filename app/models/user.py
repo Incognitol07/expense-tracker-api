@@ -28,7 +28,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     
-    # Relationship with expenses and budget
+    # Relationships
     expenses = relationship("Expense", back_populates="owner", cascade="all, delete-orphan")
     budgets = relationship("Budget", back_populates="owner", cascade="all, delete-orphan")
     categories = relationship("Category", back_populates="owner", cascade="all, delete-orphan")

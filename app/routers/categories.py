@@ -28,6 +28,22 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
     Raises:
         HTTPException: If there is an issue with creating the category.
     """
+
+    db_category_name = db.query(Category).filter(Category.user_id == user.id, Category.name == category.name).first()
+    db_category_description = db.query(Category).filter(Category.user_id == user.id, Category.description == category.description).first()
+
+    if db_category_name:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category name already exists"
+        )
+    
+    if db_category_description:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category description already exists"
+        )
+
     new_category = Category(name=category.name, description=category.description, user_id=user.id)
     db.add(new_category)  # Add the new category to the session
     db.commit()  # Commit the changes to the database
