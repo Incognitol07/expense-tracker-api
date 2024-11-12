@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
     # Uncomment this to use a SQLite database
-    # DATABASE_URL = 'sqlite:///expense.db'
+    # DATABASE_URL: str = 'sqlite:///expense.db'
 
     # Admin Master Key
     MASTER_KEY: str = os.getenv("MASTER_KEY", "master_key")

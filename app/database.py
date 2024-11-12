@@ -19,7 +19,7 @@ DB_PASSWORD: str = os.getenv("DB_PASSWORD")  # Database password (should be set 
 DATABASE_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
 # Uncomment this to use a SQLite database
-# DATABASE_URL = 'sqlite:///expense.db'
+# DATABASE_URL: str = 'sqlite:///expense.db'
 
 # Create the database engine
 engine = create_engine(DATABASE_URL)
