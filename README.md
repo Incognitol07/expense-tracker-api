@@ -119,7 +119,7 @@ You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's intera
 To register a new user:
 
 ```bash
-curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser", "password": "password123"}'
+curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser","email":"test@user.com", "password": "password123"}
 ```
 
 ### WebSocket Notifications
