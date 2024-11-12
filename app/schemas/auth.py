@@ -11,7 +11,7 @@ class UserBase(BaseModel):
     Attributes:
         username (str): The username of the user.
     """
-    username: str
+    email: EmailStr
 
 # Schema for user creation (includes email and password)
 class UserCreate(UserBase):
@@ -22,7 +22,7 @@ class UserCreate(UserBase):
         email (EmailStr): The user's email address.
         password (str): The user's password.
     """
-    email: EmailStr
+    username: str
     password: str
 
 # Schema for user login (includes username and password)

@@ -67,12 +67,13 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     Returns:
         dict: Access token and token type for authentication.
     """
-    db_admin = db.query(Admin).filter(Admin.username == user.username).first()
+    db_admin = db.query(Admin).filter(Admin.email == user.email and Admin.hashed_password == hash_password(user.password)).first()
+
     if not db_admin or not verify_password(user.password, db_admin.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": db_admin.username})
-    return {"access_token": access_token, "token_type": "bearer", "username":user.username, "user_id":db_admin.id}
+    return {"access_token": access_token, "token_type": "bearer", "username":db_admin.username, "user_id":db_admin.id}
 
 @router.post("/register")
 async def register(user: AdminCreate, db: Session = Depends(get_db)):
