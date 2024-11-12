@@ -18,6 +18,8 @@ class Category(Base):
     """
     __tablename__ = "categories"
     __table_args__ = (UniqueConstraint('user_id', 'name', name='uq_user_category_name'),)
+    __table_args__ = (UniqueConstraint('user_id', 'name', 'description', name='uq_user_category_name_description'),)
+
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, index=True, nullable=False)
