@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.schemas.expenses import ExpenseCreate, ExpenseResponse, ExpenseUpdate
-from app.models.expense import Expense
+from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
@@ -12,7 +12,7 @@ from app.routers.alerts import check_thresholds, check_budget
 # Create an instance of APIRouter for expense-related routes
 router = APIRouter()
 
-# Route to create a new expense
+
 @router.post("/expenses", response_model=ExpenseResponse)
 def create_expense(
     background_tasks: BackgroundTasks,
@@ -34,6 +34,15 @@ def create_expense(
     Raises:
         HTTPException: If there is an issue with creating the expense.
     """
+    # Check if the category_id exists in the category table
+    category = db.query(Category).filter(Category.id == expense.category_id).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The provided category_id does not exist."
+        )
+
+    # Proceed with creating the expense if category_id is valid
     new_expense = Expense(**expense.model_dump(), user_id=current_user.id)
     db.add(new_expense)  # Add the new expense to the session
     db.commit()  # Commit the transaction to the database
@@ -41,6 +50,7 @@ def create_expense(
     background_tasks.add_task(check_budget, current_user.id)
     background_tasks.add_task(check_thresholds, current_user.id)
     return new_expense
+
 
 # Route to get all expenses of the authenticated user
 @router.get("/expenses", response_model=list[ExpenseResponse])

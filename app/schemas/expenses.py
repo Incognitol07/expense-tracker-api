@@ -37,8 +37,8 @@ class ExpenseResponse(ExpenseBase):
         id (int): The unique identifier for the expense.
         user_id (int): The ID of the user who created the expense.
     """
-    id: int
-    user_id: int  # The user who created the expense
+    id: int 
+    category_id: int
 
     class Config:
         from_attributes = True
