@@ -97,8 +97,38 @@ def get_expense(
     """
     expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
     if not expense:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
     return expense
+
+# Route to get a specific expense by its ID
+@router.get("/category/{category_id}", response_model=list[ExpenseResponse])
+def get_expense(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Retrieves a specific expense by its ID for the authenticated user.
+
+    Args:
+        expense_id (int): The ID of the expense to retrieve.
+        db (Session): The database session to interact with the database.
+        current_user (User): The currently authenticated user.
+
+    Returns:
+        ExpenseResponse: The expense with the specified ID.
+    
+    Raises:
+        HTTPException: If the expense is not found or does not belong to the user.
+    """
+    category = db.query(Category).filter(Category.user_id == current_user.id, Category.id == category_id).first()
+    if not category:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    
+    expenses = db.query(Expense).filter(Expense.category_id == category_id, Expense.user_id == current_user.id).all()
+    if not expenses:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+    return expenses
 
 # Route to update an existing expense by its ID
 @router.put("/expenses/{expense_id}", response_model=ExpenseResponse)
@@ -128,7 +158,7 @@ def update_expense(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
     
     # Update expense attributes with new values
-    for key, value in expense_update.dict(exclude_unset=True).items():
+    for key, value in expense_update.model_dump(exclude_unset=True).items():
         setattr(expense, key, value)
     
     db.commit()  # Commit changes to the database

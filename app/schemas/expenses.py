@@ -54,10 +54,10 @@ class ExpenseUpdate(BaseModel):
         date (Optional[date]): The updated date for the expense.
         category_id (Optional[int]): The updated category ID for the expense.
     """
-    amount: Optional[float]
-    description: Optional[str]
-    date: Optional[date]
-    category_id: Optional[int]
+    amount: Optional[float] = None
+    description: Optional[str] = None
+    date: Optional[date] = None
+    category_id: Optional[int] = None
 
     class Config:
         from_attributes = True
