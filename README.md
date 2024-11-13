@@ -39,33 +39,16 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 ### Setup
 
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/Incognitol07/expense-tracker-api.git
    cd expense-tracker-api
    ```
 
-2. Install **Pipenv** (if you haven't already):
-   ```bash
-   pip install pipenv
-   ```
-
-3. Install dependencies from the `Pipfile.lock` file:
-   ```bash
-   pipenv sync
-   ```
-
-   This command will install the exact versions of dependencies specified in `Pipfile.lock` within a virtual environment.
-
-4. Activate the `Pipenv` shell:
-   ```bash
-   pipenv shell
-   ```
-
-5. Set up environment variables:
+2. **Set up environment variables**:
    - In the root directory of the project, you'll find a file named `.env.example`.
-   - **Rename** the `.env.example` file to `.env`.
-   - Open the `.env` file and edit it with your own values for the following variables:
+   - **Rename** `.env.example` to `.env`.
+   - Open the `.env` file in a text editor and update it with your own values for the following variables:
       ```plaintext
       ENVIRONMENT=development
       DB_HOST=localhost
@@ -76,16 +59,36 @@ Managing personal finances can be overwhelming. This API simplifies the process 
       MASTER_KEY=master_key
       ```
 
-6. Choose your database:
-   - **PostgreSQL**: Ensure you have a PostgreSQL database set up and running.
-   - **SQLite**: If you prefer SQLite, open `app/config.py` and `app/database.py`, and uncomment the SQLite database URL while commenting out the PostgreSQL connection line. SQLite does not require additional setup.
+3. **Configure the database connection**:
+   - **PostgreSQL**: If using PostgreSQL, ensure you have a PostgreSQL database running, and that the credentials in `.env` are set correctly.
+   - **SQLite**: If you prefer SQLite, open `app/config.py` and `app/database.py`, then:
+     - Uncomment the SQLite database URL line.
+     - Comment out the PostgreSQL connection line.
+   - SQLite doesn’t require additional setup.
 
-7. Start the application:
+4. **Install Pipenv** (if you haven’t already):
+   ```bash
+   pip install pipenv
+   ```
+
+5. **Install dependencies**:
+   ```bash
+   pipenv sync
+   ```
+
+   This will install the exact versions of dependencies specified in `Pipfile.lock` within a virtual environment.
+
+6. **Activate the Pipenv shell**:
+   ```bash
+   pipenv shell
+   ```
+
+7. **Start the application**:
    ```bash
    uvicorn app.main:app --reload
    ```
 
-The application will be available at `http://localhost:8000`.
+   The application will be available at `http://localhost:8000`.
 
 ### Real-Time Notifications
 
