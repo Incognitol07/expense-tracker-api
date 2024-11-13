@@ -5,6 +5,6 @@ from .expenses import ExpenseCreate, ExpenseResponse  # Expense-related schemas
 from .categories import CategoryCreate, CategoryResponse  # Category-related schemas
 from .budget import BudgetCreate, BudgetResponse  # Budget-related schemas
 from .alerts import AlertResponse, AlertUpdate, AlertCreate
-from .groups import Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, GroupMemberStatus, ExpenseSplits, ExpenseSplitCreate
+from .groups import Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, GroupMemberStatus, ExpenseSplits, ExpenseSplitCreate, GroupMemberResponse
 from .notifications import NotificationResponse
 from .debt_notifications import DebtNotifications, DebtNotificationCreate, DebtNotificationStatus

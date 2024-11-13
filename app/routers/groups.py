@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, DebtNotifications
+from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, DebtNotifications, GroupMemberResponse
 from app.models import User, Group, GroupExpense, GroupMember, ExpenseSplit, Notification, DebtNotification, Expense, Category
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -25,28 +25,28 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user
     return new_group
 
 # 2. Add a member to a group
-@router.post("/{group_id}/members", response_model=GroupMembers)
+@router.post("/{group_id}/members", response_model=GroupMemberResponse)
 def add_member(group_id: int, member: GroupMemberCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     group = db.query(Group).filter(Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
 
     # Check if current user is admin of the group
-    admin_check = db.query(GroupMember).filter(user_id=current_user.id, group_id=group_id, role="admin").first()
+    admin_check = db.query(GroupMember).filter(GroupMember.user_id == current_user.id, GroupMember.group_id == group_id, GroupMember.role == "admin").first()
     if not admin_check:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only group admins can add members")
 
     # Look up the user by email
-    user = db.query(User).filter(User.email==member.email).first()
+    user = db.query(User).filter(User.email == member.email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this email not found")
 
     # Check if user is already a member
-    existing_member = db.query(GroupMember).filter(user_id=current_user.id, group_id=group_id).first()
+    existing_member = db.query(GroupMember).filter(GroupMember.user_id == user.id, GroupMember.group_id == group_id).first()
     if existing_member:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a member of the group")
 
-    
+    # Create new member with the user's ID
     new_member = GroupMember(user_id=user.id, group_id=group_id, role="member", status="pending")
     db.add(new_member)
     db.commit()
@@ -61,11 +61,9 @@ def add_member(group_id: int, member: GroupMemberCreate, db: Session = Depends(g
 
 
 
-
-
 # 3. Approve or reject a group join request
 @router.put("/members/{member_id}", response_model=GroupMembers)
-def update_member_status(member_id: int, status: GroupMemberStatus, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_member_status(member_id: int, status_sent: GroupMemberStatus, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     member = db.query(GroupMember).filter(GroupMember.id == member_id).first()
     
     if not member or member.status != "pending":
@@ -76,7 +74,7 @@ def update_member_status(member_id: int, status: GroupMemberStatus, db: Session 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This invitation is not for you")
 
     # Update the status to "active" if the user accepts
-    member.status = "active" if status.status == "accepted" else "rejected"
+    member.status = "active" if status_sent.status == "accepted" else "rejected"
     db.commit()
     db.refresh(member)
 
@@ -85,7 +83,6 @@ def update_member_status(member_id: int, status: GroupMemberStatus, db: Session 
 
 
 # 4. Create a group expense
-
 @router.post("/{group_id}/expenses", response_model=GroupExpenses)
 def create_and_split_group_expense(group_id: int, expense: GroupExpenseCreate, splits: list[ExpenseSplitCreate], db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Ensure user is a member of the group
@@ -130,7 +127,7 @@ def create_and_split_group_expense(group_id: int, expense: GroupExpenseCreate, s
             )
             db.add(debt_notification)
 
-            # Optionally, send a notification as well
+            # Send a notification as well
             notification = Notification(user_id=split.user_id, message=f"You owe {split.amount} for '{new_expense.description}'")
             db.add(notification)
 
@@ -204,4 +201,3 @@ def respond_to_debt_notification(debt_notification_id: int, accept: bool, db: Se
     db.commit()
     db.refresh(debt_notification)
     return debt_notification
-

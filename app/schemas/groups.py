@@ -18,14 +18,25 @@ class Groups(GroupBase):
 
 # 2. Group Member Schema
 class GroupMemberBase(BaseModel):
-    email: EmailStr
     group_id: int
 
 class GroupMemberCreate(GroupMemberBase):
+    email: EmailStr
     pass
 
 class GroupMemberStatus(BaseModel):
     status: str = "active"  # "active", "pending", "rejected"
+
+class GroupMemberResponse(BaseModel):
+    user_id: int
+    group_id: int
+    role: str
+    status: str
+    # Add other fields here as needed
+
+    class Config:
+        from_attributes = True
+
 
 class GroupMembers(GroupMemberBase):
     id: int
