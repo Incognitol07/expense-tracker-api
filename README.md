@@ -19,6 +19,8 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 - **Data Analytics**: Summarize expenses, view detailed breakdowns by category, and export data.
 - **Real-time Notifications**: WebSocket support for live notifications of budget alerts.
 - **Secure Access**: JWT-based authentication and password hashing for secure access to the system.
+- **Group Expense Tracking**: Track expenses for groups of users, with automatic splitting of expenses.
+- **Debt Notifications**: Get notified when debts are owed within a group, with real-time notifications for updates and payment status.
 
 ## Tech Stack
 
@@ -48,12 +50,12 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    pip install pipenv
    ```
 
-3. Set up a `Pipenv` environment:
+3. Install dependencies from the `Pipfile.lock` file:
    ```bash
-   pipenv install
+   pipenv sync
    ```
 
-   This command will create a virtual environment and install the dependencies specified in the `Pipfile`.
+   This command will install the exact versions of dependencies specified in `Pipfile.lock` within a virtual environment.
 
 4. Activate the `Pipenv` shell:
    ```bash
@@ -90,6 +92,12 @@ The application will be available at `http://localhost:8000`.
 - **WebSocket Endpoint**: `/ws/notifications/{user_id}` - Connect to this WebSocket endpoint for live notifications about budget alerts and spending updates.
 
 This feature allows users to stay updated with budget notifications in real-time, improving their ability to manage finances instantly.
+
+### Group Expense Tracking and Debt Notifications
+
+- **Group Creation**: Users can create groups and invite others to join by email. Upon acceptance, group members can share and track expenses.
+- **Expense Splitting**: Expenses paid by one member can be split among all group members, with real-time updates sent through notifications.
+- **Debt Notifications**: When expenses are split, users will receive notifications about how much they owe or are owed within the group. These notifications include the status of debt payments.
 
 ## Project Structure
 
@@ -131,7 +139,7 @@ To test real-time notifications via WebSocket:
 
 ## Conclusion
 
-The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, and comprehensive data tracking, this API helps users make informed decisions about their finances.
+The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, group expense tracking, debt notifications, and comprehensive data tracking, this API helps users make informed decisions about their finances.
 
 ## License
 
