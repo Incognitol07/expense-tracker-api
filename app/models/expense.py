@@ -3,6 +3,7 @@
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
+from datetime import datetime
 
 class Expense(Base):
     """
@@ -25,7 +26,7 @@ class Expense(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
     description = Column(String, nullable=True)
-    date = Column(Date, nullable=False)
+    date = Column(Date, nullable=False, default=datetime.now())
     user_id = Column(Integer, ForeignKey("users.id"))
     category_id = Column(Integer, ForeignKey("categories.id"))  # Link to category
 

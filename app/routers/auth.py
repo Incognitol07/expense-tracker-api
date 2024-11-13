@@ -110,15 +110,22 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
     
-    db_category = db.query(Category).filter(Category.user_id == db_user.id, Category.name == "Debt").first()
+    db_category =  db.query(Category).filter(Category.user_id == db_user.id, Category.name=="Debt").first()
 
-    if db_category:
-        pass
-    else:
-        new_category = Category(name="Debt", description="For all debts", user_id=db_user.id)
+    if not db_category:
+        last_category = db.query(Category).filter(Category.user_id == db_user.id).order_by(Category.category_id.desc()).first()
+        new_category_id = last_category.category_id + 1 if last_category else 1  # Start with 1 if no categories exist
+        # Create a new category with the generated category_id
+        new_category = Category(
+            name="Debt",
+            description="For all debts",
+            user_id=db_user.id,
+            category_id=new_category_id
+        )
+        
         db.add(new_category)  # Add the new category to the session
         db.commit()  # Commit the changes to the database
-        db.refresh(new_category)
+        db.refresh(new_category)  # Refresh to get the latest state of the category
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})

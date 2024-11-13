@@ -84,7 +84,13 @@ def update_member_status(member_id: int, status_sent: GroupMemberStatus, db: Ses
 
 # 4. Create a group expense
 @router.post("/{group_id}/expenses", response_model=GroupExpenses)
-def create_and_split_group_expense(group_id: int, expense: GroupExpenseCreate, splits: list[ExpenseSplitCreate], db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_and_split_group_expense(
+    group_id: int,
+    expense: GroupExpenseCreate,
+    splits: list[ExpenseSplitCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     # Ensure user is a member of the group
     member = db.query(GroupMember).filter_by(user_id=current_user.id, group_id=group_id, status="active").first()
     if not member:
@@ -96,29 +102,23 @@ def create_and_split_group_expense(group_id: int, expense: GroupExpenseCreate, s
     db.commit()
     db.refresh(new_expense)
 
-    # Track total amount that is being split to ensure it matches the expense
+    # Validate split total
     total_split_amount = sum(split.amount for split in splits)
-
-    # Ensure that the total split amount equals the expense amount
     if total_split_amount != expense.amount:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The total split amount must equal the expense amount")
 
     # Process each split
     expense_splits = []
     for split in splits:
-        # Ensure that the user is a member of the group
         group_member_check = db.query(GroupMember).filter(GroupMember.user_id == split.user_id, GroupMember.group_id == group_id).first()
         if not group_member_check:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User {split.user_id} is not a member of the group")
 
-        # Create expense split entries
         expense_split = ExpenseSplit(expense_id=new_expense.id, user_id=split.user_id, amount=split.amount)
         db.add(expense_split)
         expense_splits.append(expense_split)
 
-        # Skip the payer when creating debt notifications
-        if split.user_id != current_user.id:  # Payer is excluded
-            # Create a debt notification for each member (this assumes you have a DebtNotification model)
+        if split.user_id != current_user.id:
             debt_notification = DebtNotification(
                 amount=split.amount,
                 description=f"You owe {split.amount} for '{new_expense.description}'",
@@ -127,11 +127,23 @@ def create_and_split_group_expense(group_id: int, expense: GroupExpenseCreate, s
             )
             db.add(debt_notification)
 
-            # Send a notification as well
             notification = Notification(user_id=split.user_id, message=f"You owe {split.amount} for '{new_expense.description}'")
             db.add(notification)
 
     db.commit()
+
+    # Construct the response to match GroupExpenses response model
+    return {
+        "id": new_expense.id,
+        "group_id": new_expense.group_id,
+        "payer_id": new_expense.payer_id,
+        "amount": new_expense.amount,
+        "description": new_expense.description,
+        "splits": [
+            {"id": split.id, "expense_id": new_expense.id, "user_id": split.user_id, "amount": split.amount}
+            for split in expense_splits
+        ]
+    }
 
 
 

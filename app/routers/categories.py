@@ -29,6 +29,7 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
         HTTPException: If there is an issue with creating the category.
     """
 
+    db_user = db.query(User).filter(User.email == user.email).first()
     db_category_name = db.query(Category).filter(Category.user_id == user.id, Category.name == category.name).first()
     db_category_description = db.query(Category).filter(Category.user_id == user.id, Category.description == category.description).first()
 
@@ -44,7 +45,17 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
             detail="Category description already exists"
         )
 
-    new_category = Category(name=category.name, description=category.description, user_id=user.id)
+    last_category = db.query(Category).filter(Category.user_id == db_user.id).order_by(Category.category_id.desc()).first()
+    new_category_id = last_category.category_id + 1 if last_category else 1  # Start with 1 if no categories exist
+
+    # Create a new category with the generated category_id
+    new_category = Category(
+        name=category.name,
+        description=category.description,
+        user_id=db_user.id,
+        category_id=new_category_id
+    )
+    
     db.add(new_category)  # Add the new category to the session
     db.commit()  # Commit the changes to the database
     db.refresh(new_category)  # Refresh to get the latest state of the category

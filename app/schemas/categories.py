@@ -32,6 +32,7 @@ class CategoryResponse(CategoryBase):
         id (int): The unique identifier for the category.
     """
     id: int
+    category_id:int
 
     class Config:
         # This allows Pydantic to pull attributes from ORM models
