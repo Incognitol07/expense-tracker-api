@@ -26,6 +26,6 @@ class Category(Base):
     description = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     
-    # Relationship with expenses
+    # Relationship
     expenses = relationship("Expense", back_populates="categories")
     owner = relationship("User", back_populates="categories")

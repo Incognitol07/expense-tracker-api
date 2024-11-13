@@ -14,7 +14,7 @@ from app.routers.alerts import check_budget
 router = APIRouter()
 
 # Route to set a new budget for the user
-@router.post("/budget", response_model=BudgetResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=BudgetResponse, status_code=status.HTTP_201_CREATED)
 def set_budget(background_tasks: BackgroundTasks,budget_data: BudgetCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Creates a new budget for the authenticated user.
@@ -44,7 +44,7 @@ def set_budget(background_tasks: BackgroundTasks,budget_data: BudgetCreate, db: 
     return new_budget
 
 # Route to get the current budget of the user
-@router.get("/budget", response_model=BudgetResponse)
+@router.get("/", response_model=BudgetResponse)
 def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves the current budget set by the authenticated user.
@@ -65,7 +65,7 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
     return budget
 
 # Route to update the user's existing budget
-@router.put("/budget", response_model=BudgetResponse)
+@router.put("/", response_model=BudgetResponse)
 def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Updates the existing budget of the authenticated user and resets notifications if needed.
@@ -93,7 +93,7 @@ def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, d
     return budget
 
 # Route to get the current budget status for the user (remaining budget)
-@router.get("/budget/status", response_model=BudgetStatus)
+@router.get("/status", response_model=BudgetStatus)
 def get_budget_status(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves the current status of the user's budget, including the remaining amount.
@@ -128,7 +128,7 @@ def get_budget_status(db: Session = Depends(get_db), user: User = Depends(get_cu
     )
 
 # Route to get the history of all budgets for the user
-@router.get("/budget/history", response_model=list[BudgetHistory])
+@router.get("/history", response_model=list[BudgetHistory])
 def get_budget_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves the history of all budgets set by the authenticated user.
@@ -144,7 +144,7 @@ def get_budget_history(db: Session = Depends(get_db), user: User = Depends(get_c
     return budgets
 
 # Route to delete the user's current budget
-@router.delete("/budget")
+@router.delete("/")
 def delete_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes the currently set budget for the authenticated user.

@@ -12,7 +12,7 @@ from app.schemas.notifications import NotificationResponse
 router = APIRouter()
 
 # Route to fetch all unread notifications for the authenticated user
-@router.get("/notifications", response_model=list[NotificationResponse])
+@router.get("/", response_model=list[NotificationResponse])
 def get_notifications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -39,7 +39,7 @@ def get_notifications(
     return notifications
 
 # Route to mark a specific notification as read
-@router.put("/notifications/{notification_id}/mark-as-read", response_model=NotificationResponse)
+@router.put("/{notification_id}/mark-as-read", response_model=NotificationResponse)
 def mark_notification_as_read(
     notification_id: int,
     db: Session = Depends(get_db),
@@ -74,7 +74,7 @@ def mark_notification_as_read(
     return notification
 
 # Route to mark all unread notifications as read
-@router.put("/notifications/mark-all-as-read", response_model=list[NotificationResponse])
+@router.put("/mark-all-as-read", response_model=list[NotificationResponse])
 def mark_all_notifications_as_read(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

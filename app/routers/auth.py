@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.schemas.auth import UserCreate, UserLogin
-from app.models.user import User
+from app.models import User, Category
 from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token
 from app.database import get_db
 
@@ -110,6 +110,16 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
     
+    db_category = db.query(Category).filter(Category.user_id == db_user.id, Category.name == "Debt").first()
+
+    if db_category:
+        pass
+    else:
+        new_category = Category(name="Debt", description="For all debts", user_id=db_user.id)
+        db.add(new_category)  # Add the new category to the session
+        db.commit()  # Commit the changes to the database
+        db.refresh(new_category)
+
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
     return {"access_token": access_token, "token_type": "bearer", "username":db_user.email, "user_id": db_user.id}

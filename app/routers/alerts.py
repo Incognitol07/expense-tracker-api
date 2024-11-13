@@ -98,7 +98,7 @@ async def check_budget(user_id: int):
     finally:
         db.close()
 
-@router.post("/alert", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
 def create_alert(
     alert_data: AlertCreate,
     background_tasks: BackgroundTasks,
@@ -144,7 +144,7 @@ def create_alert(
 
     return alert
 
-@router.get("/alert", response_model=list[AlertResponse])
+@router.get("/", response_model=list[AlertResponse])
 def get_alerts(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -164,7 +164,7 @@ def get_alerts(
     background_tasks.add_task(check_thresholds, current_user.id)
     return alerts
 
-@router.put("/alert/", response_model=AlertResponse)
+@router.put("/", response_model=AlertResponse)
 def update_alert(
     background_tasks: BackgroundTasks,
     alert_data: AlertUpdate,
@@ -199,7 +199,7 @@ def update_alert(
     background_tasks.add_task(check_thresholds, current_user.id)
     return alert
 
-@router.delete("/alert/")
+@router.delete("/")
 def delete_alert(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

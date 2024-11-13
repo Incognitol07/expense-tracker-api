@@ -12,7 +12,7 @@ from app.routers.auth import get_current_user
 
 router = APIRouter()
 
-@router.get("/analytics/summary", response_model=ExpenseSummary)
+@router.get("/summary", response_model=ExpenseSummary)
 def get_expense_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     total_expenses = db.query(func.sum(Expense.amount)).filter(Expense.user_id == user.id).scalar() or 0.0
     expenses_by_category = [
@@ -33,7 +33,7 @@ def get_expense_summary(db: Session = Depends(get_db), user: User = Depends(get_
         expenses_by_category=expenses_by_category
     )
 
-@router.get("/analytics/monthly", response_model=MonthlyBreakdown)
+@router.get("/monthly", response_model=MonthlyBreakdown)
 def get_monthly_breakdown(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     current_month = date.today().month
     monthly_expenses = [
@@ -45,7 +45,7 @@ def get_monthly_breakdown(db: Session = Depends(get_db), user: User = Depends(ge
     ]
     return MonthlyBreakdown(month=current_month, breakdown=monthly_expenses)
 
-@router.get("/analytics/weekly", response_model=WeeklyBreakdown)
+@router.get("/weekly", response_model=WeeklyBreakdown)
 def get_weekly_breakdown(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())
@@ -58,7 +58,7 @@ def get_weekly_breakdown(db: Session = Depends(get_db), user: User = Depends(get
     ]
     return WeeklyBreakdown(week_start=start_of_week, breakdown=weekly_expenses)
 
-@router.get("/analytics/trends", response_model=TrendData)
+@router.get("/trends", response_model=TrendData)
 def get_trend_data(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     past_year = date.today() - timedelta(days=365)
     monthly_trends = [
@@ -71,7 +71,7 @@ def get_trend_data(db: Session = Depends(get_db), user: User = Depends(get_curre
     ]
     return TrendData(trends=monthly_trends)
 
-@router.get("/analytics/export")
+@router.get("/export")
 def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     expenses = db.query(Expense).filter(Expense.user_id == user.id).all()
     data = [
@@ -94,7 +94,7 @@ def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: Us
     
     raise HTTPException(status_code=400, detail="Unsupported export format.")
 
-@router.get("/analytics/budget_adherence", response_model=dict)
+@router.get("/budget_adherence", response_model=dict)
 def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieve the user's budget adherence for monthly, quarterly, and yearly periods.
@@ -169,7 +169,7 @@ def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get
         )
     }
 
-@router.get("/analytics/date_range", response_model=ExpenseSummary)
+@router.get("/date_range", response_model=ExpenseSummary)
 def get_expense_summary_for_range(
     start_date: date, 
     end_date: date, 

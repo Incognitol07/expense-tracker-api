@@ -12,7 +12,7 @@ from app.models.user import User
 router = APIRouter()
 
 # Route to create a new category
-@router.post("/categories", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 def create_category(category: CategoryCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Creates a new category for the authenticated user.
@@ -51,7 +51,7 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
     return new_category
 
 # Route to get all categories of the authenticated user
-@router.get("/categories", response_model=list[CategoryResponse])
+@router.get("/", response_model=list[CategoryResponse])
 def get_categories(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves all categories for the authenticated user.
@@ -70,7 +70,7 @@ def get_categories(db: Session = Depends(get_db), user: User = Depends(get_curre
     return categories
 
 # Route to get a specific category by its ID
-@router.get("/categories/{category_id}", response_model=CategoryResponse)
+@router.get("/{category_id}", response_model=CategoryResponse)
 def get_category(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves a specific category by its ID for the authenticated user.
@@ -92,7 +92,7 @@ def get_category(category_id: int, db: Session = Depends(get_db), user: User = D
     return category
 
 # Route to update an existing category by its ID
-@router.put("/categories/{category_id}", response_model=CategoryResponse)
+@router.put("/{category_id}", response_model=CategoryResponse)
 def update_category(category_id: int, category_data: CategoryUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Updates a category by its ID for the authenticated user.
@@ -122,7 +122,7 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
     return category
 
 # Route to delete a category by its ID
-@router.delete("/categories/{category_id}")
+@router.delete("/{category_id}")
 def delete_category(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a category by its ID for the authenticated user.

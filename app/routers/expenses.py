@@ -13,7 +13,7 @@ from app.routers.alerts import check_thresholds, check_budget
 router = APIRouter()
 
 
-@router.post("/expenses", response_model=ExpenseResponse)
+@router.post("/", response_model=ExpenseResponse)
 def create_expense(
     background_tasks: BackgroundTasks,
     expense: ExpenseCreate,
@@ -53,7 +53,7 @@ def create_expense(
 
 
 # Route to get all expenses of the authenticated user
-@router.get("/expenses", response_model=list[ExpenseResponse])
+@router.get("/", response_model=list[ExpenseResponse])
 def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -75,7 +75,7 @@ def get_expenses(
     return expenses
 
 # Route to get a specific expense by its ID
-@router.get("/expenses/{expense_id}", response_model=ExpenseResponse)
+@router.get("/{expense_id}", response_model=ExpenseResponse)
 def get_expense(
     expense_id: int,
     db: Session = Depends(get_db),
@@ -100,9 +100,9 @@ def get_expense(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
     return expense
 
-# Route to get a specific expense by its ID
+# Route to get a expenses by category
 @router.get("/category/{category_id}", response_model=list[ExpenseResponse])
-def get_expense(
+def get_expenses_by_category(
     category_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -111,7 +111,7 @@ def get_expense(
     Retrieves a specific expense by its ID for the authenticated user.
 
     Args:
-        expense_id (int): The ID of the expense to retrieve.
+        category_id (int): The ID of the expense to retrieve.
         db (Session): The database session to interact with the database.
         current_user (User): The currently authenticated user.
 
@@ -131,7 +131,7 @@ def get_expense(
     return expenses
 
 # Route to update an existing expense by its ID
-@router.put("/expenses/{expense_id}", response_model=ExpenseResponse)
+@router.put("/{expense_id}", response_model=ExpenseResponse)
 def update_expense(
     expense_id: int,
     expense_update: ExpenseUpdate,
@@ -166,7 +166,7 @@ def update_expense(
     return expense
 
 # Route to delete an expense by its ID
-@router.delete("/expenses/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_expense(
     expense_id: int,
     db: Session = Depends(get_db),

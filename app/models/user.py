@@ -6,20 +6,8 @@ from app.database import Base
 
 class User(Base):
     """
-    Represents a user in the system, who can have expenses, budgets, categories, alerts, and notifications.
-
-    Attributes:
-        id (Integer): Unique identifier for each user.
-        username (String): The unique username chosen by the user.
-        email (String): The unique email address of the user.
-        hashed_password (String): The user's password, stored as a hash for security.
-
-    Relationships:
-        expenses (Expense): List of expenses associated with this user, using a back-populated 'owner' attribute.
-        budgets (Budget): List of budgets set by the user, using a back-populated 'owner' attribute.
-        categories (Category): List of categories created by the user, using a back-populated 'owner' attribute.
-        alerts (Alert): List of alerts associated with this user, using a back-populated 'owner' attribute.
-        notifications (Notification): List of notifications sent to this user, using a back-populated 'owner' attribute.
+    Represents a user in the system, who can have expenses, budgets, categories, alerts, notifications,
+    and can participate in groups for shared expense tracking.
     """
     __tablename__ = "users"
     
@@ -34,3 +22,6 @@ class User(Base):
     categories = relationship("Category", back_populates="owner", cascade="all, delete-orphan")
     alerts = relationship("Alert", back_populates="owner", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="owner", cascade="all, delete-orphan")
+    group_members = relationship("GroupMember", back_populates="user", cascade="all, delete-orphan")
+    group_expenses = relationship("GroupExpense", back_populates="user", cascade="all, delete-orphan")
+    expense_splits = relationship("ExpenseSplit", back_populates="user", cascade="all, delete-orphan")
