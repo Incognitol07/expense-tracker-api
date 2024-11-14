@@ -101,7 +101,7 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
     db.add(new_admin)
     db.commit()
     db.refresh(new_admin)
-    return { "username": new_admin.username, "email":user.email, "message": "Registered successfully!"}
+    return { "username": new_admin.username, "email":user.email, "message": "Admin registered successfully!"}
 
 @router.get("/users")
 def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
