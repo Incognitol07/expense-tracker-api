@@ -66,24 +66,12 @@ Managing personal finances can be overwhelming. This API simplifies the process 
      - Comment out the PostgreSQL connection line.
    - SQLite doesn’t require additional setup.
 
-4. **Install Pipenv** (if you haven’t already):
+4. **Install Packages**:
    ```bash
-   pip install pipenv
+   pip install -r requirements.txt
    ```
 
-5. **Install dependencies**:
-   ```bash
-   pipenv sync
-   ```
-
-   This will install the exact versions of dependencies specified in `Pipfile.lock` within a virtual environment.
-
-6. **Activate the Pipenv shell**:
-   ```bash
-   pipenv shell
-   ```
-
-7. **Start the application**:
+5. **Start the application**:
    ```bash
    uvicorn app.main:app --reload
    ```
