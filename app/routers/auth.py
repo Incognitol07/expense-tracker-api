@@ -95,7 +95,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     Logs in a user by verifying the username and password, and returning a JWT access token.
     
     Args:
-        user (UserLogin): The user data containing the username and password.
+        user (UserLogin): The user data containing the email and password.
         db (Session): The database session to validate user credentials.
         
     Raises:

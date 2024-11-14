@@ -58,7 +58,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     Authenticates an admin user and generates an access token.
 
     Args:
-        user (UserLogin): Admin login credentials (username and password).
+        user (UserLogin): Admin login credentials (email and password).
         db (Session): Database session for querying the database.
 
     Raises:
