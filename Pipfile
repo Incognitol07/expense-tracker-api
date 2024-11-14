@@ -11,7 +11,8 @@ pyjwt = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 apscheduler = "*"
 databases = "*"
-"psycopg2.binary" = "*"
+psycopg2-binary = "*"
+asyncio = "*"
 
 [dev-packages]
 
