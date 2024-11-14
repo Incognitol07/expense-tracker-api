@@ -129,7 +129,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
-    return {"access_token": access_token, "token_type": "bearer", "username":db_user.email, "user_id": db_user.id}
+    return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id}
 
 # Protected route example requiring authentication
 @router.get("/protected-route")
