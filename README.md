@@ -61,7 +61,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 3. **Configure the database connection**:
    - **PostgreSQL**: If using PostgreSQL, ensure you have a PostgreSQL database running, and that the credentials in `.env` are set correctly.
-   - **SQLite**: If you prefer SQLite, open `app/config.py` and `app/database.py`, then:
+   - **SQLite**: If you prefer SQLite, open `app/config.py` then:
      - Uncomment the SQLite database URL line.
      - Comment out the PostgreSQL connection line.
    - SQLite doesn’t require additional setup.

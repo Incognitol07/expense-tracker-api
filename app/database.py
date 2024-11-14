@@ -2,24 +2,9 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
-import os
+from app.config import settings
 
-# Load environment variables from a .env file
-load_dotenv()
-
-# Fetch database connection details from environment variables
-DB_HOST: str = os.getenv("DB_HOST", "localhost")  # Default to localhost if not set
-DB_NAME: str = os.getenv("DB_NAME", "expense_tracker")  # Default database name
-DB_USER: str = os.getenv("DB_USER", "postgres")  # Default user is postgres
-DB_PASSWORD: str = os.getenv("DB_PASSWORD")  # Database password (should be set in .env)
-
-# Comment this to use a SQLite database
-# Create the database URL using the environment variables
-DATABASE_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
-
-# Uncomment this to use a SQLite database
-# DATABASE_URL: str = 'sqlite:///expense.db'
+DATABASE_URL = settings.DATABASE_URL
 
 # Create the database engine
 engine = create_engine(DATABASE_URL)
