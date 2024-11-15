@@ -117,8 +117,7 @@ expense-tracker-api/
 │   ├── models/              # SQLAlchemy models
 │   ├── database.py          # Database connection and session handling
 │   └── config.py            # Configuration settings
-├── Pipfile                  # Pipenv configuration file
-├── Pipfile.lock             # Locked versions of installed packages
+├── requirements.txt         # Versions of installed packages
 ├── .env                     # Environment variables
 └── README.md                # Project documentation
 ```
