@@ -141,7 +141,6 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    ```
 
    The application will be available at `http://localhost:8000`.
-```
 
 ## Features Overview
 
