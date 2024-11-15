@@ -93,7 +93,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    uvicorn app.main:app --reload
    ```
 
-   The application will be available at `http://localhost:8000`.
+   The application will be available at `http://127.0.0.1:8000`.
 
 ---
 
@@ -140,13 +140,13 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    uvicorn app.main:app --reload
    ```
 
-   The application will be available at `http://localhost:8000`.
+   The application will be available at `http://127.0.0.1:8000`.
 
 ## Features Overview
 
 ### Real-Time Notifications
 
-- **WebSocket Endpoint**: `/ws/notifications/{user_id}` - Connect to this WebSocket endpoint for live notifications about budget alerts and spending updates.
+- **WebSocket Endpoint**: `http://127.0.0.1:8000/ws/notifications/{user_id}` - Connect to this WebSocket endpoint for live notifications about budget alerts and spending updates.
 
 This feature allows users to stay updated with budget notifications in real-time, improving their ability to manage finances instantly.
 
@@ -184,21 +184,21 @@ expense-tracker-api/
 
 ## Testing the API
 
-You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's interactive docs available at `http://localhost:8000/docs` or `http://localhost:8000/redoc` for a more comprehensive documentation.
+You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's interactive docs available at `http://127.0.0.1:8000/docs` or `http://127.0.0.1:8000/redoc` for a more comprehensive documentation.
 
 ### Example Request
 
 To register a new user:
 
 ```bash
-curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser", "email": "test@user.com", "password": "password123"}'
+curl -X POST "http://127.0.0.1:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser", "email": "test@user.com", "password": "password123"}'
 ```
 
 ### WebSocket Notifications
 
 To test real-time notifications via WebSocket:
 
-1. Connect to `/ws/notifications/{user_id}`.
+1. Connect to `http://127.0.0.1:8000/ws/notifications/{user_id}`.
 2. Upon spending updates or threshold alerts, the connected WebSocket will receive messages in real time.
 
 ---
