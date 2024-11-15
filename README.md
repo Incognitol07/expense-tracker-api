@@ -168,7 +168,7 @@ expense-tracker-api/
 
 ## Testing the API
 
-You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's interactive docs available at `http://localhost:8000/docs`.
+You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's interactive docs available at `http://localhost:8000/docs` or `http://localhost:8000/redoc` for a more comprehensive documentation.
 
 ### Example Request
 
