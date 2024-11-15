@@ -34,8 +34,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 ### Prerequisites
 
-- **Python 3.9+**
-- **PostgreSQL Database** (optional if using SQLite)
+- **Python 3.12+**
 
 ### Setup
 
@@ -47,24 +46,39 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 2. **Set up environment variables**:
    - In the root directory of the project, you'll find a file named `.env.example`.
-   - **Rename** `.env.example` to `.env`.
-   - Open the `.env` file in a text editor and update it with your own values for the following variables:
-      ```plaintext
-      ENVIRONMENT=development
-      DB_HOST=localhost
-      DB_NAME=expense_tracker
-      DB_USER=postgres
-      DB_PASSWORD=password
-      JWT_SECRET_KEY=myjwtsecretkey
-      MASTER_KEY=master_key
-      ```
+   - **Copy** the `.env.example` file and rename the copy to `.env`. You can do this using any of the following methods:
 
-3. **Configure the database connection**:
-   - **PostgreSQL**: If using PostgreSQL, ensure you have a PostgreSQL database running, and that the credentials in `.env` are set correctly.
-   - **SQLite**: If you prefer SQLite, open `app/config.py` then:
-     - Uncomment the SQLite database URL line.
-     - Comment out the PostgreSQL connection line.
-   - SQLite doesn’t require additional setup.
+     - **Command Line (Linux/Mac)**:
+       ```bash
+       cp .env.example .env
+       ```
+     - **Command Line (Windows)**:
+       ```cmd
+       copy .env.example .env
+       ```
+
+     - **Graphical Interface**:
+       1. Right-click on the `.env.example` file.
+       2. Select **Copy** (or press `Ctrl+C`).
+       3. Paste it in the same directory (right-click and select **Paste**, or press `Ctrl+V`).
+       4. Rename the pasted file to `.env`.
+
+   - Open the `.env` file in a text editor and update it with your own values for the following variables:
+     ```plaintext
+     ENVIRONMENT=development
+     DB_HOST=localhost
+     DB_NAME=expense_tracker
+     DB_USER=postgres
+     DB_PASSWORD=password
+     JWT_SECRET_KEY=myjwtsecretkey
+     MASTER_KEY=master_key
+     ```
+
+3. **Database Configuration**:
+   - By default, the application uses **SQLite** as the database. SQLite requires no additional setup.
+   - If you prefer to use PostgreSQL:
+     - Uncomment the PostgreSQL database URL line in `app/config.py`.
+     - Update your `.env` file with PostgreSQL credentials.
 
 4. **Install Packages**:
    ```bash
