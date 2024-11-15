@@ -30,40 +30,35 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 - **Notifications**: WebSocket-based live notifications
 - **Data Visualization**: Integration with front-end for trends and expense tracking
 
+---
+
 ## Installation
 
 ### Prerequisites
 
 - **Python 3.12+**
 
-### Setup
+---
 
-1. **Clone the repository**:
+### Using Pipenv
+
+1. **Install Pipenv**:
+   ```bash
+   pip install pipenv
+   ```
+
+2. **Clone the repository**:
    ```bash
    git clone https://github.com/Incognitol07/expense-tracker-api.git
    cd expense-tracker-api
    ```
 
-2. **Set up environment variables**:
-   - In the root directory of the project, you'll find a file named `.env.example`.
-   - **Copy** the `.env.example` file and rename the copy to `.env`. You can do this using any of the following methods:
-
-     - **Command Line (Linux/Mac)**:
-       ```bash
-       cp .env.example .env
-       ```
-     - **Command Line (Windows)**:
-       ```cmd
-       copy .env.example .env
-       ```
-
-     - **Graphical Interface**:
-       1. Right-click on the `.env.example` file.
-       2. Select **Copy** (or press `Ctrl+C`).
-       3. Paste it in the same directory (right-click and select **Paste**, or press `Ctrl+V`).
-       4. Rename the pasted file to `.env`.
-
-   - Open the `.env` file in a text editor and update it with your own values for the following variables:
+3. **Set up environment variables**:
+   - Copy the `.env.example` file and rename it to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Edit the `.env` file and update the variables with your configuration:
      ```plaintext
      ENVIRONMENT=development
      DB_HOST=localhost
@@ -74,23 +69,64 @@ Managing personal finances can be overwhelming. This API simplifies the process 
      MASTER_KEY=master_key
      ```
 
-3. **Database Configuration**:
-   - By default, the application uses **SQLite** as the database. SQLite requires no additional setup.
-   - If you prefer to use PostgreSQL:
-     - Uncomment the PostgreSQL database URL line in `app/config.py`.
-     - Update your `.env` file with PostgreSQL credentials.
-
-4. **Install Packages**:
+4. **Install dependencies**:
    ```bash
-   pip install -r requirements.txt
+   pipenv install --ignore-pipfile
    ```
 
-5. **Start the application**:
+5. **Activate the virtual environment**:
+   ```bash
+   pipenv shell
+   ```
+
+6. **Run the application**:
    ```bash
    uvicorn app.main:app --reload
    ```
 
    The application will be available at `http://localhost:8000`.
+
+---
+
+### Without a Virtual Environment
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Incognitol07/expense-tracker-api.git
+   cd expense-tracker-api
+   ```
+
+2. **Set up environment variables**:
+   - Copy the `.env.example` file and rename it to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Edit the `.env` file and update the variables with your configuration:
+     ```plaintext
+     ENVIRONMENT=development
+     DB_HOST=localhost
+     DB_NAME=expense_tracker
+     DB_USER=postgres
+     DB_PASSWORD=password
+     JWT_SECRET_KEY=myjwtsecretkey
+     MASTER_KEY=master_key
+     ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run the application**:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+   The application will be available at `http://localhost:8000`.
+
+---
+
+## Features Overview
 
 ### Real-Time Notifications
 
@@ -98,11 +134,15 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 This feature allows users to stay updated with budget notifications in real-time, improving their ability to manage finances instantly.
 
+---
+
 ### Group Expense Tracking and Debt Notifications
 
 - **Group Creation**: Users can create groups and invite others to join by email. Upon acceptance, group members can share and track expenses.
 - **Expense Splitting**: Expenses paid by one member can be split among all group members, with real-time updates sent through notifications.
 - **Debt Notifications**: When expenses are split, users will receive notifications about how much they owe or are owed within the group. These notifications include the status of debt payments.
+
+---
 
 ## Project Structure
 
@@ -118,9 +158,13 @@ expense-tracker-api/
 │   ├── database.py          # Database connection and session handling
 │   └── config.py            # Configuration settings
 ├── requirements.txt         # Versions of installed packages
+├── Pipfile                  # Pipenv dependencies
+├── Pipfile.lock             # Locked dependency versions
 ├── .env                     # Environment variables
 └── README.md                # Project documentation
 ```
+
+---
 
 ## Testing the API
 
@@ -131,7 +175,7 @@ You can test the API using **curl**, **Postman**, **Bruno**, or FastAPI's intera
 To register a new user:
 
 ```bash
-curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser","email":"test@user.com", "password": "password123"}
+curl -X POST "http://localhost:8000/auth/register" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username": "testuser", "email": "test@user.com", "password": "password123"}'
 ```
 
 ### WebSocket Notifications
@@ -141,9 +185,13 @@ To test real-time notifications via WebSocket:
 1. Connect to `/ws/notifications/{user_id}`.
 2. Upon spending updates or threshold alerts, the connected WebSocket will receive messages in real time.
 
+---
+
 ## Conclusion
 
 The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, group expense tracking, debt notifications, and comprehensive data tracking, this API helps users make informed decisions about their finances.
+
+---
 
 ## License
 
