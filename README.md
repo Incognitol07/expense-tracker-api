@@ -54,10 +54,19 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    ```
 
 3. **Set up environment variables**:
-   - Copy the `.env.example` file and rename it to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
+   - Copy the `.env.example` file to `.env`:
+     - **Mac/Linux**:
+       ```bash
+       cp .env.example .env
+       ```
+     - **Windows** (Command Prompt):
+       ```cmd
+       copy .env.example .env
+       ```
+     - **Windows** (PowerShell):
+       ```powershell
+       Copy-Item .env.example .env
+       ```
    - Edit the `.env` file and update the variables with your configuration:
      ```plaintext
      ENVIRONMENT=development
@@ -97,10 +106,19 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    ```
 
 2. **Set up environment variables**:
-   - Copy the `.env.example` file and rename it to `.env`:
-     ```bash
-     cp .env.example .env
-     ```
+   - Copy the `.env.example` file to `.env`:
+     - **Mac/Linux**:
+       ```bash
+       cp .env.example .env
+       ```
+     - **Windows** (Command Prompt):
+       ```cmd
+       copy .env.example .env
+       ```
+     - **Windows** (PowerShell):
+       ```powershell
+       Copy-Item .env.example .env
+       ```
    - Edit the `.env` file and update the variables with your configuration:
      ```plaintext
      ENVIRONMENT=development
@@ -123,8 +141,7 @@ Managing personal finances can be overwhelming. This API simplifies the process 
    ```
 
    The application will be available at `http://localhost:8000`.
-
----
+```
 
 ## Features Overview
 
