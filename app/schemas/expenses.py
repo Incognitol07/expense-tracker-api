@@ -56,7 +56,7 @@ class ExpenseUpdate(BaseModel):
     """
     amount: Optional[float] = None
     description: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[date]
     category_id: Optional[int] = None
 
     class Config:
