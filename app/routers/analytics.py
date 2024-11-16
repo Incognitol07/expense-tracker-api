@@ -7,7 +7,7 @@ from sqlalchemy import func
 from datetime import date, timedelta
 from app.database import get_db
 from app.models import Expense, Budget, User
-from app.schemas.analytics import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend
+from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend, ExpensesResponse
 from app.routers.auth import get_current_user
 
 router = APIRouter()
@@ -44,6 +44,13 @@ def get_monthly_breakdown(db: Session = Depends(get_db), user: User = Depends(ge
             .all()
     ]
     return MonthlyBreakdown(month=current_month, breakdown=monthly_expenses)
+
+@router.get("/daily", response_model=list[ExpensesResponse])
+def get_daily_expenses(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    current_month = date.today().month
+    monthly_expenses = db.query(Expense).filter(Expense.user_id == user.id, func.extract('month', Expense.date) == current_month).all()
+    
+    return monthly_expenses
 
 @router.get("/weekly", response_model=WeeklyBreakdown)
 def get_weekly_breakdown(db: Session = Depends(get_db), user: User = Depends(get_current_user)):

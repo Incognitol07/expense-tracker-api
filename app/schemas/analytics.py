@@ -32,6 +32,13 @@ class ExpenseSummary(BaseModel):
     adherence: Optional[float]
     expenses_by_category: List[CategorySummary]
 
+class ExpensesResponse(BaseModel):
+    id: int
+    description: str
+    date: date
+    category_id: int
+
+
 # Schema for breaking down expenses by month
 class MonthlyBreakdown(BaseModel):
     """
