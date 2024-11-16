@@ -20,7 +20,7 @@ class Category(Base):
     __tablename__ = "categories"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    category_id = Column(Integer, nullable=False)  # Unique per user
+    category_id = Column(Integer, nullable=False, autoincrement=True)  # Unique per user
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"))

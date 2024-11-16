@@ -80,19 +80,17 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     # Hash the password before storing
     hashed_password = hash_password(user.password)
     new_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
-
     
     # Add the new user to the database
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    db_user = db.query(User).filter(User.username == user.username).first()
+    db_user = db.query(User).filter(User.username == user.username, User.hashed_password==hashed_password).first()
     new_category = Category(
         name="Debt",
         description="For all debts",
-        user_id=db_user.id,
-        category_id=1
+        user_id=db_user.id
     )
     
     db.add(new_category)  # Add the new category to the session
