@@ -80,11 +80,24 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     # Hash the password before storing
     hashed_password = hash_password(user.password)
     new_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
+
     
     # Add the new user to the database
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    db_user = db.query(User).filter(User.username == user.username).first()
+    new_category = Category(
+        name="Debt",
+        description="For all debts",
+        user_id=db_user.id,
+        category_id=1
+    )
+    
+    db.add(new_category)  # Add the new category to the session
+    db.commit()  # Commit the changes to the database
+    db.refresh(new_category)  # Refresh to get the latest state of the category
     
     return {"username":user.username, "email":user.email, "message":"Registered successfully"}
 
@@ -109,23 +122,6 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
-    
-    db_category =  db.query(Category).filter(Category.user_id == db_user.id, Category.name=="Debt").first()
-
-    if not db_category:
-        last_category = db.query(Category).filter(Category.user_id == db_user.id).order_by(Category.category_id.desc()).first()
-        new_category_id = last_category.category_id + 1 if last_category else 1  # Start with 1 if no categories exist
-        # Create a new category with the generated category_id
-        new_category = Category(
-            name="Debt",
-            description="For all debts",
-            user_id=db_user.id,
-            category_id=new_category_id
-        )
-        
-        db.add(new_category)  # Add the new category to the session
-        db.commit()  # Commit the changes to the database
-        db.refresh(new_category)  # Refresh to get the latest state of the category
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
