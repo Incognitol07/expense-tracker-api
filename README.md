@@ -36,11 +36,40 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 ### Prerequisites
 
-- **Python 3.12+**
+- **Python 3.12+** (if you're not using Docker)
+- **Docker** (if you're using Docker to run the app)
 
 ---
 
-### Using Pipenv
+### Using Docker (Recommended)
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Incognitol07/expense-tracker-api.git
+   cd expense-tracker-api
+   ```
+
+2. **Create and start the containers**:
+   ```bash
+   docker-compose up --build
+   ```
+
+   This command will:
+   - Build the Docker images for the web and database services.
+   - Start the services, including PostgreSQL and the FastAPI app.
+
+3. **Access the application**:
+   Once the services are up, you can access the app at `http://127.0.0.1:8000` on your browser.
+
+4. **Stopping the containers**:
+   To stop the running containers, run:
+   ```bash
+   docker-compose down
+   ```
+
+---
+
+### Using Pipenv (Without Docker)
 
 1. **Install Pipenv**:
    ```bash
@@ -176,6 +205,8 @@ expense-tracker-api/
 ├── requirements.txt         # Versions of installed packages
 ├── Pipfile                  # Pipenv dependencies
 ├── Pipfile.lock             # Locked dependency versions
+├── docker-compose.yml       # Docker Compose configuration for the app and database
+├── Dockerfile               # Dockerfile for building the web service image
 ├── .env                     # Environment variables
 └── README.md                # Project documentation
 ```
