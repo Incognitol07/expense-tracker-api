@@ -26,7 +26,7 @@ class ExpenseCreate(ExpenseBase):
     Attributes:
         category_id (int): The ID of the category the expense belongs to.
     """
-    category_id: int  # Category relation
+    category_name: str  # Category relation
 
 # Schema for returning expense details in the response, including the expense ID and user ID
 class ExpenseResponse(ExpenseBase):

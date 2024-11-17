@@ -35,15 +35,15 @@ def create_expense(
         HTTPException: If there is an issue with creating the expense.
     """
     # Check if the category_id exists in the category table
-    category = db.query(Category).filter(Category.id == expense.category_id).first()
+    category = db.query(Category).filter(Category.name == expense.category_name).first()
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Please create the provided category first"
         )
-
+    category_id = db.query(Category.id).filter(Category.name == expense.category_name).first()[0]
     # Proceed with creating the expense if category_id is valid
-    new_expense = Expense(**expense.model_dump(), user_id=current_user.id)
+    new_expense = Expense(amount=expense.amount, description=expense.description,date=expense.date, user_id=current_user.id, category_id=category_id)
     db.add(new_expense)  # Add the new expense to the session
     db.commit()  # Commit the transaction to the database
     db.refresh(new_expense)  # Refresh to get the latest state of the expense
@@ -101,9 +101,9 @@ def get_expense(
     return expense
 
 # Route to get a expenses by category
-@router.get("/category/{category_id}", response_model=list[ExpenseResponse])
+@router.get("/category/{category_name}", response_model=list[ExpenseResponse])
 def get_expenses_by_category(
-    category_id: int,
+    category_name: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -121,13 +121,16 @@ def get_expenses_by_category(
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
-    category = db.query(Category).filter(Category.user_id == current_user.id, Category.id == category_id).first()
+    category = db.query(Category).filter(Category.user_id == current_user.id, Category.name == category_name).first()
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
+    category_id = db.query(Category.id).filter(Category.name == category_name).first()[0]
+    
     expenses = db.query(Expense).filter(Expense.category_id == category_id, Expense.user_id == current_user.id).all()
     if not expenses:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
+    
     return expenses
 
 # Route to update an existing expense by its ID
