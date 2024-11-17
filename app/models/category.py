@@ -20,7 +20,6 @@ class Category(Base):
     __tablename__ = "categories"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    category_id = Column(Integer, nullable=False, autoincrement=True)  # Unique per user
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"))
@@ -28,7 +27,6 @@ class Category(Base):
     # Unique Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'name', name='uq_user_category_name'),
-        UniqueConstraint('user_id', 'category_id', name='uq_user_category_id'),
     )
 
     # Relationships

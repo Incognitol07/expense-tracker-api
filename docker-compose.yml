@@ -1,0 +1,27 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"  # Maps the FastAPI app to localhost:8000
+    environment:
+      - DATABASE_URL=postgresql://postgres:Datapointsl07$@db:5432/expense_tracker
+    depends_on:
+      - db  # Ensures the web service starts after the database is ready
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Datapointsl07$
+      POSTGRES_DB: expense_tracker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Maps the PostgreSQL database to localhost:5432
+
+volumes:
+  postgres_data:
