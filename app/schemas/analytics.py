@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 # Schema for summarizing expenses by category
 class CategorySummary(BaseModel):
@@ -102,3 +102,64 @@ class ExportData(BaseModel):
     description: Optional[str]
     date: date
     category_id: int
+
+# Schema for a daily breakdown of expenses by category
+class DailyCategoryBreakdown(BaseModel):
+    """
+    Schema for representing the daily breakdown of expenses by category.
+    
+    Attributes:
+        date (date): The date of the breakdown.
+        categories (List[CategorySummary]): A list of category-wise expense summaries for this day.
+    """
+    date: date
+    categories: List[CategorySummary]
+
+
+# Schema for daily expenses overview
+class DailyOverview(BaseModel):
+    """
+    Schema for summarizing daily expenses and overall metrics for the current month.
+    
+    Attributes:
+        total_monthly_expenses (float): Total expenses for the current month.
+        average_daily_expense (float): Average daily expense for the current month.
+        daily_expenses (Dict[str, float]): Dictionary of daily expenses keyed by date.
+    """
+    total_monthly_expenses: float
+    average_daily_expense: float
+    daily_expenses: Dict[str, float]
+
+
+# Schema for expenses within a date range
+class DateRangeExpenses(BaseModel):
+    """
+    Schema for representing total expenses within a date range, grouped by day.
+    
+    Attributes:
+        date (date): The specific date within the range.
+        total (float): Total expenses for this date.
+    """
+    date: date
+    total: float
+
+class DailyExpense(BaseModel):
+    """
+    Schema for representing daily expenses.
+    
+    Attributes:
+        date (date): The date of the expenses.
+        total (float): The total expenses for that date.
+    """
+    date: date
+    total: float
+
+
+class DailyExpensesResponse(BaseModel):
+    """
+    Schema for representing the response of daily expenses in the current month.
+    
+    Attributes:
+        expenses (List[DailyExpense]): A list of daily expenses with their dates and totals.
+    """
+    expenses: List[DailyExpense]

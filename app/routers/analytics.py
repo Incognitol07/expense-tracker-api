@@ -7,7 +7,7 @@ from sqlalchemy import func
 from datetime import date, timedelta
 from app.database import get_db
 from app.models import Expense, Budget, User
-from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend, ExpensesResponse
+from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend,DailyExpensesResponse, DailyExpense, DailyCategoryBreakdown, DailyOverview, DateRangeExpenses
 from app.routers.auth import get_current_user
 
 router = APIRouter()
@@ -45,12 +45,24 @@ def get_monthly_breakdown(db: Session = Depends(get_db), user: User = Depends(ge
     ]
     return MonthlyBreakdown(month=current_month, breakdown=monthly_expenses)
 
-@router.get("/daily", response_model=list[ExpensesResponse])
+@router.get("/daily", response_model=DailyExpensesResponse)
 def get_daily_expenses(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     current_month = date.today().month
-    monthly_expenses = db.query(Expense).filter(Expense.user_id == user.id, func.extract('month', Expense.date) == current_month).all()
+    daily_expenses = db.query(
+        func.date(Expense.date).label("expense_date"),
+        func.sum(Expense.amount).label("total")
+    ).filter(
+        Expense.user_id == user.id,
+        func.extract('month', Expense.date) == current_month
+    ).group_by(
+        func.date(Expense.date)
+    ).order_by("expense_date").all()
     
-    return monthly_expenses
+    # Map query results to the response model
+    expenses = [{"date": expense_date, "total": total} for expense_date, total in daily_expenses]
+    
+    return {"expenses": expenses}
+
 
 @router.get("/weekly", response_model=WeeklyBreakdown)
 def get_weekly_breakdown(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -220,3 +232,90 @@ def get_expense_summary_for_range(
         adherence=adherence,
         expenses_by_category=expenses_by_category
     )
+
+@router.get("/daily/categorized", response_model=list[DailyCategoryBreakdown])
+def get_daily_expenses_by_category(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    current_month = date.today().month
+    categorized_expenses = db.query(
+        func.date(Expense.date).label("expense_date"),
+        Expense.category_id,
+        func.sum(Expense.amount).label("total")
+    ).filter(
+        Expense.user_id == user.id,
+        func.extract('month', Expense.date) == current_month
+    ).group_by(
+        func.date(Expense.date),
+        Expense.category_id
+    ).order_by("expense_date").all()
+    
+    # Organize data into a list of DailyCategoryBreakdown objects
+    daily_data = {}
+    for expense_date, category_id, total in categorized_expenses:
+        if expense_date not in daily_data:
+            daily_data[expense_date] = []
+        daily_data[expense_date].append(CategorySummary(category_id=category_id, total=total))
+    
+    response = [
+        DailyCategoryBreakdown(date=expense_date, categories=categories)
+        for expense_date, categories in daily_data.items()
+    ]
+    
+    return response
+
+
+@router.get("/daily/overview", response_model=DailyOverview)
+def get_daily_expenses_overview(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    current_month = date.today().month
+    current_year = date.today().year
+
+    # Total monthly expenses
+    total_monthly_expenses = db.query(
+        func.sum(Expense.amount)
+    ).filter(
+        Expense.user_id == user.id,
+        func.extract('month', Expense.date) == current_month,
+        func.extract('year', Expense.date) == current_year
+    ).scalar() or 0.0
+
+    # Daily expenses grouped by date
+    daily_expenses = db.query(
+        func.date(Expense.date).label("expense_date"),
+        func.sum(Expense.amount).label("total")
+    ).filter(
+        Expense.user_id == user.id,
+        func.extract('month', Expense.date) == current_month
+    ).group_by(
+        func.date(Expense.date)
+    ).order_by("expense_date").all()
+
+    # Format response
+    daily_data = {str(expense_date): total for expense_date, total in daily_expenses}
+    average_daily_expense = total_monthly_expenses / len(daily_data) if daily_data else 0.0
+
+    return {
+        "total_monthly_expenses": total_monthly_expenses,
+        "average_daily_expense": average_daily_expense,
+        "daily_expenses": daily_data,
+    }
+
+
+@router.get("/daily/range", response_model=list[DateRangeExpenses])
+def get_expenses_for_date_range(
+    start_date: date, 
+    end_date: date, 
+    db: Session = Depends(get_db), 
+    user: User = Depends(get_current_user)
+):
+    daily_expenses = db.query(
+        func.date(Expense.date).label("expense_date"),
+        func.sum(Expense.amount).label("total")
+    ).filter(
+        Expense.user_id == user.id,
+        Expense.date >= start_date,
+        Expense.date <= end_date
+    ).group_by(
+        func.date(Expense.date)
+    ).order_by("expense_date").all()
+    
+    # Return as a list of DateRangeExpenses objects
+    return [DateRangeExpenses(date=expense_date, total=total) for expense_date, total in daily_expenses]
