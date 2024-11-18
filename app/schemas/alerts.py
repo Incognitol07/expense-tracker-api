@@ -40,6 +40,7 @@ class AlertResponse(AlertBase):
     """
     id: int
     user_id: int
+    created_at: str
 
     class Config:
         """

@@ -190,6 +190,13 @@ def update_alert(
     alert = db.query(Alert).filter(Alert.user_id == current_user.id).first()
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
+    
+    db.query(Notification).filter(
+    Notification.user_id == current_user.id,
+    Notification.message.ilike("%alert%"),
+    Notification.is_read == False
+    ).update({"is_read": True})
+    db.commit()
 
     # Update alert details
     for key, value in alert_data.model_dump(exclude_unset=True).items():
@@ -222,6 +229,14 @@ def delete_alert(
     alert = db.query(Alert).filter(Alert.user_id == current_user.id).first()
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
+    
+    db.query(Notification).filter(
+    Notification.user_id == current_user.id,
+    Notification.message.ilike("%alert%"),
+    Notification.is_read == False
+    ).update({"is_read": True})
+    db.commit()
+
     
     db.delete(alert)
     db.commit()

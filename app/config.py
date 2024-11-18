@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "password")  # Default password
 
     # Uncomment this to use a PostgreSQL database
-    DATABASE_URL: str = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
+    # DATABASE_URL: str = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
     # Comment this to use a PostgreSQL database
-    # DATABASE_URL: str = 'sqlite:///expense.db'
+    DATABASE_URL: str = 'sqlite:///expense.db'
 
     # Admin Master Key
     MASTER_KEY: str = os.getenv("MASTER_KEY", "master_key")

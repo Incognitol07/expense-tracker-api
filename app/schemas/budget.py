@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional
+from datetime import datetime
 
 # Base schema for Budget-related attributes
 class BudgetBase(BaseModel):
@@ -43,6 +43,7 @@ class BudgetResponse(BudgetBase):
         id (int): The unique identifier for the budget.
     """
     id: int
+    created_at: datetime
 
     class Config:
         # This allows Pydantic to pull attributes from ORM models

@@ -27,7 +27,7 @@ class Budget(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.now().strftime("%d-%m-%Y"), nullable=False)
+    created_at = Column(DateTime, default=datetime.now(), nullable=False)
 
     # Relationship back to the user
     owner = relationship("User", back_populates="budgets")
