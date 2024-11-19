@@ -7,6 +7,7 @@ from app.schemas.auth import UserCreate, UserLogin
 from app.models import User, Category
 from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token
 from app.database import get_db
+from app.utils.logging_config import logger  # Import the logger
 
 # Create an instance of APIRouter to handle authentication routes
 router = APIRouter()
@@ -31,27 +32,35 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     Returns:
         User: The authenticated user object from the database.
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
-    # Verify the token and retrieve user information
-    payload = verify_access_token(token)
-    if payload is None:
-        raise credentials_exception
+    try:
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+        # Verify the token and retrieve user information
+        payload = verify_access_token(token)
+        if payload is None:
+            logger.warning("Token validation failed for a request.")
+            raise credentials_exception
 
-    username: str = payload.get("sub")
-    if username is None:
-        raise credentials_exception
-    
-    # Query the user by username from the database
-    db_user = db.query(User).filter(User.username == username).first()
-    if db_user is None:
-        raise credentials_exception
-    
-    return db_user
+        username: str = payload.get("sub")
+        if username is None:
+            logger.error("Invalid token payload: Missing 'sub' field.")
+            raise credentials_exception
+        
+        # Query the user by username from the database
+        db_user = db.query(User).filter(User.username == username).first()
+        if db_user is None:
+            logger.warning(f"Unauthorized access attempt by unknown user '{username}'.")
+            raise credentials_exception
+        
+        logger.info(f"User '{username}' authenticated successfully.")
+        return db_user
+    except Exception as e:
+        logger.error(f"Error during admin authentication: {e}")
+        raise
 
 # Register route to create a new user account
 @router.post("/register")
@@ -71,10 +80,12 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     """
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
+        logger.warning(f"Attempt to register with an existing username: {user.username}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     
     db_email = db.query(User).filter(User.email == user.email).first()
     if db_email:
+        logger.warning(f"Attempt to register with an existing email: {user.email}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     
     # Hash the password before storing
@@ -96,7 +107,8 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_category)  # Add the new category to the session
     db.commit()  # Commit the changes to the database
     db.refresh(new_category)  # Refresh to get the latest state of the category
-    
+
+    logger.info(f"New user registered successfully: {new_user.username} ({new_user.email}).")
     return {"username":user.username, "email":user.email, "message":"Registered successfully", "created_at":new_user.created_at}
 
 # Login route for user authentication and token generation
@@ -119,10 +131,12 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email and User.hashed_password == hash_password(user.password)).first()
     
     if not db_user or not verify_password(user.password, db_user.hashed_password):
+        logger.warning(f"Failed login attempt for email: {user.email}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
+    logger.info(f"User '{db_user.username}' logged in successfully.")
     return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id}
 
 # Protected route example requiring authentication
@@ -140,7 +154,7 @@ async def protected_route(current_user: User = Depends(get_current_user)):
     return {"message": f"Hello, {current_user.username}! You have access to this protected route."}
 
 @router.delete("/account")
-def delete_user(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def delete_account(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a user along with their related expenses, budgets, alerts, and categories.
 
@@ -159,9 +173,10 @@ def delete_user(db: Session = Depends(get_db), user: User = Depends(get_current_
     target_user = db.query(User).filter(User.id == user_id).first()
 
     if not target_user:
+        logger.warning(f"Attempted deletion of account with ID: {user_id} by user '{user.username}'.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     db.delete(target_user)
-
     db.commit()
+    logger.info(f"User '{user.username}' deleted account (ID: {user_id}).")
     return {"message": f"Deleted user '{target_user.username}' successfully"}

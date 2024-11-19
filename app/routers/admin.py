@@ -70,6 +70,10 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
     if db.query(Admin).filter(Admin.username == user.username).first():
         logger.warning(f"Attempt to register with an existing username: {user.username}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+    
+    if db.query(Admin).filter(Admin.email == user.email).first():
+        logger.warning(f"Attempt to register with an existing email: {user.email}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
     hashed_password = hash_password(user.password)
     new_admin = Admin(username=user.username, email=user.email, hashed_password=hashed_password)
