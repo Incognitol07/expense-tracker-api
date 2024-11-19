@@ -3,6 +3,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.database import Base
+from datetime import datetime
 
 class User(Base):
     """
@@ -15,6 +16,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    created_at = Column(String, default=datetime.now().strftime("%d-%m-%Y %H:%M:%S %p"))
     
     # Relationships
     expenses = relationship("Expense", back_populates="owner", cascade="all, delete-orphan")

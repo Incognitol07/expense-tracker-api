@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, Integer, String
 from app.database import Base
+from datetime import datetime
 
 class Admin(Base):
     """
@@ -19,3 +20,4 @@ class Admin(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    created_at = Column(String, default=datetime.now().strftime("%d-%m-%Y %H:%M:%S %p"))

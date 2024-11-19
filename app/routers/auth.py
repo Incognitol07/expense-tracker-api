@@ -97,7 +97,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()  # Commit the changes to the database
     db.refresh(new_category)  # Refresh to get the latest state of the category
     
-    return {"username":user.username, "email":user.email, "message":"Registered successfully"}
+    return {"username":user.username, "email":user.email, "message":"Registered successfully", "created_at":new_user.created_at}
 
 # Login route for user authentication and token generation
 @router.post("/login")
