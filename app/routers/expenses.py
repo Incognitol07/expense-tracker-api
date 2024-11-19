@@ -1,6 +1,6 @@
 # app/routers/expenses.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from app.schemas.expenses import ExpenseCreate, ExpenseResponse, ExpenseUpdate
 from app.models import Expense, Category
@@ -56,14 +56,18 @@ def create_expense(
 @router.get("/", response_model=list[ExpenseResponse])
 def get_expenses(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0)
 ):
     """
-    Retrieves all expenses for the authenticated user.
+    Retrieves all expenses for the authenticated user with pagination.
 
     Args:
         db (Session): The database session to interact with the database.
         current_user (User): The currently authenticated user.
+        limit (int): Maximum number of expenses to return.
+        offset (int): Number of expenses to skip.
 
     Returns:
         list[ExpenseResponse]: List of expenses belonging to the user.
@@ -71,7 +75,7 @@ def get_expenses(
     Raises:
         HTTPException: If no expenses are found for the user.
     """
-    expenses = db.query(Expense).filter(Expense.user_id == current_user.id).all()
+    expenses = db.query(Expense).filter(Expense.user_id == current_user.id).offset(offset).limit(limit).all()
     return expenses
 
 # Route to get a specific expense by its ID
