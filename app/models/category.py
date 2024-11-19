@@ -30,5 +30,5 @@ class Category(Base):
     )
 
     # Relationships
-    expenses = relationship("Expense", back_populates="categories")
+    expenses = relationship("Expense", back_populates="categories", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="categories")

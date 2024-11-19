@@ -149,6 +149,9 @@ def delete_category(category_id: int, db: Session = Depends(get_db), user: User 
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
+    if category.name == "Debt":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete this category")
+    
     db.delete(category)  # Delete the category from the session
     db.commit()  # Commit the deletion to the database
     return { "message" : "Deleted successfully" }
