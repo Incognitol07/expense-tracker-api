@@ -77,7 +77,7 @@ def get_categories(db: Session = Depends(get_db), user: User = Depends(get_curre
     return categories
 
 # Route to get a specific category by its ID
-@router.get("/id/{category_id}", response_model=CategoryResponse)
+@router.get("/{category_id}", response_model=CategoryResponse)
 def get_category_by_id(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves a specific category by its ID for the authenticated user.
@@ -94,28 +94,6 @@ def get_category_by_id(category_id: int, db: Session = Depends(get_db), user: Us
         HTTPException: If the category is not found or does not belong to the user.
     """
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
-    if not category:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-    return category
-
-# Route to get a specific category by its name
-@router.get("/name/{category_name}", response_model=CategoryResponse)
-def get_category_by_name(category_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """
-    Retrieves a specific category by its ID for the authenticated user.
-
-    Args:
-        category_id (int): The ID of the category to retrieve.
-        db (Session): The database session to interact with the database.
-        user (User): The currently authenticated user.
-
-    Returns:
-        CategoryResponse: The category with the specified ID.
-    
-    Raises:
-        HTTPException: If the category is not found or does not belong to the user.
-    """
-    category = db.query(Category).filter(Category.name == category_name, Category.user_id == user.id).first()
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     return category
