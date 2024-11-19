@@ -138,3 +138,30 @@ async def protected_route(current_user: User = Depends(get_current_user)):
         dict: A greeting message with the username of the authenticated user.
     """
     return {"message": f"Hello, {current_user.username}! You have access to this protected route."}
+
+@router.delete("/account")
+def delete_user(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """
+    Deletes a user along with their related expenses, budgets, alerts, and categories.
+
+    Args:
+        user_id (int): The ID of the user to be deleted.
+        db (Session): Database session for querying and modifying the database.
+        admin (Admin): The current admin user.
+
+    Raises:
+        HTTPException: If the user does not exist.
+
+    Returns:
+        dict: Success message confirming the user deletion.
+    """
+    user_id = db.query(User.id).filter(User.username == user.username, User.email==user.email).first()[0]
+    target_user = db.query(User).filter(User.id == user_id).first()
+
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    db.delete(target_user)
+
+    db.commit()
+    return {"message": f"Deleted user '{target_user.username}' successfully"}
