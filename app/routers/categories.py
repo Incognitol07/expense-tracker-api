@@ -7,6 +7,7 @@ from app.models.category import Category
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
+from app.utils import logger  # Import the logger
 
 # Create an instance of APIRouter for category-related routes
 router = APIRouter()
@@ -34,12 +35,14 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
     db_category_description = db.query(Category).filter(Category.user_id == user.id, Category.description == category.description).first()
 
     if db_category_name:
+        logger.warning(f"Category name '{category.name}' already exists for user {user.id}.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category name already exists"
         )
     
     if db_category_description:
+        logger.warning(f"Category description '{category.description}' already exists for user {user.id}.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category description already exists"
@@ -55,6 +58,8 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
     db.add(new_category)  # Add the new category to the session
     db.commit()  # Commit the changes to the database
     db.refresh(new_category)  # Refresh to get the latest state of the category
+    
+    logger.info(f"Category '{category.name}' created successfully for user {user.id}.")
     return new_category
 
 # Route to get all categories of the authenticated user
@@ -74,6 +79,13 @@ def get_categories(db: Session = Depends(get_db), user: User = Depends(get_curre
         HTTPException: If no categories are found for the user.
     """
     categories = db.query(Category).filter(Category.user_id == user.id).all()
+
+    # Log the number of categories retrieved
+    logger.info(f"Fetched {len(categories)} categories for user {user.id}.")
+    
+    if not categories:
+        logger.warning(f"No categories found for user {user.id}.")
+    
     return categories
 
 # Route to get a specific category by its ID
@@ -94,8 +106,12 @@ def get_category_by_id(category_id: int, db: Session = Depends(get_db), user: Us
         HTTPException: If the category is not found or does not belong to the user.
     """
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
+    
     if not category:
+        logger.error(f"Category {category_id} not found for user {user.id}.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    
+    logger.info(f"Fetched category {category_id} for user {user.id}.")
     return category
 
 # Route to update an existing category by its ID
@@ -117,7 +133,9 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
         HTTPException: If the category is not found or does not belong to the user.
     """
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
+    
     if not category:
+        logger.error(f"Category {category_id} not found for user {user.id}.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
     # Update category attributes with new values
@@ -126,6 +144,8 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
     
     db.commit()  # Commit changes to the database
     db.refresh(category)  # Refresh to get the updated state
+    
+    logger.info(f"Category {category_id} updated for user {user.id}.")
     return category
 
 # Route to delete a category by its ID
@@ -146,12 +166,17 @@ def delete_category(category_id: int, db: Session = Depends(get_db), user: User 
         HTTPException: If the category is not found or does not belong to the user.
     """
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
+    
     if not category:
+        logger.error(f"Category {category_id} not found for user {user.id}.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
     if category.name == "Debt":
+        logger.error(f"Attempt to delete restricted category 'Debt' by user {user.id}.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete this category")
     
     db.delete(category)  # Delete the category from the session
     db.commit()  # Commit the deletion to the database
+    
+    logger.info(f"Category {category_id} deleted successfully for user {user.id}.")
     return { "message" : "Deleted successfully" }
