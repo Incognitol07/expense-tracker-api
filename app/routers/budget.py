@@ -60,6 +60,7 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
         BudgetResponse: The user's current budget.
     """
     budget = db.query(Budget).filter(Budget.user_id == user.id).first()
+    budget.created_at=budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
     return budget

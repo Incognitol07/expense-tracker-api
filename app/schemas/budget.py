@@ -43,7 +43,7 @@ class BudgetResponse(BudgetBase):
         id (int): The unique identifier for the budget.
     """
     id: int
-    created_at: datetime
+    created_at: str
 
     class Config:
         # This allows Pydantic to pull attributes from ORM models
