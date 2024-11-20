@@ -35,14 +35,14 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
     db_category_description = db.query(Category).filter(Category.user_id == user.id, Category.description == category.description).first()
 
     if db_category_name:
-        logger.warning(f"Category name '{category.name}' already exists for user {user.id}.")
+        logger.warning(f"Category name '{category.name}' already exists for user '{user.username}' (ID: {user.id}).")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category name already exists"
         )
     
     if db_category_description:
-        logger.warning(f"Category description '{category.description}' already exists for user {user.id}.")
+        logger.warning(f"Category description '{category.description}' already exists for user '{user.username}' (ID: {user.id}).")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category description already exists"
@@ -59,7 +59,7 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db), use
     db.commit()  # Commit the changes to the database
     db.refresh(new_category)  # Refresh to get the latest state of the category
     
-    logger.info(f"Category '{category.name}' created successfully for user {user.id}.")
+    logger.info(f"Category '{category.name}' created successfully for user '{user.username}' (ID: {user.id}).")
     return new_category
 
 # Route to get all categories of the authenticated user
@@ -81,10 +81,10 @@ def get_categories(db: Session = Depends(get_db), user: User = Depends(get_curre
     categories = db.query(Category).filter(Category.user_id == user.id).all()
 
     # Log the number of categories retrieved
-    logger.info(f"Fetched {len(categories)} categories for user {user.id}.")
+    logger.info(f"Fetched {len(categories)} categories for user '{user.username}' (ID: {user.id}).")
     
     if not categories:
-        logger.warning(f"No categories found for user {user.id}.")
+        logger.warning(f"No categories found for user '{user.username}' (ID: {user.id}).")
     
     return categories
 
@@ -108,10 +108,10 @@ def get_category_by_id(category_id: int, db: Session = Depends(get_db), user: Us
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
     
     if not category:
-        logger.error(f"Category {category_id} not found for user {user.id}.")
+        logger.error(f"Category {category_id} not found for user '{user.username}' (ID: {user.id}).")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
-    logger.info(f"Fetched category {category_id} for user {user.id}.")
+    logger.info(f"Fetched category {category_id} for user '{user.username}' (ID: {user.id}).")
     return category
 
 # Route to update an existing category by its ID
@@ -135,7 +135,7 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
     
     if not category:
-        logger.error(f"Category {category_id} not found for user {user.id}.")
+        logger.error(f"Category {category_id} not found for user '{user.username}' (ID: {user.id}).")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
     # Update category attributes with new values
@@ -145,7 +145,7 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
     db.commit()  # Commit changes to the database
     db.refresh(category)  # Refresh to get the updated state
     
-    logger.info(f"Category {category_id} updated for user {user.id}.")
+    logger.info(f"Category {category_id} updated for user '{user.username}' (ID: {user.id}).")
     return category
 
 # Route to delete a category by its ID
@@ -168,15 +168,15 @@ def delete_category(category_id: int, db: Session = Depends(get_db), user: User 
     category = db.query(Category).filter(Category.id == category_id, Category.user_id == user.id).first()
     
     if not category:
-        logger.error(f"Category {category_id} not found for user {user.id}.")
+        logger.error(f"Category {category_id} not found for user '{user.username}' (ID: {user.id}).")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
     if category.name == "Debt":
-        logger.error(f"Attempt to delete restricted category 'Debt' by user {user.id}.")
+        logger.error(f"Attempt to delete restricted category 'Debt' by user '{user.username}' (ID: {user.id}).")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete this category")
     
     db.delete(category)  # Delete the category from the session
     db.commit()  # Commit the deletion to the database
     
-    logger.info(f"Category {category_id} deleted successfully for user {user.id}.")
+    logger.info(f"Category {category_id} deleted successfully for user '{user.username}' (ID: {user.id}).")
     return { "message" : "Deleted successfully" }
