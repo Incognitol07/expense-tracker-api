@@ -37,11 +37,11 @@ def get_notifications(
     ).all()
 
     # Log the fetched unread notifications
-    logger.info(f"Fetched {len(notifications)} unread notifications for user {current_user.id}.")
+    logger.info(f"Fetched {len(notifications)} unread notifications for user '{current_user.username}' (ID: {current_user.id}).")
     
     # If no unread notifications are found, return an empty list
     if not notifications:
-        logger.warning(f"No unread notifications found for user {current_user.id}.")
+        logger.warning(f"No unread notifications found for user '{current_user.username}' (ID: {current_user.id}).")
     return notifications
 
 # Route to mark a specific notification as read
@@ -71,7 +71,7 @@ def mark_notification_as_read(
     ).first()
 
     if not notification:
-        logger.error(f"Notification {notification_id} not found for user {current_user.id}.")
+        logger.error(f"Notification {notification_id} not found for user '{current_user.username}' (ID: {current_user.id}).")
         raise HTTPException(status_code=404, detail="Notification not found")
     
     notification.is_read = True  # Mark the notification as read
@@ -79,7 +79,7 @@ def mark_notification_as_read(
     db.refresh(notification)  # Refresh the notification object to get the updated state
     
     # Log the action of marking the notification as read
-    logger.info(f"Notification {notification_id} marked as read for user {current_user.id}.")
+    logger.info(f"Notification {notification_id} marked as read for user '{current_user.username}' (ID: {current_user.id}).")
     
     return notification
 
@@ -119,7 +119,7 @@ def mark_all_notifications_as_read(
     db.commit()  # Commit the updates to the database
     
     # Log the action of marking all notifications as read
-    logger.info(f"Marked all unread notifications as read for user {current_user.id}. Total: {len(notifications)}.")
+    logger.info(f"Marked all unread notifications as read for user '{current_user.username}' (ID: {current_user.id}). Total: {len(notifications)}.")
     
     # Return the list of updated notifications
     return notifications
