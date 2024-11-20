@@ -4,7 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 # Configure logger
-log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+log_formatter = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
 log_file = "audit_logs.log"
 
 file_handler = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5)

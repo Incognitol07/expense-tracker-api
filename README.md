@@ -188,6 +188,37 @@ This feature allows users to stay updated with budget notifications in real-time
 - **Debt Notifications**: When expenses are split, users will receive notifications about how much they owe or are owed within the group. These notifications include the status of debt payments.
 
 ---
+### Logging Support
+
+The API includes robust logging functionality to ensure transparency and ease of debugging. The logging system is configured to capture critical events, including errors, user actions, and alerts, to help maintain a secure and reliable system.
+
+#### Key Features of Logging
+
+- **RotatingFileHandler**: Logs are stored in files with a rotation mechanism to prevent excessive file size.
+- **Error Logging**: Captures and records all error events.
+- **Audit Logging**: Tracks important user activities, such as updates to budgets, expenses, and group actions.
+- **Alert Logging**: Logs actions related to alerts, such as creation, updates, and thresholds being exceeded.
+
+#### Configuration
+
+Logging is configured in the `app/utils/logging_config.py` file and integrates with routers across the application.
+
+#### Example Log Structure
+
+Here is an example of a log entry:
+```plaintext
+[2024-11-20 14:32:15,123] - INFO - Budget alert triggered for user_id=101: Budget 'Monthly Groceries' exceeded 90% threshold.
+```
+
+#### Benefits
+
+1. **System Health**: Continuous logging helps monitor system health and identify issues early.
+2. **Audit Trail**: Maintains a record of user and system actions for accountability.
+3. **Debugging**: Simplifies tracing issues and troubleshooting errors during development and production.
+
+For detailed instructions on configuring or extending the logging system, refer to the `app/utils/logging_config.py` file in the project structure.
+
+---
 
 ## Project Structure
 
