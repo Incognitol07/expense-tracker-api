@@ -31,7 +31,7 @@ def set_budget(background_tasks: BackgroundTasks,budget_data: BudgetCreate, db: 
         BudgetResponse: The newly created budget.
     """
     # Check if the user already has a set budget
-    existing_budget = db.query(Budget).filter(Budget.user_id == user.id).first()
+    existing_budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     if existing_budget:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Budget already set. Use update instead.")
     
@@ -41,6 +41,7 @@ def set_budget(background_tasks: BackgroundTasks,budget_data: BudgetCreate, db: 
     db.commit()
     db.refresh(new_budget)
     background_tasks.add_task(check_budget, user.id)
+    new_budget.created_at=new_budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return new_budget
 
 # Route to get the current budget of the user
@@ -59,10 +60,10 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
     Returns:
         BudgetResponse: The user's current budget.
     """
-    budget = db.query(Budget).filter(Budget.user_id == user.id).first()
-    budget.created_at=budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
+    budget.created_at=budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budget
 
 # Route to update the user's existing budget
@@ -72,7 +73,7 @@ def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, d
     Updates the existing budget of the authenticated user and resets notifications if needed.
     """
     # Check if the user has an existing budget
-    budget = db.query(Budget).filter(Budget.user_id == user.id).first()
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
     
@@ -110,7 +111,7 @@ def get_budget_status(db: Session = Depends(get_db), user: User = Depends(get_cu
         BudgetStatus: The remaining budget, start date, and end date.
     """
     # Retrieve the user's current budget
-    budget = db.query(Budget).filter(Budget.user_id == user.id).first()
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status=="active").first()
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
     
@@ -121,6 +122,8 @@ def get_budget_status(db: Session = Depends(get_db), user: User = Depends(get_cu
         if budget.start_date <= expense.date <= budget.end_date
     ]
     remaining_amount = budget.amount_limit - sum(expenses)
+    if remaining_amount<0:
+        remaining_amount=0
     
     return BudgetStatus(
         remaining_amount=remaining_amount,
@@ -142,11 +145,13 @@ def get_budget_history(db: Session = Depends(get_db), user: User = Depends(get_c
         list[BudgetHistory]: A list of all previous budgets for the user.
     """
     budgets = db.query(Budget).filter(Budget.user_id == user.id).all()
+    for budget in budgets:
+        budget.created_at=budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budgets
 
-# Route to delete the user's current budget
-@router.delete("/")
-def delete_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+# Route to deactivate the user's current budget
+@router.post("/deactivate")
+def deactivate_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes the currently set budget for the authenticated user.
     
@@ -161,10 +166,52 @@ def delete_budget(db: Session = Depends(get_db), user: User = Depends(get_curren
         dict: A confirmation message indicating successful deletion.
     """
     # Check if the user has an existing budget to delete
-    budget = db.query(Budget).filter(Budget.user_id == user.id).first()
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
     
+    db.query(Notification).filter(
+    Notification.user_id == user.id,
+    Notification.message.ilike("%budget%"),
+    Notification.is_read == False
+    ).update({"is_read": True})
+    db.commit()
+
+    # Deactivate the budget and commit the changes
+    setattr(budget, "status", "deactivated")
+    db.commit()
+    db.refresh(budget)
+    
+    return { "message" : f"Deactivated budget of amount {budget.amount_limit} for {budget.start_date} to {budget.end_date} successfully" }
+
+# Route to delete the user's current budget
+@router.delete("/{budget_id}")
+def delete_budget(budget_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """
+    Deletes the currently set budget for the authenticated user.
+    
+    Args:
+        db (Session): The database session for querying and deleting the budget.
+        user (User): The authenticated user requesting to delete their budget.
+        
+    Raises:
+        HTTPException: If no budget is set for the user.
+        
+    Returns:
+        dict: A confirmation message indicating successful deletion.
+    """
+    # Check if the user has an existing budget to delete
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.id == budget_id).first()
+    if not budget:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found.")
+    
+    db.query(Notification).filter(
+    Notification.user_id == user.id,
+    Notification.message.ilike("%budget%"),
+    Notification.is_read == False
+    ).update({"is_read": True})
+    db.commit()
+
     # Delete the budget and commit the changes
     db.delete(budget)
     db.commit()

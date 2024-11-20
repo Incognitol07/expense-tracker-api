@@ -71,4 +71,5 @@ class BudgetHistory(BudgetResponse):
     Attributes:
         created_at (date): The date when the budget was created.
     """
-    created_at: date
+    created_at: str
+    status: str
