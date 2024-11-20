@@ -1,6 +1,6 @@
 # app/routers/analytics.py
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -24,7 +24,7 @@ def get_expense_summary(db: Session = Depends(get_db), user: User = Depends(get_
             .group_by(Expense.category_id)
             .all()
     ]
-    budget = db.query(Budget).filter(Budget.user_id == user.id).first()
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     budget_limit = budget.amount_limit if budget else 0
     adherence = (total_expenses / budget_limit) * 100 if budget_limit else None
 
@@ -111,6 +111,14 @@ def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: Us
         {"id": expense.id, "amount": expense.amount, "description": expense.description, "date": str(expense.date), "category_id": expense.category_id}
         for expense in expenses
     ]
+    if not data:
+        logger.warning(f"No data to be exported for user '{user.username}' (ID: {user.id})")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No data to export.")
+
+     # Format validation
+    if format not in ["csv", "json"]:
+        logger.warning(f"Invalid format requested: {format} for user '{user.username}' (ID: {user.id})")
+        raise HTTPException(status_code=400, detail="Unsupported export format.")
     
     if format == "csv":
         import csv
@@ -128,7 +136,6 @@ def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: Us
         return JSONResponse(content=data)
     
     logger.warning(f"Failed to export expenses for user '{user.username}' (ID: {user.id})")
-    raise HTTPException(status_code=400, detail="Unsupported export format.")
 
 @router.get("/budget_adherence", response_model=dict)
 def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -142,20 +149,20 @@ def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get
     today = date.today()
     current_month = today.month
     current_year = today.year
-
+    
     # --- Monthly Adherence ---
     monthly_expenses = db.query(func.sum(Expense.amount)).filter(
         Expense.user_id == user.id,
         func.extract('month', Expense.date) == current_month,
         func.extract('year', Expense.date) == current_year
     ).scalar() or 0.0
-    monthly_budget = db.query(Budget).filter(
+    monthly_limit = db.query(func.sum(Budget.amount_limit)).filter(
         Budget.user_id == user.id,
         func.extract('month', Budget.start_date) <= current_month,
         func.extract('month', Budget.end_date) >= current_month,
-        func.extract('year', Budget.start_date) == current_year
-    ).first()
-    monthly_limit = monthly_budget.amount_limit if monthly_budget else 0
+        func.extract('year', Budget.start_date) == current_year,
+        Budget.status=="active"
+    ).scalar() or 0.0
     monthly_adherence = (monthly_expenses / monthly_limit) * 100 if monthly_limit else None
 
     # --- Quarterly Adherence ---
@@ -169,7 +176,8 @@ def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get
     quarterly_budget = db.query(func.sum(Budget.amount_limit)).filter(
         Budget.user_id == user.id,
         func.extract('month', Budget.start_date).between(quarter_start_month, quarter_start_month + 2),
-        func.extract('year', Budget.start_date) == current_year
+        func.extract('year', Budget.start_date) == current_year,
+        Budget.status=="active"
     ).scalar() or 0.0
     quarterly_adherence = (quarterly_expenses / quarterly_budget) * 100 if quarterly_budget else None
 
@@ -180,7 +188,8 @@ def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get
     ).scalar() or 0.0
     yearly_budget = db.query(func.sum(Budget.amount_limit)).filter(
         Budget.user_id == user.id,
-        func.extract('year', Budget.start_date) == current_year
+        func.extract('year', Budget.start_date) == current_year,
+        Budget.status=="active"
     ).scalar() or 0.0
     yearly_adherence = (yearly_expenses / yearly_budget) * 100 if yearly_budget else None
 
@@ -236,15 +245,29 @@ def get_expense_summary_for_range(
             .all()
     ]
     
+    overlapping_budgets = db.query(Budget).filter(
+    Budget.user_id == user.id,
+    Budget.status == "active",
+    Budget.end_date >= start_date,
+    Budget.start_date <= end_date
+    ).count()
+    if overlapping_budgets > 0:
+        raise HTTPException(status_code=400, detail="Overlapping active budgets are not allowed.")
     # Fetch user's budget for the date range
     budget = db.query(Budget).filter(
-        Budget.user_id == user.id,
-        Budget.start_date <= end_date,
-        Budget.end_date >= start_date
+    Budget.user_id == user.id,
+    Budget.start_date <= end_date,
+    Budget.end_date >= start_date,
+    Budget.status == "active"
     ).first()
+
     
     budget_limit = budget.amount_limit if budget else 0
     adherence = (total_expenses / budget_limit) * 100 if budget_limit else None
+    if not budget_limit:
+        logger.warning(f"Budget limit is zero or unavailable for user '{user.username}' (ID: {user.id}). Adherence cannot be calculated.")
+        adherence = 0
+
     
     logger.info(f"Expense summary for the range {start_date} to {end_date} successfully retrieved for user '{user.username}' (ID: {user.id}).")
     return ExpenseSummary(

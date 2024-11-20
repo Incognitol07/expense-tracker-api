@@ -31,9 +31,17 @@ def set_budget(background_tasks: BackgroundTasks,budget_data: BudgetCreate, db: 
         BudgetResponse: The newly created budget.
     """
     # Check if the user already has a set budget
-    existing_budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
+    existing_budget = db.query(Budget).filter(
+    Budget.user_id == user.id,
+    Budget.status == "active",
+    Budget.start_date <= budget_data.end_date,
+    Budget.end_date >= budget_data.start_date
+    ).first()
     if existing_budget:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Budget already set. Use update instead.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An active budget already exists in the given date range. Use update instead."
+        )
     
     # Create and save the new budget
     new_budget = Budget(**budget_data.model_dump(), user_id=user.id)
@@ -72,6 +80,19 @@ def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, d
     """
     Updates the existing budget of the authenticated user and resets notifications if needed.
     """
+    conflicting_budget = db.query(Budget).filter(
+    Budget.user_id == user.id,
+    Budget.status == "active",
+    Budget.id != budget.id,  # Exclude the current budget being updated
+    Budget.start_date <= budget_data.end_date,
+    Budget.end_date >= budget_data.start_date
+    ).first()
+    if conflicting_budget:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The updated budget dates conflict with another active budget."
+        )
+
     # Check if the user has an existing budget
     budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     if not budget:
@@ -204,7 +225,12 @@ def delete_budget(budget_id: int, db: Session = Depends(get_db), user: User = De
     budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.id == budget_id).first()
     if not budget:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found.")
-    
+    if budget.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only active budgets can be deleted. Please deactivate or update the budget."
+        )
+
     db.query(Notification).filter(
     Notification.user_id == user.id,
     Notification.message.ilike("%budget%"),

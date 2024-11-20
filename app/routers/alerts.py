@@ -77,9 +77,10 @@ async def check_budget(user_id: int):
     db = SessionLocal()
     try:
         logger.info(f"Initiating budget check for user ID: {user_id}")
-        budget = db.query(Budget).filter(Budget.user_id == user_id).first()
+        budget = db.query(Budget).filter(Budget.user_id == user_id, Budget.status == "active").first()
         if not budget:
-            logger.warning(f"No budget found for user ID: {user_id}")
+            logger.warning(f"No active budget found for user ID: {user_id}")
+            return
         user_expenses = db.query(Expense).filter(
             Expense.user_id == user_id,
             Expense.date >= budget.start_date,
@@ -153,6 +154,14 @@ def create_alert(
             detail="An alert with the same threshold already exists. Please delete it first to create a new one."
         )
 
+    active_budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.status == "active").first()
+    if not active_budget:
+        logger.warning(f"No active budget found for user ID: {current_user.id} while creating alert")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An active budget is required to create an alert."
+        )
+
     # Create the new alert since no duplicate was found
     alert = Alert(**alert_data.model_dump(), user_id=current_user.id)
     db.add(alert)
@@ -184,8 +193,11 @@ def get_alerts(
     logger.info(f"Fetching all alerts for user ID: {current_user.id}")
     alerts = db.query(Alert).filter(Alert.user_id == current_user.id).all()
     logger.info(f"Retrieved {len(alerts)} alerts for user ID: {current_user.id}")
-    background_tasks.add_task(check_thresholds, current_user.id)
-    logger.info(f"Background task scheduled to check thresholds for user ID: {current_user.id}")
+    active_budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.status == "active").first()
+    if active_budget:
+        background_tasks.add_task(check_thresholds, current_user.id)
+        logger.info(f"Background task scheduled to check thresholds for user ID: {current_user.id}")
+
     return alerts
 
 @router.put("/", response_model=AlertResponse)
@@ -216,6 +228,15 @@ def update_alert(
     if not alert:
         logger.warning(f"Alert not found for user ID: {current_user.id}")
         raise HTTPException(status_code=404, detail="Alert not found")
+    
+    active_budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.status == "active").first()
+    if not active_budget:
+        logger.warning(f"No active budget found for user ID: {current_user.id} while updating alert")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An active budget is required to update an alert."
+        )
+
     
     db.query(Notification).filter(
     Notification.user_id == current_user.id,
