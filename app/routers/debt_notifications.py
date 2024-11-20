@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models import DebtNotification, User, Expense, Category
 from app.routers.auth import get_current_user
 from app.schemas import DebtNotificationResponse, DebtNotificationStatus
+from app.utils import logger
 
 router = APIRouter()
 
@@ -32,12 +33,15 @@ def send_debt_notification(
         HTTPException: If no debtors are provided.
     """
     if not debtor_ids:
+        logger.warning(f"No debtors provided by user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(status_code=400, detail="No debtors provided")
 
+    logger.info(f"Sending debt notification from user '{current_user.username}' (ID: {current_user.id}) to debtors: {debtor_ids} with amount {amount}")
     for debtor_id in debtor_ids:
         if debtor_id != current_user.id:  # Ensure the payer doesn't get a debt notification
             debtor = db.query(User).filter(User.id == debtor_id).first()
             if not debtor:
+                logger.error(f"Debtor with ID {debtor_id} not found by user '{current_user.username}' (ID: {current_user.id})")
                 raise HTTPException(status_code=404, detail=f"Debtor with ID {debtor_id} not found")
             debt_notification = DebtNotification(
                 amount=amount,
@@ -46,9 +50,11 @@ def send_debt_notification(
                 creditor_id=current_user.id
             )
             db.add(debt_notification)
+            logger.info(f"Debt notification created for debtor {debtor_id} by user '{current_user.username}' (ID: {current_user.id})")
 
 
     db.commit()
+    logger.info(f"Debt notifications sent successfully to user '{current_user.username}' (ID: {current_user.id})")
     return {"message": "Debt notifications sent successfully"}
 
 # app/routers/debt_notifications.py (continued)
@@ -73,16 +79,20 @@ def respond_debt_notification(
     Raises:
         HTTPException: If the debt notification doesn't exist or is not for the current user.
     """
+    logger.info(f"Responding to debt notification {debt_notification_id} with {'accept' if accept else 'reject'} by user '{current_user.username}' (ID: {current_user.id})")
     debt_notification = db.query(DebtNotification).filter(DebtNotification.id == debt_notification_id).first()
 
     if not debt_notification:
+        logger.error(f"Debt notification {debt_notification_id} not found for user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(status_code=404, detail="Debt notification not found")
 
     if debt_notification.debtor_id != current_user.id:
+        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not the intended debtor for notification {debt_notification_id}")
         raise HTTPException(status_code=403, detail="This debt notification is not for you")
 
     # Update the status based on the user's response
     debt_notification.status = DebtNotificationStatus.ACCEPTED if accept else DebtNotificationStatus.REJECTED
+    logger.info(f"Debt notification {debt_notification_id} status updated to {'ACCEPTED' if accept else 'REJECTED'} for user '{current_user.username}' (ID: {current_user.id})")
 
     debt_category = db.query(Category).filter(
         Category.name == "Debt", 
@@ -90,6 +100,7 @@ def respond_debt_notification(
     ).first()
 
     if not debt_category:
+        logger.error(f"Debt category not found for user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Debt category not found")
 
     if accept:
@@ -101,8 +112,10 @@ def respond_debt_notification(
             category_id=debt_category.id
         )
         db.add(new_expense)
+        logger.info(f"Expense created for debtor '{current_user.username}' (ID: {current_user.id}) with amount {debt_notification.amount}")
 
     db.commit()
+    logger.info(f"Debt notification {debt_notification_id} responded successfully for user '{current_user.username}' (ID: {current_user.id})")
     return {"message": "Debt notification responded successfully"}
 
 @router.get("/debt-notifications/", response_model=list[DebtNotificationResponse])
@@ -122,10 +135,13 @@ def get_debt_notifications(
     Raises:
         HTTPException: If there are no notifications for the user.
     """
+    logger.info(f"Retrieving debt notifications for user '{current_user.username}' (ID: {current_user.id})")
     debt_notifications = db.query(DebtNotification).filter(DebtNotification.debtor_id == current_user.id, DebtNotification.status == False).all()
     
     if not debt_notifications:
+        logger.warning(f"No debt notifications found for user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(status_code=404, detail="No debt notifications found")
 
+    logger.info(f"Found {len(debt_notifications)} debt notifications for user '{current_user.username}' (ID: {current_user.id})")
     return debt_notifications
 
