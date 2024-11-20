@@ -38,8 +38,6 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 - **Python 3.12+** (if you're not using Docker)  
 - **Docker** (if you're using Docker to run the app)
 
----
-
 ### Installation Steps  
 
 #### 1. Clone the Repository  
@@ -95,8 +93,6 @@ MASTER_KEY=master_key
    docker-compose down  
    ```  
 
----
-
 #### Using Pipenv (Virtual Environment)  
 1. **Install Pipenv**:  
    ```bash  
@@ -118,8 +114,6 @@ MASTER_KEY=master_key
    uvicorn app.main:app --reload  
    ```  
    The app will be available at `http://127.0.0.1:8000`.  
-
----
 
 #### Without Virtual Environment  
 1. **Install dependencies**:  
@@ -143,15 +137,12 @@ MASTER_KEY=master_key
 
 This feature allows users to stay updated with budget notifications in real-time, improving their ability to manage finances instantly.
 
----
-
 ### Group Expense Tracking and Debt Notifications
 
 - **Group Creation**: Users can create groups and invite others to join by email. Upon acceptance, group members can share and track expenses.
 - **Expense Splitting**: Expenses paid by one member can be split among all group members, with real-time updates sent through notifications.
 - **Debt Notifications**: When expenses are split, users will receive notifications about how much they owe or are owed within the group. These notifications include the status of debt payments.
 
----
 ### Logging Support
 
 The API includes robust logging functionality to ensure transparency and ease of debugging. The logging system is configured to capture critical events, including errors, user actions, and alerts, to help maintain a secure and reliable system.
