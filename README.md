@@ -32,144 +32,112 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 ---
 
+Here’s a consolidated version of the installation instructions, grouping similar steps for clarity:  
+
+---
+
 ## Installation
 
 ### Prerequisites
-
-- **Python 3.12+** (if you're not using Docker)
+- **Python 3.12+** (if you're not using Docker)  
 - **Docker** (if you're using Docker to run the app)
 
 ---
 
-### Using Docker (Recommended)
+### Installation Steps  
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Incognitol07/expense-tracker-api.git
-   cd expense-tracker-api
-   ```
+#### 1. Clone the Repository  
+Clone the repository to your local machine:  
+```bash  
+git clone https://github.com/Incognitol07/expense-tracker-api.git  
+cd expense-tracker-api  
+```  
 
-2. **Create and start the containers**:
-   ```bash
-   docker-compose up --build
-   ```
+#### 2. Set Up Environment Variables  
+Create a `.env` file by copying the provided example file:  
+- **Mac/Linux**:  
+  ```bash  
+  cp .env.example .env  
+  ```  
+- **Windows (Command Prompt)**:  
+  ```cmd  
+  copy .env.example .env  
+  ```  
+- **Windows (PowerShell)**:  
+  ```powershell  
+  Copy-Item .env.example .env  
+  ```  
 
-   This command will:
-   - Build the Docker images for the web and database services.
-   - Start the services, including PostgreSQL and the FastAPI app.
-
-3. **Access the application**:
-   Once the services are up, you can access the app at `http://127.0.0.1:8000` on your browser.
-
-4. **Stopping the containers**:
-   To stop the running containers, run:
-   ```bash
-   docker-compose down
-   ```
-
----
-
-### Using Pipenv (Without Docker)
-
-1. **Install Pipenv**:
-   ```bash
-   pip install pipenv
-   ```
-
-2. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Incognitol07/expense-tracker-api.git
-   cd expense-tracker-api
-   ```
-
-3. **Set up environment variables**:
-   - Copy the `.env.example` file to `.env`:
-     - **Mac/Linux**:
-       ```bash
-       cp .env.example .env
-       ```
-     - **Windows** (Command Prompt):
-       ```cmd
-       copy .env.example .env
-       ```
-     - **Windows** (PowerShell):
-       ```powershell
-       Copy-Item .env.example .env
-       ```
-   - Edit the `.env` file and update the variables with your configuration:
-     ```plaintext
-     ENVIRONMENT=development
-     DB_HOST=localhost
-     DB_NAME=expense_tracker
-     DB_USER=postgres
-     DB_PASSWORD=password
-     JWT_SECRET_KEY=myjwtsecretkey
-     MASTER_KEY=master_key
-     ```
-
-4. **Install dependencies**:
-   ```bash
-   pipenv install --ignore-pipfile
-   ```
-
-5. **Activate the virtual environment**:
-   ```bash
-   pipenv shell
-   ```
-
-6. **Run the application**:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-
-   The application will be available at `http://127.0.0.1:8000`.
+Edit the `.env` file and update the variables with your configuration:  
+```plaintext  
+ENVIRONMENT=development  
+DB_HOST=localhost  
+DB_NAME=expense_tracker  
+DB_USER=postgres  
+DB_PASSWORD=password  
+JWT_SECRET_KEY=myjwtsecretkey  
+MASTER_KEY=master_key  
+```  
 
 ---
 
-### Without a Virtual Environment
+### Running the Application  
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Incognitol07/expense-tracker-api.git
-   cd expense-tracker-api
-   ```
+#### Using Docker (Recommended)  
+1. **Create and start the containers**:  
+   ```bash  
+   docker-compose up --build  
+   ```  
+   This builds and starts the application and database services.  
 
-2. **Set up environment variables**:
-   - Copy the `.env.example` file to `.env`:
-     - **Mac/Linux**:
-       ```bash
-       cp .env.example .env
-       ```
-     - **Windows** (Command Prompt):
-       ```cmd
-       copy .env.example .env
-       ```
-     - **Windows** (PowerShell):
-       ```powershell
-       Copy-Item .env.example .env
-       ```
-   - Edit the `.env` file and update the variables with your configuration:
-     ```plaintext
-     ENVIRONMENT=development
-     DB_HOST=localhost
-     DB_NAME=expense_tracker
-     DB_USER=postgres
-     DB_PASSWORD=password
-     JWT_SECRET_KEY=myjwtsecretkey
-     MASTER_KEY=master_key
-     ```
+2. **Access the application**:  
+   Once running, visit `http://127.0.0.1:8000` in your browser.  
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. **Stop the containers**:  
+   When done, stop the services with:  
+   ```bash  
+   docker-compose down  
+   ```  
 
-4. **Run the application**:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+---
 
-   The application will be available at `http://127.0.0.1:8000`.
+#### Using Pipenv (Virtual Environment)  
+1. **Install Pipenv**:  
+   ```bash  
+   pip install pipenv  
+   ```  
+
+2. **Install dependencies**:  
+   ```bash  
+   pipenv install --ignore-pipfile  
+   ```  
+
+3. **Activate the virtual environment**:  
+   ```bash  
+   pipenv shell  
+   ```  
+
+4. **Run the application**:  
+   ```bash  
+   uvicorn app.main:app --reload  
+   ```  
+   The app will be available at `http://127.0.0.1:8000`.  
+
+---
+
+#### Without Virtual Environment  
+1. **Install dependencies**:  
+   ```bash  
+   pip install -r requirements.txt  
+   ```  
+
+2. **Run the application**:  
+   ```bash  
+   uvicorn app.main:app --reload  
+   ```  
+   The app will be available at `http://127.0.0.1:8000`.  
+
+---
 
 ## Features Overview
 
