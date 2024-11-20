@@ -8,6 +8,7 @@ from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.routers.alerts import check_thresholds, check_budget
+from app.utils import logger
 
 # Create an instance of APIRouter for expense-related routes
 router = APIRouter()
@@ -34,9 +35,11 @@ def create_expense(
     Raises:
         HTTPException: If there is an issue with creating the expense.
     """
+    logger.info(f"Creating expense for user '{current_user.username}' (ID: {current_user.id}) ")
     # Check if the category_id exists in the category table
     category = db.query(Category).filter(Category.name == expense.category_name).first()
     if not category:
+        logger.warning(f"Failed to create expense: Category '{expense.category_name}' not found for user '{current_user.username}' (ID: {current_user.id}) ")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Please create the provided category first"
@@ -47,6 +50,7 @@ def create_expense(
     db.add(new_expense)  # Add the new expense to the session
     db.commit()  # Commit the transaction to the database
     db.refresh(new_expense)  # Refresh to get the latest state of the expense
+    logger.info(f"Created expense ID: {new_expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
     background_tasks.add_task(check_budget, current_user.id)
     background_tasks.add_task(check_thresholds, current_user.id)
     return new_expense
@@ -75,7 +79,11 @@ def get_expenses(
     Raises:
         HTTPException: If no expenses are found for the user.
     """
+    logger.info(f"Retrieving expenses for user '{current_user.username}' (ID: {current_user.id}) with limit={limit} and offset={offset} ")
     expenses = db.query(Expense).filter(Expense.user_id == current_user.id).offset(offset).limit(limit).all()
+    if not expenses:
+        logger.warning(f"Failed to retrieve expenses for user '{current_user.username}' (ID: {current_user.id}) ")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found")
     return expenses
 
 # Route to get a specific expense by its ID
@@ -99,9 +107,12 @@ def get_expense(
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
+    logger.info(f"Retrieving expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
     expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
     if not expense:
+        logger.warning(f"Failed to retrieve expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
+    logger.info(f"Retrieved expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
     return expense
 
 # Route to get a expenses by category
@@ -125,16 +136,19 @@ def get_expenses_by_category(
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
+    logger.info(f"Retrieving expenses in category '{category_name}' for user '{current_user.username}' (ID: {current_user.id}) ")
     category = db.query(Category).filter(Category.user_id == current_user.id, Category.name == category_name).first()
     if not category:
+        logger.warning(f"Failed to retrieve expenses: Category '{category_name}' not found for user '{current_user.username}' (ID: {current_user.id}) ")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     
     category_id = db.query(Category.id).filter(Category.name == category_name).first()[0]
     
     expenses = db.query(Expense).filter(Expense.category_id == category_id, Expense.user_id == current_user.id).all()
     if not expenses:
+        logger.warning(f"Failed to retrieve expenses in category '{category_name}' for user '{current_user.username}' (ID: {current_user.id}) ")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
-    
+    logger.info(f"Retrieved {len(expenses)} expenses in category '{category_name}' for user '{current_user.username}' (ID: {current_user.id}) ")
     return expenses
 
 # Route to update an existing expense by its ID
@@ -160,8 +174,10 @@ def update_expense(
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
+    logger.info(f"Updating expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
     expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
     if not expense:
+        logger.warning(f"Failed to update expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
     
     # Update expense attributes with new values
@@ -170,6 +186,7 @@ def update_expense(
     
     db.commit()  # Commit changes to the database
     db.refresh(expense)  # Refresh to get the updated state
+    logger.info(f"Updated expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
     return expense
 
 # Route to delete an expense by its ID
@@ -193,10 +210,13 @@ def delete_expense(
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
+    logger.info(f"Deleting expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
     expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
     if not expense:
+        logger.warning(f"Failed to delete expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
     
+    logger.info(f"Deleted expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
     db.delete(expense)  # Delete the expense from the session
     db.commit()  # Commit the deletion to the database
     return None
