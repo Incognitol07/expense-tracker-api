@@ -32,10 +32,6 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 
 ---
 
-Here’s a consolidated version of the installation instructions, grouping similar steps for clarity:  
-
----
-
 ## Installation
 
 ### Prerequisites
