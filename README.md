@@ -218,13 +218,12 @@ To test real-time notifications via WebSocket:
 1. Connect to `http://127.0.0.1:8000/ws/notifications/{user_id}`.
 2. Upon spending updates or threshold alerts, the connected WebSocket will receive messages in real time.
 
----
 
 ## Conclusion
 
 The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, group expense tracking, debt notifications, and comprehensive data tracking, this API helps users make informed decisions about their finances.
 
----
+
 
 ## License
 
