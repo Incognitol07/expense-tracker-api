@@ -111,7 +111,12 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: Admin = Depe
     return {"message": f"Deleted user '{target_user.username}' successfully"}
 
 @router.get("/logs")
-def get_logs(admin: Admin = Depends(get_admin_user)):
+def get_logs(admin: Admin = Depends(get_admin_user), skip: int = 0, limit: int = 100):
+    """
+    Securely retrieves application logs.
+    - Only accessible to authenticated admins.
+    - Logs are paginated to prevent overwhelming responses.
+    """
     log_file = "audit_logs.log"
     if not os.path.exists(log_file):
         logger.error(f"Log file not found when requested by admin '{admin.username}'.")
@@ -119,5 +124,12 @@ def get_logs(admin: Admin = Depends(get_admin_user)):
 
     with open(log_file, "r") as file:
         logs = file.readlines()
-    logger.info(f"Admin '{admin.username}' retrieved application logs.")
-    return {"logs": logs}
+
+    # Sanitize sensitive data
+    sanitized_logs = [line.replace("password", "****") for line in logs]
+
+    # Paginate logs
+    paginated_logs = sanitized_logs[skip: skip + limit]
+
+    logger.info(f"Admin '{admin.username}' retrieved application logs (skip: {skip}, limit: {limit}).")
+    return {"logs": paginated_logs}
