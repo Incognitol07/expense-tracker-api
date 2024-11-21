@@ -139,7 +139,7 @@ def create_alert(
     Raises:
         HTTPException: If an alert with the same threshold already exists.
     """
-    logger.info(f"Attempting to create an alert for user ID: {current_user.id}")
+    logger.info(f"Attempting to create an alert for user '{current_user.username}' (ID: {current_user.id})")
     # Check if an alert with the same threshold already exists for the user
     existing_alert = db.query(Alert).filter(
         Alert.user_id == current_user.id,
@@ -148,7 +148,7 @@ def create_alert(
 
     # Only proceed if there is no existing alert with the same threshold
     if existing_alert:
-        logger.warning(f"Alert with threshold {alert_data.threshold} already exists for user ID: {current_user.id}")
+        logger.warning(f"Alert with threshold {alert_data.threshold} already exists for user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An alert with the same threshold already exists. Please delete it first to create a new one."
@@ -156,7 +156,7 @@ def create_alert(
 
     active_budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.status == "active").first()
     if not active_budget:
-        logger.warning(f"No active budget found for user ID: {current_user.id} while creating alert")
+        logger.warning(f"No active budget found for user '{current_user.username}' (ID: {current_user.id}) while creating alert")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An active budget is required to create an alert."
@@ -167,11 +167,11 @@ def create_alert(
     db.add(alert)
     db.commit()
     db.refresh(alert)
-    logger.info(f"Alert created successfully for user ID: {current_user.id} with threshold: {alert_data.threshold}")
+    logger.info(f"Alert created successfully for user '{current_user.username}' (ID: {current_user.id}) with threshold: {alert_data.threshold}")
 
     # Add background task to check thresholds for this user, to be run immediately
     background_tasks.add_task(check_thresholds, current_user.id)
-    logger.info(f"Background task scheduled to check thresholds for user ID: {current_user.id}")
+    logger.info(f"Background task scheduled to check thresholds for user '{current_user.username}' (ID: {current_user.id})")
     return alert
 
 @router.get("/", response_model=list[AlertResponse])
@@ -190,13 +190,13 @@ def get_alerts(
     Returns:
         list[AlertResponse]: A list of all alerts for the user.
     """
-    logger.info(f"Fetching all alerts for user ID: {current_user.id}")
+    logger.info(f"Fetching all alerts for user '{current_user.username}' (ID: {current_user.id})")
     alerts = db.query(Alert).filter(Alert.user_id == current_user.id).all()
-    logger.info(f"Retrieved {len(alerts)} alerts for user ID: {current_user.id}")
+    logger.info(f"Retrieved {len(alerts)} alerts for user '{current_user.username}' (ID: {current_user.id})")
     active_budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.status == "active").first()
     if active_budget:
         background_tasks.add_task(check_thresholds, current_user.id)
-        logger.info(f"Background task scheduled to check thresholds for user ID: {current_user.id}")
+        logger.info(f"Background task scheduled to check thresholds for user '{current_user.username}' (ID: {current_user.id})")
 
     return alerts
 
@@ -222,16 +222,16 @@ def update_alert(
     Raises:
         HTTPException: If the alert does not exist.
     """
-    logger.info(f"Attempting to update an alert for user ID: {current_user.id}")
+    logger.info(f"Attempting to update an alert for user '{current_user.username}' (ID: {current_user.id})")
     # Retrieve the alert to be updated
     alert = db.query(Alert).filter(Alert.user_id == current_user.id).first()
     if not alert:
-        logger.warning(f"Alert not found for user ID: {current_user.id}")
+        logger.warning(f"Alert not found for user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(status_code=404, detail="Alert not found")
     
     active_budget = db.query(Budget).filter(Budget.user_id == current_user.id, Budget.status == "active").first()
     if not active_budget:
-        logger.warning(f"No active budget found for user ID: {current_user.id} while updating alert")
+        logger.warning(f"No active budget found for user '{current_user.username}' (ID: {current_user.id}) while updating alert")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An active budget is required to update an alert."
@@ -244,15 +244,15 @@ def update_alert(
     Notification.is_read == False
     ).update({"is_read": True})
     db.commit()
-    logger.info(f"Marking all unread alert-related notifications as read for user ID: {current_user.id}")
+    logger.info(f"Marking all unread alert-related notifications as read for user '{current_user.username}' (ID: {current_user.id})")
     # Update alert details
     for key, value in alert_data.model_dump(exclude_unset=True).items():
         setattr(alert, key, value)
     db.commit()
     db.refresh(alert)
-    logger.info(f"Alert updated successfully for user ID: {current_user.id}")
+    logger.info(f"Alert updated successfully for user '{current_user.username}' (ID: {current_user.id})")
     background_tasks.add_task(check_thresholds, current_user.id)
-    logger.info(f"Background task scheduled to check thresholds for user ID: {current_user.id}")
+    logger.info(f"Background task scheduled to check thresholds for user '{current_user.username}' (ID: {current_user.id})")
     return alert
 
 @router.delete("/")
@@ -274,11 +274,11 @@ def delete_alert(
     Raises:
         HTTPException: If the alert does not exist.
     """
-    logger.info(f"Attempting to delete an alert for user ID: {current_user.id}")
+    logger.info(f"Attempting to delete an alert for user '{current_user.username}' (ID: {current_user.id})")
     # Retrieve the alert to be deleted
     alert = db.query(Alert).filter(Alert.user_id == current_user.id).first()
     if not alert:
-        logger.warning(f"Alert not found for user ID: {current_user.id}")
+        logger.warning(f"Alert not found for user '{current_user.username}' (ID: {current_user.id})")
         raise HTTPException(status_code=404, detail="Alert not found")
     
     db.query(Notification).filter(
@@ -287,9 +287,9 @@ def delete_alert(
     Notification.is_read == False
     ).update({"is_read": True})
     db.commit()
-    logger.info(f"Marking all unread alert-related notifications as read for user ID: {current_user.id}")
+    logger.info(f"Marking all unread alert-related notifications as read for user '{current_user.username}' (ID: {current_user.id})")
     
     db.delete(alert)
     db.commit()
-    logger.info(f"Alert deleted successfully for user ID: {current_user.id}")
+    logger.info(f"Alert deleted successfully for user '{current_user.username}' (ID: {current_user.id})")
     return {"detail": "Alert deleted successfully"}
