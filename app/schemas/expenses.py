@@ -42,6 +42,20 @@ class ExpenseResponse(ExpenseBase):
 
     class Config:
         from_attributes = True
+class CategoryExpenseResponse(ExpenseBase):
+    """
+    Schema for returning expense details, including the unique ID and user ID associated with the expense.
+    
+    Attributes:
+        id (int): The unique identifier for the expense.
+        user_id (int): The ID of the user who created the expense.
+    """
+    id: int 
+    category_id: int
+    category_name:str
+
+    class Config:
+        from_attributes = True
 
 # Schema for updating an existing expense (optional fields)
 class ExpenseUpdate(BaseModel):

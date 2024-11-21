@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from datetime import date
-from app.schemas.expenses import ExpenseCreate, ExpenseResponse, ExpenseUpdate
+from app.schemas import ExpenseCreate, ExpenseResponse, ExpenseUpdate, CategoryExpenseResponse
 from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
-from app.models.user import User
+from app.models import User
 from app.routers.alerts import check_thresholds, check_budget
 from app.utils import logger
 
@@ -59,7 +59,7 @@ def create_expense(
 
 
 # Route to get all expenses of the authenticated user
-@router.get("/")
+@router.get("/", response_model=list[CategoryExpenseResponse])
 def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -255,7 +255,7 @@ def delete_expense(
     return None
 
 
-@router.get("/filter", response_model=list[ExpenseResponse])
+@router.get("/filter", response_model=list[CategoryExpenseResponse])
 def filter_expenses(
     start_date: date = Query(None, description="Start date for filtering expenses."),
     end_date: date = Query(None, description="End date for filtering expenses."),
@@ -321,7 +321,7 @@ def filter_expenses(
         for expense in expenses
     ]
 
-@router.get("/search", response_model=list[ExpenseResponse])
+@router.get("/search", response_model=list[CategoryExpenseResponse])
 def search_expenses(
     keyword: str = Query(..., description="Keyword to search in expenses."),
     db: Session = Depends(get_db),
