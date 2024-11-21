@@ -1,6 +1,7 @@
 # app/routers/expenses.py
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from app.schemas.expenses import ExpenseCreate, ExpenseResponse, ExpenseUpdate
 from app.models import Expense, Category
@@ -57,7 +58,7 @@ def create_expense(
 
 
 # Route to get all expenses of the authenticated user
-@router.get("/", response_model=list[ExpenseResponse])
+@router.get("/")
 def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -65,7 +66,7 @@ def get_expenses(
     offset: int = Query(0, ge=0)
 ):
     """
-    Retrieves all expenses for the authenticated user with pagination.
+    Retrieves all expenses for the authenticated user with pagination, ordered by latest date and ID.
 
     Args:
         db (Session): The database session to interact with the database.
@@ -79,12 +80,43 @@ def get_expenses(
     Raises:
         HTTPException: If no expenses are found for the user.
     """
-    logger.info(f"Retrieving expenses for user '{current_user.username}' (ID: {current_user.id}) with limit={limit} and offset={offset} ")
-    expenses = db.query(Expense).filter(Expense.user_id == current_user.id).offset(offset).limit(limit).all()
+    logger.info(f"Retrieving expenses for user '{current_user.username}' (ID: {current_user.id}) with limit={limit} and offset={offset}, ordered by latest date and ID.")
+    
+    # Join Expense with Category to fetch the category name in a single query
+    expenses = (
+        db.query(
+            Expense.id,
+            Expense.amount,
+            Expense.description,
+            Expense.date,
+            Expense.category_id,
+            Category.name.label("category_name")
+        )
+        .join(Category, Expense.category_id == Category.id)
+        .filter(Expense.user_id == current_user.id)
+        .order_by(desc(Expense.date), desc(Expense.id))  # Order by latest date, then by latest ID
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    
     if not expenses:
-        logger.warning(f"Failed to retrieve expenses for user '{current_user.username}' (ID: {current_user.id}) ")
+        logger.warning(f"No expenses found for user '{current_user.username}' (ID: {current_user.id}).")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found")
-    return expenses
+
+    return [
+        {
+            "id": expense.id,
+            "amount": expense.amount,
+            "description": expense.description,
+            "date": expense.date,
+            "category_id": expense.category_id,
+            "category_name": expense.category_name
+        }
+        for expense in expenses
+    ]
+
+
 
 # Route to get a specific expense by its ID
 @router.get("/{expense_id}", response_model=ExpenseResponse)
