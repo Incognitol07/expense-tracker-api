@@ -122,7 +122,7 @@ def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: Us
         logger.warning(f"No data to be exported for user '{user.username}' (ID: {user.id})")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No data to export.")
 
-     # Format validation
+    # Format validation
     if format not in ["csv", "json"]:
         logger.warning(f"Invalid format requested: {format} for user '{user.username}' (ID: {user.id})")
         raise HTTPException(status_code=400, detail="Unsupported export format.")

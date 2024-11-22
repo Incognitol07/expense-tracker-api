@@ -292,4 +292,4 @@ def delete_alert(
     db.delete(alert)
     db.commit()
     logger.info(f"Alert deleted successfully for user '{current_user.username}' (ID: {current_user.id})")
-    return {"detail": "Alert deleted successfully"}
+    return {"message": f"Alert of threshold {alert.threshold} deleted successfully"}
