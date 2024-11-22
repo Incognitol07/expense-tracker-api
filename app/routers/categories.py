@@ -115,8 +115,8 @@ def get_category_by_id(category_id: int, db: Session = Depends(get_db), user: Us
     return category
 
 # Route to update an existing category by its ID
-@router.put("/{category_id}", response_model=CategoryResponse)
-def update_category(category_id: int, category_data: CategoryUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+@router.put("/id/{category_id}", response_model=CategoryResponse)
+def update_category_by_id(category_id: int, category_data: CategoryUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Updates a category by its ID for the authenticated user.
 
@@ -146,6 +146,40 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
     db.refresh(category)  # Refresh to get the updated state
     
     logger.info(f"Category {category_id} updated for user '{user.username}' (ID: {user.id}).")
+    return category
+
+# Route to update an existing category by its name
+@router.put("/name/{category_name}", response_model=CategoryResponse)
+def update_category_by_name(category_name: str, category_data: CategoryUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """
+    Updates a category by its name for the authenticated user.
+
+    Args:
+        category_name (str): The name of the category to update.
+        category_data (CategoryUpdate): The updated data for the category.
+        db (Session): The database session to interact with the database.
+        user (User): The currently authenticated user.
+
+    Returns:
+        CategoryResponse: The updated category.
+    
+    Raises:
+        HTTPException: If the category is not found or does not belong to the user.
+    """
+    category = db.query(Category).filter(Category.name == category_name, Category.user_id == user.id).first()
+    
+    if not category:
+        logger.error(f"Category {category_name} not found for user '{user.username}' (ID: {user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    
+    # Update category attributes with new values
+    for key, value in category_data.model_dump(exclude_unset=True).items():
+        setattr(category, key, value)
+    
+    db.commit()  # Commit changes to the database
+    db.refresh(category)  # Refresh to get the updated state
+    
+    logger.info(f"Category {category_name} updated for user '{user.username}' (ID: {user.id}).")
     return category
 
 # Route to delete a category by its ID
@@ -185,10 +219,10 @@ def delete_category_by_id(category_id: int, db: Session = Depends(get_db), user:
 @router.delete("/name/{category_name}")
 def delete_category_by_name(category_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
-    Deletes a category by its ID for the authenticated user.
+    Deletes a category by its name for the authenticated user.
 
     Args:
-        category_id (int): The ID of the category to delete.
+        category_name (str): The name of the category to delete.
         db (Session): The database session to interact with the database.
         user (User): The currently authenticated user.
 
