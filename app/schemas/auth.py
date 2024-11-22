@@ -50,13 +50,3 @@ class UserResponse(UserBase):
     class Config:
         # This allows Pydantic to pull attributes from ORM models
         from_attributes = True
-
-# Schema for admin creation (includes master key for additional admin-specific attributes)
-class AdminCreate(UserCreate):
-    """
-    Schema for creating an admin user, which extends the user creation schema and includes a master key.
-    
-    Attributes:
-        master_key (str): The master key required to create an admin.
-    """
-    master_key: str

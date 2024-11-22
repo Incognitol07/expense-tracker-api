@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.admin import Admin
 from fastapi.security import OAuth2PasswordBearer
 from app.models import User, Expense, Budget, Alert, Category
-from app.schemas.auth import UserLogin, UserResponse, AdminCreate
+from app.schemas import UserLogin, UserResponse, AdminCreate, AdminExpenses
 from app.utils.security import create_access_token, hash_password, verify_access_token, verify_password
 from app.config import settings
 from app.utils.logging_config import logger  # Import the logger
@@ -91,13 +91,14 @@ def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admi
         user.hashed_password = "Encrypted"
     return users
 
-@router.get("/expenses")
+@router.get("/expenses", response_model=list[AdminExpenses])
 def get_all_expenses(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
     expenses = db.query(Expense).all()
     response=[]
     for expense in expenses:
+        username = db.query(User.username).filter(User.id == expense.user_id).first()[0]
         category_name = db.query(Category.name).filter(Category.user_id == expense.user_id, Category.id == expense.category_id).first()[0]
-        response.append({"id":expense.id, "date":expense.date,"category_id":expense.category_id, "category_name":category_name, "description":expense.description, "amount":expense.amount, "user_id":expense.user_id})
+        response.append({"id":expense.id, "date":expense.date,"category_id":expense.category_id, "category_name":category_name, "description":expense.description, "amount":expense.amount, "user_id":expense.user_id, "username":username})
     logger.info(f"Admin '{admin.username}' retrieved all expenses.")
     return response
 
