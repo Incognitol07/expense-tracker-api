@@ -115,7 +115,7 @@ def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: Us
     logger.info(f"Starting expense export in '{format.upper()}' format for user '{user.username}' (ID: {user.id}).")
     expenses = db.query(Expense).filter(Expense.user_id == user.id).all()
     data = [
-        {"id": expense.id, "amount": expense.amount, "description": expense.description, "date": str(expense.date), "category_id": expense.category_id}
+        {"id": expense.id, "amount": expense.amount, "description": expense.description, "date": str(expense.date), "category_name": db.query(Category.name).filter(Category.id == expense.category_id, Category.user_id == expense.user_id).first()[0],"category_id": expense.category_id}
         for expense in expenses
     ]
     if not data:
