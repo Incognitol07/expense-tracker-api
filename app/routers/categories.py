@@ -150,7 +150,7 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
 
 # Route to delete a category by its ID
 @router.delete("/id/{category_id}")
-def delete_category(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def delete_category_by_id(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a category by its ID for the authenticated user.
 
@@ -183,7 +183,7 @@ def delete_category(category_id: int, db: Session = Depends(get_db), user: User 
 
 # Route to delete a category by its name
 @router.delete("/name/{category_name}")
-def delete_category(category_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def delete_category_by_name(category_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a category by its ID for the authenticated user.
 
