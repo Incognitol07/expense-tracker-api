@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.admin import Admin
 from fastapi.security import OAuth2PasswordBearer
 from app.models import User, Expense, Category
-from app.schemas import UserLogin, AdminUsers, AdminCreate, AdminExpenses, RegisterResponse, LoginResponse, MessageResponse
+from app.schemas import UserLogin, AdminUsers, AdminCreate, AdminExpenses, RegisterResponse, LoginResponse, MessageResponse, LogResponse
 from app.utils.security import create_access_token, hash_password, verify_access_token, verify_password
 from app.config import settings
 from app.utils.logging_config import logger  # Import the logger
@@ -113,7 +113,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: Admin = Depe
     logger.info(f"Admin '{admin.username}' deleted user '{target_user.username}' (ID: {user_id}).")
     return {"message": f"Deleted user '{target_user.username}' successfully"}
 
-@router.get("/logs")
+@router.get("/logs", response_model=LogResponse)
 def get_logs(admin: Admin = Depends(get_admin_user), skip: int = 0, limit: int = 100):
     """
     Securely retrieves application logs.

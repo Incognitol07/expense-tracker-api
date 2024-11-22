@@ -29,3 +29,6 @@ class AdminUsers(BaseModel):
 
     class Config:
         from_attributes=True
+
+class LogResponse(BaseModel):
+    logs: list[str]
