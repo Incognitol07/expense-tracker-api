@@ -94,8 +94,12 @@ def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admi
 @router.get("/expenses")
 def get_all_expenses(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
     expenses = db.query(Expense).all()
+    response=[]
+    for expense in expenses:
+        category_name = db.query(Category.name).filter(Category.user_id == expense.user_id, Category.id == expense.category_id).first()[0]
+        response.append({"id":expense.id, "date":expense.date,"category_id":expense.category_id, "category_name":category_name, "description":expense.description, "amount":expense.amount, "user_id":expense.user_id})
     logger.info(f"Admin '{admin.username}' retrieved all expenses.")
-    return expenses
+    return response
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
