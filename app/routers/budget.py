@@ -86,6 +86,13 @@ def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, d
     """
     Updates the existing budget of the authenticated user and resets notifications if needed.
     """
+
+    # Check if the user has an existing budget
+    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
+    if not budget:
+        logger.error(f"No active budget found for user '{user.username}' (ID: {user.id}) to update.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
+    
     conflicting_budget = db.query(Budget).filter(
     Budget.user_id == user.id,
     Budget.status == "active",
@@ -99,12 +106,6 @@ def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, d
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The updated budget dates conflict with another active budget."
         )
-
-    # Check if the user has an existing budget
-    budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
-    if not budget:
-        logger.error(f"No active budget found for user '{user.username}' (ID: {user.id}) to update.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Budget not set.")
     
     # Reset notifications for this budget
     db.query(Notification).filter(
@@ -123,6 +124,7 @@ def update_budget(background_tasks: BackgroundTasks,budget_data: BudgetUpdate, d
     db.refresh(budget)
     background_tasks.add_task(check_budget, user.id)
     logger.info(f"Budget updated for user '{user.username}' (ID: {user.id}) with new values.")
+    budget.created_at=budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budget
 
 # Route to get the current budget status for the user (remaining budget)
