@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from app.schemas.auth import UserCreate, UserLogin
+from app.schemas import UserCreate, UserLogin, RegisterResponse, LoginResponse, MessageResponse
 from app.models import User, Category
 from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token
 from app.database import get_db
@@ -63,7 +63,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise
 
 # Register route to create a new user account
-@router.post("/register")
+@router.post("/register", response_model=RegisterResponse)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     """
     Registers a new user account.
@@ -112,7 +112,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"username":user.username, "email":user.email, "message":"Registered successfully", "created_at":new_user.created_at}
 
 # Login route for user authentication and token generation
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     """
     Logs in a user by verifying the username and password, and returning a JWT access token.
@@ -153,7 +153,7 @@ async def protected_route(current_user: User = Depends(get_current_user)):
     """
     return {"message": f"Hello, {current_user.username}! You have access to this protected route."}
 
-@router.delete("/account")
+@router.delete("/account", response_model=MessageResponse)
 def delete_account(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a user along with their related expenses, budgets, alerts, and categories.
@@ -179,4 +179,4 @@ def delete_account(db: Session = Depends(get_db), user: User = Depends(get_curre
     db.delete(target_user)
     db.commit()
     logger.info(f"User '{user.username}' deleted account (ID: {user_id}).")
-    return {"message": f"Deleted user '{target_user.username}' successfully"}
+    return {"message": f"Deleted account of '{target_user.username}' successfully"}

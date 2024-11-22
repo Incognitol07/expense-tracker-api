@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.admin import Admin
 from fastapi.security import OAuth2PasswordBearer
 from app.models import User, Expense, Category
-from app.schemas import UserLogin, AdminUsers, AdminCreate, AdminExpenses
+from app.schemas import UserLogin, AdminUsers, AdminCreate, AdminExpenses, RegisterResponse, LoginResponse, MessageResponse
 from app.utils.security import create_access_token, hash_password, verify_access_token, verify_password
 from app.config import settings
 from app.utils.logging_config import logger  # Import the logger
@@ -49,7 +49,7 @@ async def get_admin_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl="adm
         logger.error(f"Error during admin authentication: {e}")
         raise
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     db_admin = db.query(Admin).filter(Admin.email == user.email).first()
 
@@ -61,7 +61,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     logger.info(f"Admin '{db_admin.username}' logged in successfully.")
     return {"access_token": access_token, "token_type": "bearer", "username": db_admin.username, "user_id": db_admin.id}
 
-@router.post("/register")
+@router.post("/register", response_model=RegisterResponse)
 async def register(user: AdminCreate, db: Session = Depends(get_db)):
     if user.master_key != settings.MASTER_KEY:
         logger.warning(f"Invalid master key used during admin registration for username: '{user.username}' and email: {user.email}")
@@ -100,7 +100,7 @@ def get_all_expenses(db: Session = Depends(get_db), admin: Admin = Depends(get_a
     logger.info(f"Admin '{admin.username}' retrieved all expenses.")
     return response
 
-@router.delete("/users/{user_id}")
+@router.delete("/users/{user_id}", response_model=MessageResponse)
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
     target_user = db.query(User).filter(User.id == user_id).first()
 

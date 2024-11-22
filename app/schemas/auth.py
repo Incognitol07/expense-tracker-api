@@ -50,3 +50,17 @@ class UserResponse(UserBase):
     class Config:
         # This allows Pydantic to pull attributes from ORM models
         from_attributes = True
+
+class RegisterResponse(BaseModel):
+    username:str
+    email: EmailStr
+    message: str
+
+class LoginResponse(BaseModel):
+    access_token:str
+    token_type: str
+    username:str
+    user_id: int
+
+class MessageResponse(BaseModel):
+    message: str
