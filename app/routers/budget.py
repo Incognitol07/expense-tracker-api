@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
-from app.schemas.budget import BudgetCreate, BudgetUpdate, BudgetResponse, BudgetStatus, BudgetHistory
+from app.schemas import BudgetCreate, BudgetUpdate, BudgetResponse, BudgetStatus, BudgetHistory, MessageResponse
 from app.models import Budget, Notification
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -186,7 +186,7 @@ def get_budget_history(db: Session = Depends(get_db), user: User = Depends(get_c
     return budgets
 
 # Route to deactivate the user's current budget
-@router.post("/deactivate")
+@router.post("/deactivate", response_model=MessageResponse)
 def deactivate_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes the currently set budget for the authenticated user.
@@ -223,7 +223,7 @@ def deactivate_budget(db: Session = Depends(get_db), user: User = Depends(get_cu
     return { "message" : f"Deactivated budget of amount {budget.amount_limit} for {budget.start_date} to {budget.end_date} successfully" }
 
 # Route to delete the user's current budget
-@router.delete("/{budget_id}")
+@router.delete("/{budget_id}", response_model=MessageResponse)
 def delete_budget(budget_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes the currently set budget for the authenticated user.

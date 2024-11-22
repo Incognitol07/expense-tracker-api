@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas.categories import CategoryCreate, CategoryResponse, CategoryUpdate
+from app.schemas import CategoryCreate, CategoryResponse, CategoryUpdate, MessageResponse
 from app.models.category import Category
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -183,7 +183,7 @@ def update_category_by_name(category_name: str, category_data: CategoryUpdate, d
     return category
 
 # Route to delete a category by its ID
-@router.delete("/id/{category_id}")
+@router.delete("/id/{category_id}", response_model=MessageResponse)
 def delete_category_by_id(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a category by its ID for the authenticated user.
@@ -213,10 +213,10 @@ def delete_category_by_id(category_id: int, db: Session = Depends(get_db), user:
     db.commit()  # Commit the deletion to the database
     
     logger.info(f"Category {category_id} deleted successfully for user '{user.username}' (ID: {user.id}).")
-    return { "message" : "Deleted successfully" }
+    return { "message" : f"Deleted category '{category.name}' successfully" }
 
 # Route to delete a category by its name
-@router.delete("/name/{category_name}")
+@router.delete("/name/{category_name}", response_model=MessageResponse)
 def delete_category_by_name(category_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a category by its name for the authenticated user.

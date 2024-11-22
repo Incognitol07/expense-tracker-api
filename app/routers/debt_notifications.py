@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import DebtNotification, User, Expense, Category
 from app.routers.auth import get_current_user
-from app.schemas import DebtNotificationResponse, DebtNotificationStatus
+from app.schemas import DebtNotificationResponse, DebtNotificationStatus, MessageResponse
 from app.utils import logger
 
 router = APIRouter()
 
-@router.post("/send_debt_notification/")
+@router.post("/send_debt_notification/", response_model=MessageResponse)
 def send_debt_notification(
     amount: float,
     description: str,
@@ -59,7 +59,7 @@ def send_debt_notification(
 
 # app/routers/debt_notifications.py (continued)
 
-@router.post("/respond_debt_notification/{debt_notification_id}")
+@router.post("/respond_debt_notification/{debt_notification_id}", response_model=MessageResponse)
 def respond_debt_notification(
     debt_notification_id: int,
     accept: bool,
