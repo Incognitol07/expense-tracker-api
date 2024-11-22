@@ -63,28 +63,35 @@ def create_expense(
 def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0)
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of expenses to return."),
+    offset: int = Query(0, ge=0, description="Number of expenses to skip."),
+    start_date: date = Query(None, description="Start date for filtering expenses."),
+    end_date: date = Query(None, description="End date for filtering expenses."),
+    description: str = Query(None, description="Filter by expense description."),
+    category_name: str = Query(None, description="Filter by category name."),
+    keyword: str = Query(None, description="Keyword to search in expenses."),
 ):
     """
-    Retrieves all expenses for the authenticated user with pagination, ordered by latest date and ID.
+    Retrieves, filters, and searches expenses for the authenticated user.
 
     Args:
-        db (Session): The database session to interact with the database.
-        current_user (User): The currently authenticated user.
+        db (Session): The database session.
+        current_user (User): The authenticated user.
         limit (int): Maximum number of expenses to return.
         offset (int): Number of expenses to skip.
+        start_date (date): Start date for filtering.
+        end_date (date): End date for filtering.
+        description (str): Filter by description.
+        category_name (str): Filter by category name.
+        keyword (str): Keyword to search in expenses.
 
     Returns:
-        list[ExpenseResponse]: List of expenses belonging to the user.
-    
-    Raises:
-        HTTPException: If no expenses are found for the user.
+        list[CategoryExpenseResponse]: List of retrieved, filtered, or searched expenses.
     """
-    logger.info(f"Retrieving expenses for user '{current_user.username}' (ID: {current_user.id}) with limit={limit} and offset={offset}, ordered by latest date and ID.")
+    logger.info(f"Fetching expenses for user '{current_user.username}' (ID: {current_user.id}) with query parameters.")
     
-    # Join Expense with Category to fetch the category name in a single query
-    expenses = (
+    # Base query with joins and user-specific filtering
+    query = (
         db.query(
             Expense.id,
             Expense.amount,
@@ -95,15 +102,34 @@ def get_expenses(
         )
         .join(Category, Expense.category_id == Category.id)
         .filter(Expense.user_id == current_user.id)
-        .order_by(desc(Expense.date), desc(Expense.id))  # Order by latest date, then by latest ID
+    )
+
+    # Apply filters if provided
+    if start_date:
+        query = query.filter(Expense.date >= start_date)
+    if end_date:
+        query = query.filter(Expense.date <= end_date)
+    if description:
+        query = query.filter(Expense.description.ilike(f"%{description}%"))
+    if category_name:
+        query = query.filter(Category.name.ilike(f"%{category_name}%"))
+    if keyword:
+        query = query.filter(
+            Expense.description.ilike(f"%{keyword}%") |
+            Category.name.ilike(f"%{keyword}%")
+        )
+
+    # Apply ordering, pagination, and execute query
+    expenses = (
+        query.order_by(desc(Expense.date), desc(Expense.id))
         .offset(offset)
         .limit(limit)
         .all()
     )
-    
+
     if not expenses:
-        logger.warning(f"No expenses found for user '{current_user.username}' (ID: {current_user.id}).")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found")
+        logger.warning(f"No expenses found for user '{current_user.username}' (ID: {current_user.id}) with applied filters or search.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found.")
 
     return [
         {
@@ -112,12 +138,10 @@ def get_expenses(
             "description": expense.description,
             "date": expense.date,
             "category_id": expense.category_id,
-            "category_name": expense.category_name
+            "category_name": expense.category_name,
         }
         for expense in expenses
     ]
-
-
 
 # Route to get a specific expense by its ID
 @router.get("/id/{expense_id}", response_model=ExpenseResponse)
@@ -253,126 +277,3 @@ def delete_expense(
     db.delete(expense)  # Delete the expense from the session
     db.commit()  # Commit the deletion to the database
     return {"message": f"Expense '{expense.description}' of amount {expense.amount} deleted successfully"}
-
-
-@router.get("/filter", response_model=list[CategoryExpenseResponse])
-def filter_expenses(
-    start_date: date = Query(None, description="Start date for filtering expenses."),
-    end_date: date = Query(None, description="End date for filtering expenses."),
-    description: str = Query(None, description="Filter by expense description."),
-    category_name: str = Query(None, description="Filter by category name."),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Filters expenses for the authenticated user based on provided query parameters.
-
-    Args:
-        start_date (date): Start date for filtering.
-        end_date (date): End date for filtering.
-        description (str): Filter by description.
-        category_name (str): Filter by category name.
-        db (Session): The database session.
-        current_user (User): The authenticated user.
-
-    Returns:
-        list[ExpenseResponse]: List of filtered expenses.
-    """
-    logger.info(f"Filtering expenses for user '{current_user.username}' (ID: {current_user.id})")
-    
-    query = (
-        db.query(
-            Expense.id,
-            Expense.amount,
-            Expense.description,
-            Expense.date,
-            Expense.category_id,
-            Category.name.label("category_name")
-        )
-        .join(Category, Expense.category_id == Category.id)
-        .filter(Expense.user_id == current_user.id)
-    )
-
-    # Apply filters
-    if start_date:
-        query = query.filter(Expense.date >= start_date)
-    if end_date:
-        query = query.filter(Expense.date <= end_date)
-    if description:
-        query = query.filter(Expense.description.ilike(f"%{description}%"))
-    if category_name:
-        query = query.filter(Category.name.ilike(f"%{category_name}%"))
-    
-    expenses = query.order_by(desc(Expense.date), desc(Expense.id)).all()
-
-    if not expenses:
-        logger.warning(f"No expenses found for user '{current_user.username}' (ID: {current_user.id}) with applied filters.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found with applied filters.")
-
-    return [
-        {
-            "id": expense.id,
-            "amount": expense.amount,
-            "description": expense.description,
-            "date": expense.date,
-            "category_id": expense.category_id,
-            "category_name": expense.category_name
-        }
-        for expense in expenses
-    ]
-
-@router.get("/search", response_model=list[CategoryExpenseResponse])
-def search_expenses(
-    keyword: str = Query(..., description="Keyword to search in expenses."),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Searches expenses for the authenticated user by a keyword.
-
-    Args:
-        keyword (str): The keyword to search in expenses.
-        db (Session): The database session.
-        current_user (User): The authenticated user.
-
-    Returns:
-        list[ExpenseResponse]: List of expenses matching the keyword.
-    """
-    logger.info(f"Searching expenses for user '{current_user.username}' (ID: {current_user.id}) with keyword '{keyword}'")
-    
-    expenses = (
-        db.query(
-            Expense.id,
-            Expense.amount,
-            Expense.description,
-            Expense.date,
-            Expense.category_id,
-            Category.name.label("category_name")
-        )
-        .join(Category, Expense.category_id == Category.id)
-        .filter(
-            Expense.user_id == current_user.id,
-            (
-                Expense.description.ilike(f"%{keyword}%") |
-                Category.name.ilike(f"%{keyword}%")
-            )
-        )
-        .order_by(desc(Expense.date), desc(Expense.id))
-        .all()
-    )
-
-    if not expenses:
-        logger.warning(f"No expenses found for user '{current_user.username}' (ID: {current_user.id}) with keyword '{keyword}'.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found matching the keyword.")
-
-    return [
-        {
-            "id": expense.id,
-            "amount": expense.amount,
-            "description": expense.description,
-            "date": expense.date,
-            "category_id": expense.category_id,
-            "category_name": expense.category_name
-        }
-        for expense in expenses
-    ]
