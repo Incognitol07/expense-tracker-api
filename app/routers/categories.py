@@ -149,7 +149,7 @@ def update_category(category_id: int, category_data: CategoryUpdate, db: Session
     return category
 
 # Route to delete a category by its ID
-@router.delete("/{category_id}")
+@router.delete("/id/{category_id}")
 def delete_category(category_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Deletes a category by its ID for the authenticated user.
@@ -179,4 +179,37 @@ def delete_category(category_id: int, db: Session = Depends(get_db), user: User 
     db.commit()  # Commit the deletion to the database
     
     logger.info(f"Category {category_id} deleted successfully for user '{user.username}' (ID: {user.id}).")
+    return { "message" : "Deleted successfully" }
+
+# Route to delete a category by its name
+@router.delete("/name/{category_name}")
+def delete_category(category_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """
+    Deletes a category by its ID for the authenticated user.
+
+    Args:
+        category_id (int): The ID of the category to delete.
+        db (Session): The database session to interact with the database.
+        user (User): The currently authenticated user.
+
+    Returns:
+        dict: A message indicating successful deletion.
+    
+    Raises:
+        HTTPException: If the category is not found or does not belong to the user.
+    """
+    category = db.query(Category).filter(Category.name == category_name, Category.user_id == user.id).first()
+    
+    if not category:
+        logger.error(f"Category {category_name} not found for user '{user.username}' (ID: {user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    
+    if category.name == "Debt":
+        logger.error(f"Attempt to delete restricted category 'Debt' by user '{user.username}' (ID: {user.id}).")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete this category")
+    
+    db.delete(category)  # Delete the category from the session
+    db.commit()  # Commit the deletion to the database
+    
+    logger.info(f"Category {category_name} deleted successfully for user '{user.username}' (ID: {user.id}).")
     return { "message" : "Deleted successfully" }
