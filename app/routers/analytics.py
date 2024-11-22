@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, timedelta
 from app.database import get_db
-from app.models import Expense, Budget, User
-from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend,DailyExpensesResponse, DailyExpense, DailyCategoryBreakdown, DailyOverview, DateRangeExpenses
+from app.models import Expense, Budget, User, Category
+from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend,DailyExpensesResponse, DailyCategoryBreakdown, DailyOverview, DateRangeExpenses, Adherence, BudgetAdherence
 from app.routers.auth import get_current_user
 from app.utils import logger
 
@@ -18,12 +18,15 @@ def get_expense_summary(db: Session = Depends(get_db), user: User = Depends(get_
     logger.info(f"Fetching analytics summary for user '{user.username}' (ID: {user.id}).")
     total_expenses = db.query(func.sum(Expense.amount)).filter(Expense.user_id == user.id).scalar() or 0.0
     expenses_by_category = [
-        CategorySummary(category_id=category_id, total=total)
+        CategorySummary(category_id=category_id, total=total, category_name="name")
         for category_id, total in db.query(Expense.category_id, func.sum(Expense.amount).label("total"))
             .filter(Expense.user_id == user.id)
             .group_by(Expense.category_id)
             .all()
     ]
+    for expenses in expenses_by_category:
+        expenses.category_name = db.query(Category.name).filter(Category.user_id == user.id, Category.id == expenses.category_id).first()[0]
+
     budget = db.query(Budget).filter(Budget.user_id == user.id, Budget.status == "active").first()
     budget_limit = budget.amount_limit if budget else 0
     adherence = (total_expenses / budget_limit) * 100 if budget_limit else None
@@ -41,12 +44,14 @@ def get_monthly_breakdown(db: Session = Depends(get_db), user: User = Depends(ge
     logger.info(f"Fetching monthly expense breakdown for user '{user.username}' (ID: {user.id}).")
     current_month = date.today().month
     monthly_expenses = [
-        CategorySummary(category_id=category_id, total=total)
+        CategorySummary(category_id=category_id, total=total, category_name="name")
         for category_id, total in db.query(Expense.category_id, func.sum(Expense.amount).label("total"))
             .filter(Expense.user_id == user.id, func.extract('month', Expense.date) == current_month)
             .group_by(Expense.category_id)
             .all()
     ]
+    for expenses in monthly_expenses:
+        expenses.category_name = db.query(Category.name).filter(Category.user_id == user.id, Category.id == expenses.category_id).first()[0]
     logger.info(f"Monthly expense breakdown successfully generated for user '{user.username}' (ID: {user.id}).")
     return MonthlyBreakdown(month=current_month, breakdown=monthly_expenses)
 
@@ -78,12 +83,14 @@ def get_weekly_breakdown(db: Session = Depends(get_db), user: User = Depends(get
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())
     weekly_expenses = [
-        CategorySummary(category_id=category_id, total=total)
+        CategorySummary(category_id=category_id, total=total, category_name="name")
         for category_id, total in db.query(Expense.category_id, func.sum(Expense.amount).label("total"))
             .filter(Expense.user_id == user.id, Expense.date >= start_of_week)
             .group_by(Expense.category_id)
             .all()
     ]
+    for expenses in weekly_expenses:
+        expenses.category_name = db.query(Category.name).filter(Category.user_id == user.id, Category.id == expenses.category_id).first()[0]
     logger.info(f"Weekly expense breakdown successfully generated for user '{user.username}' (ID: {user.id}).")
     return WeeklyBreakdown(week_start=start_of_week, breakdown=weekly_expenses)
 
@@ -137,7 +144,7 @@ def export_expenses(format: str = "csv", db: Session = Depends(get_db), user: Us
     
     logger.warning(f"Failed to export expenses for user '{user.username}' (ID: {user.id})")
 
-@router.get("/budget_adherence", response_model=dict)
+@router.get("/budget_adherence", response_model=BudgetAdherence)
 def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieve the user's budget adherence for monthly, quarterly, and yearly periods.
@@ -196,23 +203,20 @@ def get_budget_adherence(db: Session = Depends(get_db), user: User = Depends(get
     logger.info(f"Budget adherence data successfully retrieved for user '{user.username}' (ID: {user.id}).")
     # Return results as a dictionary
     return {
-        "monthly_adherence": ExpenseSummary(
+        "monthly_adherence": Adherence(
             total_expenses=monthly_expenses,
             budget_limit=monthly_limit,
-            adherence=monthly_adherence,
-            expenses_by_category=[]
+            adherence=monthly_adherence
         ),
-        "quarterly_adherence": ExpenseSummary(
+        "quarterly_adherence": Adherence(
             total_expenses=quarterly_expenses,
             budget_limit=quarterly_budget,
-            adherence=quarterly_adherence,
-            expenses_by_category=[]
+            adherence=quarterly_adherence
         ),
-        "yearly_adherence": ExpenseSummary(
+        "yearly_adherence": Adherence(
             total_expenses=yearly_expenses,
             budget_limit=yearly_budget,
-            adherence=yearly_adherence,
-            expenses_by_category=[]
+            adherence=yearly_adherence
         )
     }
 
@@ -238,20 +242,23 @@ def get_expense_summary_for_range(
     
     # Expenses by category for the date range
     expenses_by_category = [
-        CategorySummary(category_id=category_id, total=total)
+        CategorySummary(category_id=category_id, total=total, category_name="name")
         for category_id, total in db.query(Expense.category_id, func.sum(Expense.amount).label("total"))
             .filter(Expense.user_id == user.id, Expense.date >= start_date, Expense.date <= end_date)
             .group_by(Expense.category_id)
             .all()
     ]
-    
+
+    for expenses in expenses_by_category:
+        expenses.category_name = db.query(Category.name).filter(Category.user_id == user.id, Category.id == expenses.category_id).first()[0]
+
     overlapping_budgets = db.query(Budget).filter(
     Budget.user_id == user.id,
     Budget.status == "active",
     Budget.end_date >= start_date,
     Budget.start_date <= end_date
     ).count()
-    if overlapping_budgets > 0:
+    if overlapping_budgets > 1:
         raise HTTPException(status_code=400, detail="Overlapping active budgets are not allowed.")
     # Fetch user's budget for the date range
     budget = db.query(Budget).filter(
@@ -298,7 +305,8 @@ def get_daily_expenses_by_category(db: Session = Depends(get_db), user: User = D
     for expense_date, category_id, total in categorized_expenses:
         if expense_date not in daily_data:
             daily_data[expense_date] = []
-        daily_data[expense_date].append(CategorySummary(category_id=category_id, total=total))
+        category_name = db.query(Category.name).filter(Category.user_id == user.id, Category.id == category_id).first()[0]
+        daily_data[expense_date].append(CategorySummary(category_id=category_id, total=total, category_name=category_name))
     
     response = [
         DailyCategoryBreakdown(date=expense_date, categories=categories)
@@ -338,7 +346,7 @@ def get_daily_expenses_overview(db: Session = Depends(get_db), user: User = Depe
 
     # Format response
     daily_data = {str(expense_date): total for expense_date, total in daily_expenses}
-    average_daily_expense = total_monthly_expenses / len(daily_data) if daily_data else 0.0
+    average_daily_expense = (total_monthly_expenses / len(daily_data)).__round__(2) if daily_data else 0.0
 
     logger.info(f"Daily expenses overview successfully generated for user '{user.username}' (ID: {user.id}).")
     return {

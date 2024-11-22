@@ -14,6 +14,7 @@ class CategorySummary(BaseModel):
         total (float): The total amount spent in this category.
     """
     category_id: int
+    category_name: str
     total: float
 
 # Schema for summarizing total expenses, adherence to budget, and expenses by category
@@ -31,6 +32,21 @@ class ExpenseSummary(BaseModel):
     budget_limit: Optional[float]
     adherence: Optional[float]
     expenses_by_category: List[CategorySummary]
+
+# Schema for summarizing total expenses, adherence to budget
+class Adherence(BaseModel):
+    """
+    Schema for representing the overall summary of expenses, including budget adherence.
+    
+    Attributes:
+        total_expenses (float): Total expenses across all categories.
+        budget_limit (Optional[float]): The set budget limit for the user (if applicable).
+        adherence (Optional[float]): The adherence percentage to the budget (if applicable).
+        expenses_by_category (List[CategorySummary]): A list of category-wise expense summaries.
+    """
+    total_expenses: float
+    budget_limit: Optional[float]
+    adherence: Optional[float]
 
 class ExpensesResponse(BaseModel):
     id: int
@@ -129,6 +145,19 @@ class DailyOverview(BaseModel):
     total_monthly_expenses: float
     average_daily_expense: float
     daily_expenses: Dict[str, float]
+
+class BudgetAdherence(BaseModel):
+    """
+    Schema for summarizing daily expenses and overall metrics for the current month.
+    
+    Attributes:
+        total_monthly_expenses (float): Total expenses for the current month.
+        average_daily_expense (float): Average daily expense for the current month.
+        daily_expenses (Dict[str, float]): Dictionary of daily expenses keyed by date.
+    """
+    monthly_adherence: Adherence
+    quarterly_adherence: Adherence
+    yearly_adherence: Adherence
 
 
 # Schema for expenses within a date range
