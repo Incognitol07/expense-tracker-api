@@ -1,7 +1,7 @@
 # app/schemas/__init__.py
 
 from .auth import UserCreate, UserLogin, UserResponse  # Auth-related schemas
-from .admin import AdminCreate, AdminExpenses
+from .admin import AdminCreate, AdminExpenses, AdminUsers
 from .expenses import ExpenseCreate, ExpenseResponse, CategoryExpenseResponse, ExpenseUpdate  # Expense-related schemas
 from .categories import CategoryCreate, CategoryResponse  # Category-related schemas
 from .budget import BudgetCreate, BudgetResponse  # Budget-related schemas

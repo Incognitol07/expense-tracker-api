@@ -22,4 +22,10 @@ class AdminExpenses(BaseModel):
     username: str
 
 class AdminUsers(BaseModel):
-    
+    id: int 
+    username: str
+    email : EmailStr
+    created_at : str
+
+    class Config:
+        from_attributes=True

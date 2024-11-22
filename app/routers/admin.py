@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.admin import Admin
 from fastapi.security import OAuth2PasswordBearer
-from app.models import User, Expense, Budget, Alert, Category
-from app.schemas import UserLogin, UserResponse, AdminCreate, AdminExpenses
+from app.models import User, Expense, Category
+from app.schemas import UserLogin, AdminUsers, AdminCreate, AdminExpenses
 from app.utils.security import create_access_token, hash_password, verify_access_token, verify_password
 from app.config import settings
 from app.utils.logging_config import logger  # Import the logger
@@ -83,12 +83,10 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
     logger.info(f"New admin registered successfully: '{new_admin.username}' ({new_admin.email}).")
     return {"username": new_admin.username, "email": user.email, "message": "Admin registered successfully!"}
 
-@router.get("/users")
+@router.get("/users", response_model=list[AdminUsers])
 def get_all_users(db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)):
     users = db.query(User).all()
     logger.info(f"Admin '{admin.username}' retrieved all users.")
-    for user in users:
-        user.hashed_password = "Encrypted"
     return users
 
 @router.get("/expenses", response_model=list[AdminExpenses])
