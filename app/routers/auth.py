@@ -1,11 +1,12 @@
 # app/routers/auth.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Form, APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from datetime import timedelta
 from app.schemas import UserCreate, UserLogin, RegisterResponse, LoginResponse, MessageResponse
 from app.models import User, Category
-from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token
+from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.database import get_db
 from app.utils.logging_config import logger  # Import the logger
 
@@ -14,7 +15,7 @@ router = APIRouter()
 
 # OAuth2 scheme to retrieve token from Authorization header
 # The `tokenUrl` specifies the endpoint for obtaining a token
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # Dependency to retrieve and verify the current user
 # This will be used to secure routes that require user authentication
@@ -112,7 +113,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"username":user.username, "email":user.email, "message":"Registered successfully", "created_at":new_user.created_at}
 
 # Login route for user authentication and token generation
-@router.post("/login", response_model=LoginResponse)
+@router.post("/user/login", response_model=LoginResponse)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     """
     Logs in a user by verifying the username and password, and returning a JWT access token.
@@ -180,3 +181,18 @@ def delete_account(db: Session = Depends(get_db), user: User = Depends(get_curre
     db.commit()
     logger.info(f"User '{user.username}' deleted account (ID: {user_id}).")
     return {"message": f"Deleted account of '{target_user.username}' successfully"}
+
+# Login route for user authentication and token generation
+@router.post("/login")
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    db_user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not db_user or not verify_password(form_data.password, db_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials")
+
+    # Create and return the JWT access token
+    access_token = create_access_token(data={"sub": db_user.username})
+    return {"access_token": access_token, "token_type": "bearer", "username": db_user.username}

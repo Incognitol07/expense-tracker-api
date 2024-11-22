@@ -1,6 +1,6 @@
 # app/schemas/auth.py
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 
 # Base schema for user-related attributes
@@ -64,3 +64,21 @@ class LoginResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class OAuth2PasswordRequestForm(BaseModel):
+    """
+    Schema for OAuth2 Password Request form.
+
+    Used to validate user login credentials (username and password).
+    """
+    username: str = Field(..., title="Username", max_length=150, description="The username of the user.")
+    password: str = Field(..., title="Password", description="The password of the user.")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "username": "user123",
+                "password": "mypassword123"
+            }
+        }
