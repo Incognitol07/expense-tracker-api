@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from datetime import date
-from app.schemas import ExpenseCreate, ExpenseResponse, ExpenseUpdate, CategoryExpenseResponse
+from app.schemas import ExpenseCreate, ExpenseResponse, ExpenseUpdate, CategoryExpenseResponse, MessageResponse
 from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
@@ -223,7 +223,7 @@ def update_expense(
     return expense
 
 # Route to delete an expense by its ID
-@router.delete("/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{expense_id}", response_model=MessageResponse)
 def delete_expense(
     expense_id: int,
     db: Session = Depends(get_db),
@@ -252,7 +252,7 @@ def delete_expense(
     logger.info(f"Deleted expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
     db.delete(expense)  # Delete the expense from the session
     db.commit()  # Commit the deletion to the database
-    return None
+    return {"message": f"Expense '{expense.description}' of amount {expense.amount} deleted successfully"}
 
 
 @router.get("/filter", response_model=list[CategoryExpenseResponse])
