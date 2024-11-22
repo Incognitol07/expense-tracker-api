@@ -64,11 +64,11 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 @router.post("/register")
 async def register(user: AdminCreate, db: Session = Depends(get_db)):
     if user.master_key != settings.MASTER_KEY:
-        logger.warning(f"Invalid master key used during admin registration for username: {user.username}")
+        logger.warning(f"Invalid master key used during admin registration for username: '{user.username}' and email: {user.email}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect master key")
 
     if db.query(Admin).filter(Admin.username == user.username).first():
-        logger.warning(f"Attempt to register with an existing username: {user.username}")
+        logger.warning(f"Attempt to register with an existing username: '{user.username}'")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     
     if db.query(Admin).filter(Admin.email == user.email).first():
@@ -80,7 +80,7 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
     db.add(new_admin)
     db.commit()
     db.refresh(new_admin)
-    logger.info(f"New admin registered successfully: {new_admin.username} ({new_admin.email}).")
+    logger.info(f"New admin registered successfully: '{new_admin.username}' ({new_admin.email}).")
     return {"username": new_admin.username, "email": user.email, "message": "Admin registered successfully!"}
 
 @router.get("/users")
