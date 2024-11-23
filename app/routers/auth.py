@@ -136,6 +136,7 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
+    member_ids= db.query(GroupMember.id).filter(GroupMember.user_id==db_user.id).all()
     group_ids= db.query(GroupMember.group_id).filter(GroupMember.user_id==db_user.id).all()
     group_roles= db.query(GroupMember.role).filter(GroupMember.user_id==db_user.id).all()
     group_statuses= db.query(GroupMember.status).filter(GroupMember.user_id==db_user.id).all()
@@ -144,10 +145,11 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
         for group_id in group_ids:
             for group_role in group_roles:
                 for group_status in group_statuses:
-                    group_name= db.query(Group.name).filter(Group.id==group_id[0]).first()
-                    group_list.append({"group_id":group_id[0], "group_role":group_role[0], "group_name":group_name[0], "group_status":group_status[0]})
+                    for member_id in member_ids:
+                        group_name= db.query(Group.name).filter(Group.id==group_id[0]).first()
+                        group_list.append({"group_id":group_id[0], "group_role":group_role[0], "group_name":group_name[0], "member_status":group_status[0], "member_id":member_id[0]})
         logger.info(f"User '{db_user.username}' logged in successfully.")
-        return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id, "group_ids":group_list}
+        return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id, "groups":group_list}
     logger.info(f"User '{db_user.username}' logged in successfully.")
     return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id}
 
