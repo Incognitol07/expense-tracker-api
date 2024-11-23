@@ -8,7 +8,7 @@ class Group(Base):
     __tablename__ = "groups"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, unique=True,nullable=False)
     
     group_members = relationship("GroupMember", back_populates="group", cascade="all, delete")
     group_expenses = relationship("GroupExpense", back_populates="group", cascade="all, delete")

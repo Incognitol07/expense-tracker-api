@@ -39,7 +39,7 @@ async def check_thresholds(user_id: int):
         adherence = total_expenses - alert.threshold 
 
         # Condition to check if adherence exceeds the threshold
-        if adherence:
+        if adherence>0:
             logger.info(f"Threshold exceeded for user ID {user_id}. Exceedance amount: {adherence:.2f}")
             message = f"Your alert threshold of {alert.threshold} has been exceeded by {adherence:.2f}"
             

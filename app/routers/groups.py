@@ -13,6 +13,10 @@ router = APIRouter()
 # 1. Create a new group
 @router.post("/", response_model=Groups)
 def create_group(group: GroupCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing_group = db.query(Group).filter(Group.name==group.name).first()
+    if existing_group:
+        logger.warning(f"Attempt to create group with existing name '{group.name}' by '{current_user.username}'")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Group name already exists")
     new_group = Group(name=group.name)
     db.add(new_group)
     db.commit()
@@ -43,13 +47,13 @@ def add_member(group_id: int, member: GroupMemberCreate, db: Session = Depends(g
     # Look up the user by email
     user = db.query(User).filter(User.email == member.email).first()
     if not user:
-        logger.warning(f"User ID: {user.id} is already a member of group ID: {group.id}")
+        logger.warning(f"User with email '{member.email}' not found for group ID: {group.id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this email not found")
 
     # Check if user is already a member
     existing_member = db.query(GroupMember).filter(GroupMember.user_id == user.id, GroupMember.group_id == group_id).first()
     if existing_member:
-        logger.warning(f"User with email '{member.email}' not found for group ID: {group.id}")
+        logger.warning(f"User with email '{member.email}' is already a member of group ID: {group.id}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a member of the group")
 
     # Create new member with the user's ID
@@ -59,7 +63,7 @@ def add_member(group_id: int, member: GroupMemberCreate, db: Session = Depends(g
     db.refresh(new_member)
 
     # Send notification to new member
-    notification = Notification(user_id=user.id, message=f"You've been invited to join group '{group.name}'. Please accept or reject the invitation.")
+    notification = Notification(user_id=user.id, message=f"You've been invited to join group '{group.name}' by '{current_user.username}'. Please accept or reject the invitation.")
     db.add(notification)
     db.commit()
 
