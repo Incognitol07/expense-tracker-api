@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, DebtNotifications, GroupMemberResponse
+from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, GroupMemberResponse, MessageResponse
 from app.models import User, Group, GroupExpense, GroupMember, ExpenseSplit, Notification, DebtNotification
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -74,6 +74,35 @@ def add_member(group_id: int, member: GroupMemberCreate, db: Session = Depends(g
 
     logger.info(f"Added member ID: {new_member.user_id} to group ID: {group.id} successfully for user '{current_user.username}' (ID: {current_user.id})")
     return new_member
+
+# 2. Remove a member from a group
+@router.delete("/member/{group_id}", response_model=MessageResponse)
+def remove_member(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        logger.warning(f"Group ID: {group_id} not found for user '{current_user.username}' (ID: {current_user.id})")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    # Look up the user by email
+    user = db.query(User).filter(User.email == current_user.email).first()
+    if not user:
+        logger.warning(f"User with email '{current_user.email}' not found for group ID: {group.id}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this email not found")
+    # Check if user is already a member
+    existing_member = db.query(GroupMember).filter(GroupMember.user_id == user.id, GroupMember.group_id == group_id).first()
+    if not existing_member:
+        logger.warning(f"User with email '{current_user.email}' is not a member of group ID: {group.id}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is not a member of the group")
+
+    db.delete(existing_member)
+    db.commit()
+
+    if existing_member.role=="admin":
+        db.delete(group)
+        db.commit()
+
+    logger.info(f"Removed member ID: {current_user.id} from group ID: {group.id} successfully for user '{current_user.username}'")
+    return {"message":f"Deleted from group '{group.name}' successfully"}
 
 # 3. Approve or reject a group join request
 @router.put("/members/{member_id}", response_model=GroupMembers)

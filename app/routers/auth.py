@@ -113,7 +113,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
 
 # Login route for user authentication and token generation
 @router.post("/user/login", response_model=LoginResponse)
-async def login(user: UserLogin, db: Session = Depends(get_db)):
+async def user_login(user: UserLogin, db: Session = Depends(get_db)):
     """
     Logs in a user by verifying the username and password, and returning a JWT access token.
     
@@ -179,12 +179,20 @@ def delete_account(db: Session = Depends(get_db), user: User = Depends(get_curre
     Returns:
         dict: Success message confirming the user deletion.
     """
+    group_members= db.query(GroupMember).filter(GroupMember.user_id==user.id, GroupMember.role=="admin").all()
+    if group_members:
+        for group_member in group_members:
+            groups= db.query(Group).filter(Group.id==group_member.id).all()
+            for group in groups:
+                db.delete(group)
+                db.commit()
     user_id = db.query(User.id).filter(User.username == user.username, User.email==user.email).first()[0]
     target_user = db.query(User).filter(User.id == user_id).first()
 
     if not target_user:
         logger.warning(f"Attempted deletion of account with ID: {user_id} by user '{user.username}'.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
 
     db.delete(target_user)
     db.commit()
@@ -193,7 +201,7 @@ def delete_account(db: Session = Depends(get_db), user: User = Depends(get_curre
 
 # Login route for user authentication and token generation
 @router.post("/login")
-async def login(
+async def login_for_oauth_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
