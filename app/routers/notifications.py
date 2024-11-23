@@ -1,6 +1,7 @@
 # app/routers/notifications.py
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -16,7 +17,9 @@ router = APIRouter()
 @router.get("/", response_model=list[NotificationResponse])
 def get_notifications(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of notifications to return."),
+    offset: int = Query(0, ge=0, description="Number of notifications to skip."),
 ):
     """
     Fetches all unread notifications for the authenticated user.
@@ -34,7 +37,7 @@ def get_notifications(
     notifications = db.query(Notification).filter(
         Notification.user_id == current_user.id, 
         Notification.is_read == False
-    ).all()
+    ).order_by(desc(Notification.id)).offset(offset).limit(limit).all()
 
     # Log the fetched unread notifications
     logger.info(f"Fetched {len(notifications)} unread notifications for user '{current_user.username}' (ID: {current_user.id}).")
