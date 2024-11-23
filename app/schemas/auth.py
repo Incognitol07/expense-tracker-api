@@ -1,7 +1,7 @@
 # app/schemas/auth.py
 
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 # Base schema for user-related attributes
 class UserBase(BaseModel):
@@ -56,12 +56,17 @@ class RegisterResponse(BaseModel):
     email: EmailStr
     message: str
 
+class GroupResponse(BaseModel):
+    group_id: int
+    group_role: str
+    group_name: str
+
 class LoginResponse(BaseModel):
     access_token:str
     token_type: str
     username:str
     user_id: int
-    group_ids: Optional[list]=None
+    group_ids: List[GroupResponse]=None
 
 class MessageResponse(BaseModel):
     message: str
