@@ -67,6 +67,11 @@ def add_member(group_id: int, member: GroupMemberCreate, db: Session = Depends(g
     db.add(notification)
     db.commit()
 
+    # Send notification to admin
+    notification = Notification(user_id=current_user.id, message=f"You've invited '{user.username}' to join group '{group.name}'.")
+    db.add(notification)
+    db.commit()
+
     logger.info(f"Added member ID: {new_member.user_id} to group ID: {group.id} successfully for user '{current_user.username}' (ID: {current_user.id})")
     return new_member
 
