@@ -52,6 +52,8 @@ def send_debt_notification(
             )
             db.add(debt_notification)
             logger.info(f"Debt notification created for debtor {debtor_id} by user '{current_user.username}' (ID: {current_user.id})")
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't add debt for yourself")
 
 
     db.commit()
