@@ -1,11 +1,10 @@
 # app/routers/auth.py
 
-from fastapi import Form, APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from datetime import timedelta
 from app.schemas import UserCreate, UserLogin, RegisterResponse, LoginResponse, MessageResponse
-from app.models import User, Category
+from app.models import User, Category, GroupMember, Group
 from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token
 from app.database import get_db
 from app.utils.logging_config import logger
@@ -137,6 +136,16 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
+    group_ids= db.query(GroupMember.group_id).filter(GroupMember.user_id==db_user.id).all()
+    group_roles= db.query(GroupMember.role).filter(GroupMember.user_id==db_user.id).all()
+    if group_ids:
+        group_list=[]
+        for group_id in group_ids:
+            for group_role in group_roles:
+                group_name= db.query(Group.name).filter(Group.id==group_id[0]).first()
+                group_list.append({"group_id":group_id[0], "group_role":group_role[0], "group_name":group_name[0]})
+        logger.info(f"User '{db_user.username}' logged in successfully.")
+        return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id, "group_ids":group_list}
     logger.info(f"User '{db_user.username}' logged in successfully.")
     return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id}
 

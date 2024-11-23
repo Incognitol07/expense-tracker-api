@@ -61,6 +61,7 @@ class LoginResponse(BaseModel):
     token_type: str
     username:str
     user_id: int
+    group_ids: Optional[list]=None
 
 class MessageResponse(BaseModel):
     message: str
