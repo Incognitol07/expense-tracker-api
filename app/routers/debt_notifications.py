@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import DebtNotification, User, Expense, Category
+from app.models import DebtNotification, User, Expense, Category, Notification
 from app.routers.auth import get_current_user
 from app.schemas import DebtNotificationResponse, DebtNotificationStatus, MessageResponse
 from app.utils import logger
@@ -120,6 +120,10 @@ def respond_debt_notification(
     db.commit()
     background_tasks.add_task(check_budget, current_user.id)
     background_tasks.add_task(check_thresholds, current_user.id)
+    new_notification = Notification(message=f"Debt notification for {debt_notification.amount} responded successfully", user_id=current_user.id)
+    db.add(new_notification)
+    db.commit()
+    logger.info(f"Expense created for debtor '{current_user.username}' (ID: {current_user.id}) with amount {debt_notification.amount}")
     logger.info(f"Debt notification {debt_notification_id} responded successfully for user '{current_user.username}' (ID: {current_user.id})")
     return {"message": "Debt notification responded successfully"}
 
