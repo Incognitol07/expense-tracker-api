@@ -8,7 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from app.database import get_db, SessionLocal
 from app.routers.alerts import check_thresholds, check_budget  # Import the function to be scheduled
 from app.models import User, Budget, Notification
-from app.routers import auth_router, expenses_router, categories_router, budget_router, analytics_router, alerts_router, admin_router, notifications_router, groups_router, debt_router
+from app.routers import auth_router, expenses_router, categories_router, budget_router, analytics_router, alerts_router, admin_router, notifications_router, groups_router, debt_router, profile_router
 from app.database import engine, Base
 from app.config import settings  # Configuration settings (e.g., environment variables)
 from fastapi.middleware.cors import CORSMiddleware
@@ -121,6 +121,7 @@ app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 app.include_router(groups_router, prefix="/groups", tags=["Groups"])
 app.include_router(debt_router, prefix="/debts", tags=["Debts"])
+app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
 # CORS settings
 app.add_middleware(

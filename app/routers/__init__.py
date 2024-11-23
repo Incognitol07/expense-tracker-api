@@ -8,3 +8,4 @@ from .admin import router as admin_router
 from .groups import router as groups_router
 from .debt_notifications import router as debt_router
 from .notifications import router as notifications_router
+from .profile import router as profile_router

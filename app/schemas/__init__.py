@@ -10,3 +10,4 @@ from .groups import Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, Grou
 from .notifications import NotificationResponse
 from .debt_notifications import DebtNotifications, DebtNotificationCreate, DebtNotificationStatus, DebtNotificationResponse
 from .analytics import ExpenseSummary, ExportData, CategorySummary, MonthlyBreakdown, MonthlyTrend, WeeklyBreakdown, TrendData, ExpensesResponse, DailyCategoryBreakdown, DailyOverview,DailyExpense, DailyExpensesResponse, DateRangeExpenses, Adherence, BudgetAdherence
+from .profile import UserProfile, ProfileResponse
