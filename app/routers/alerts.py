@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db, SessionLocal
 from app.routers.auth import get_current_user
 from app.models import User, Alert, Expense, Budget
-from app.models.notification import Notification  # New import for notifications
+from app.models.notification import Notification
 from app.schemas.alerts import AlertCreate, AlertUpdate, AlertResponse
 from fastapi import BackgroundTasks
 from app.websocket_manager import manager

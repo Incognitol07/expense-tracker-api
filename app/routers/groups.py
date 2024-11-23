@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, DebtNotifications, GroupMemberResponse
-from app.models import User, Group, GroupExpense, GroupMember, ExpenseSplit, Notification, DebtNotification, Expense, Category
+from app.models import User, Group, GroupExpense, GroupMember, ExpenseSplit, Notification, DebtNotification
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.utils import logger

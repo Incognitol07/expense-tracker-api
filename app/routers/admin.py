@@ -10,7 +10,7 @@ from app.models import User, Expense, Category
 from app.schemas import UserLogin, AdminUsers, AdminCreate, AdminExpenses, RegisterResponse, LoginResponse, MessageResponse, LogResponse
 from app.utils.security import create_access_token, hash_password, verify_access_token, verify_password
 from app.config import settings
-from app.utils.logging_config import logger  # Import the logger
+from app.utils.logging_config import logger
 
 router = APIRouter()
 

@@ -7,7 +7,7 @@ from app.models.category import Category
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
-from app.utils import logger  # Import the logger
+from app.utils import logger
 
 # Create an instance of APIRouter for category-related routes
 router = APIRouter()

@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.schemas import UserCreate, UserLogin, RegisterResponse, LoginResponse, MessageResponse
 from app.models import User, Category
-from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.utils.security import hash_password, verify_password, create_access_token, verify_access_token
 from app.database import get_db
-from app.utils.logging_config import logger  # Import the logger
+from app.utils.logging_config import logger
 
 # Create an instance of APIRouter to handle authentication routes
 router = APIRouter()

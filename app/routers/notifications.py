@@ -7,7 +7,7 @@ from app.routers.auth import get_current_user
 from app.models.user import User
 from app.models.notification import Notification
 from app.schemas.notifications import NotificationResponse
-from app.utils import logger  # Import the logger
+from app.utils import logger
 
 # Create an instance of APIRouter for notification-related routes
 router = APIRouter()

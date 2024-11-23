@@ -60,8 +60,6 @@ def send_debt_notification(
     logger.info(f"Debt notifications sent successfully to user '{current_user.username}' (ID: {current_user.id})")
     return {"message": "Debt notifications sent successfully"}
 
-# app/routers/debt_notifications.py (continued)
-
 @router.post("/respond_debt_notification/{debt_notification_id}", response_model=MessageResponse)
 def respond_debt_notification(
     background_tasks: BackgroundTasks,
@@ -150,4 +148,3 @@ def get_debt_notifications(
 
     logger.info(f"Found {len(debt_notifications)} debt notifications for user '{current_user.username}' (ID: {current_user.id})")
     return debt_notifications
-
