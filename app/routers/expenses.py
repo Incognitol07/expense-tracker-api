@@ -172,42 +172,6 @@ def get_expense(
     logger.info(f"Retrieved expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
     return expense
 
-# Route to get a expenses by category
-@router.get("/category/{category_name}", response_model=list[ExpenseResponse])
-def get_expenses_by_category(
-    category_name: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Retrieves a specific expense by its ID for the authenticated user.
-
-    Args:
-        category_id (int): The ID of the expense to retrieve.
-        db (Session): The database session to interact with the database.
-        current_user (User): The currently authenticated user.
-
-    Returns:
-        ExpenseResponse: The expense with the specified ID.
-    
-    Raises:
-        HTTPException: If the expense is not found or does not belong to the user.
-    """
-    logger.info(f"Retrieving expenses in category '{category_name}' for user '{current_user.username}' (ID: {current_user.id}) ")
-    category = db.query(Category).filter(Category.user_id == current_user.id, Category.name == category_name).first()
-    if not category:
-        logger.warning(f"Failed to retrieve expenses: Category '{category_name}' not found for user '{current_user.username}' (ID: {current_user.id}) ")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-    
-    category_id = db.query(Category.id).filter(Category.name == category_name).first()[0]
-    
-    expenses = db.query(Expense).filter(Expense.category_id == category_id, Expense.user_id == current_user.id).all()
-    if not expenses:
-        logger.warning(f"Failed to retrieve expenses in category '{category_name}' for user '{current_user.username}' (ID: {current_user.id}) ")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
-    logger.info(f"Retrieved {len(expenses)} expenses in category '{category_name}' for user '{current_user.username}' (ID: {current_user.id}) ")
-    return expenses
-
 # Route to update an existing expense by its ID
 @router.put("/{expense_id}", response_model=ExpenseResponse)
 def update_expense(
