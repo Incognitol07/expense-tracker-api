@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, GroupMemberResponse, MessageResponse
+from app.schemas import GroupMemberStatus, Groups, GroupCreate, GroupExpenses, GroupExpenseCreate, GroupMembers, GroupMemberCreate, ExpenseSplitCreate, GroupMemberResponse, MessageResponse, GroupResponse
 from app.models import User, Group, GroupExpense, GroupMember, ExpenseSplit, Notification, DebtNotification
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -275,3 +275,75 @@ def remove_member_as_admin(
 
     # Return a success response
     return {"message": f"Member ID {member_id} was removed from group '{group.name}' by admin '{current_user.username}'."}
+
+@router.get("/", response_model=list[GroupResponse]|None)
+def get_group_details(db:Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    member_ids= db.query(GroupMember.id).filter(GroupMember.user_id==current_user.id).all()
+    group_ids= db.query(GroupMember.group_id).filter(GroupMember.user_id==current_user.id).all()
+    group_roles= db.query(GroupMember.role).filter(GroupMember.user_id==current_user.id).all()
+    group_statuses= db.query(GroupMember.status).filter(GroupMember.user_id==current_user.id).all()
+    if group_ids:
+        group_list=[]
+        for group_id in group_ids:
+            for group_role in group_roles:
+                for group_status in group_statuses:
+                    for member_id in member_ids:
+                        group_name= db.query(Group.name).filter(Group.id==group_id[0]).first()
+                        group_list.append({"group_id":group_id[0], "group_role":group_role[0], "group_name":group_name[0], "member_status":group_status[0], "member_id":member_id[0]})
+        logger.info(f"User '{current_user.username}' logged in successfully.")
+        return group_list
+    
+# 8. Get group details
+@router.get("/{group_id}/details", response_model=GroupResponse)
+def get_group_details(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Get details of a specific group, including members and expenses.
+    """
+    # Check if the group exists
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        logger.warning(f"Group ID: {group_id} not found for user '{current_user.username}' (ID: {current_user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    # Check if the current user is a member of the group
+    member = db.query(GroupMember).filter(
+        GroupMember.user_id == current_user.id,
+        GroupMember.group_id == group_id,
+        GroupMember.status == "active"
+    ).first()
+    if not member:
+        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not an active member of group ID: {group_id}.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not an active member of this group")
+
+    # Fetch all group members
+    members = db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
+
+    # Fetch all group expenses
+    expenses = db.query(GroupExpense).filter(GroupExpense.group_id == group_id).all()
+
+    # Build the response
+    group_details = {
+        "id": group.id,
+        "name": group.name,
+        "members": [
+            {
+                "id": member.id,
+                "user_id": member.user_id,
+                "role": member.role,
+                "status": member.status
+            }
+            for member in members
+        ],
+        "expenses": [
+            {
+                "id": expense.id,
+                "amount": expense.amount,
+                "description": expense.description,
+                "payer_id": expense.payer_id
+            }
+            for expense in expenses
+        ]
+    }
+
+    logger.info(f"Fetched details for group ID: {group_id} successfully for user '{current_user.username}' (ID: {current_user.id}).")
+    return group_details

@@ -112,7 +112,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"username":user.username, "email":user.email, "message":"Registered successfully", "created_at":new_user.created_at}
 
 # Login route for user authentication and token generation
-@router.post("/user/login", response_model=LoginResponse)
+@router.post("/user/login")
 async def user_login(user: UserLogin, db: Session = Depends(get_db)):
     """
     Logs in a user by verifying the username and password, and returning a JWT access token.
@@ -136,20 +136,6 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
 
     # Create and return the JWT access token
     access_token = create_access_token(data={"sub": db_user.username})
-    member_ids= db.query(GroupMember.id).filter(GroupMember.user_id==db_user.id).all()
-    group_ids= db.query(GroupMember.group_id).filter(GroupMember.user_id==db_user.id).all()
-    group_roles= db.query(GroupMember.role).filter(GroupMember.user_id==db_user.id).all()
-    group_statuses= db.query(GroupMember.status).filter(GroupMember.user_id==db_user.id).all()
-    if group_ids:
-        group_list=[]
-        for group_id in group_ids:
-            for group_role in group_roles:
-                for group_status in group_statuses:
-                    for member_id in member_ids:
-                        group_name= db.query(Group.name).filter(Group.id==group_id[0]).first()
-                        group_list.append({"group_id":group_id[0], "group_role":group_role[0], "group_name":group_name[0], "member_status":group_status[0], "member_id":member_id[0]})
-        logger.info(f"User '{db_user.username}' logged in successfully.")
-        return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id, "groups":group_list}
     logger.info(f"User '{db_user.username}' logged in successfully.")
     return {"access_token": access_token, "token_type": "bearer", "username":db_user.username, "user_id": db_user.id}
 

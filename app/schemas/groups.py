@@ -77,3 +77,10 @@ class ExpenseSplits(ExpenseSplitBase):
 
     class Config:
         from_attributes = True
+
+class GroupResponse(BaseModel):
+    group_id: Optional[int]
+    group_role: Optional[str]
+    group_name: Optional[str]
+    member_status: Optional[str]
+    member_id : Optional[int]

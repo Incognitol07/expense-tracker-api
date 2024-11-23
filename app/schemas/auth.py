@@ -56,19 +56,13 @@ class RegisterResponse(BaseModel):
     email: EmailStr
     message: str
 
-class GroupResponse(BaseModel):
-    group_id: int
-    group_role: str
-    group_name: str
-    member_status: str
-    member_id : int
+
 
 class LoginResponse(BaseModel):
     access_token:str
     token_type: str
     username:str
     user_id: int
-    groups: List[GroupResponse]=None
 
 class MessageResponse(BaseModel):
     message: str
