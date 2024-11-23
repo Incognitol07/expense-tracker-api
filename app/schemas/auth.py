@@ -60,6 +60,7 @@ class GroupResponse(BaseModel):
     group_id: int
     group_role: str
     group_name: str
+    group_status: str
 
 class LoginResponse(BaseModel):
     access_token:str
