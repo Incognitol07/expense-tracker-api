@@ -42,6 +42,7 @@ class GroupMembers(GroupMemberBase):
     id: int
     role: str  # "admin", "member"
     status: str  # "active", "pending", "rejected"
+    user_id:int
 
     class Config:
         from_attributes = True

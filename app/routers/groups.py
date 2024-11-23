@@ -107,7 +107,7 @@ def remove_member(group_id: int, db: Session = Depends(get_db), current_user: Us
 # 3. Approve or reject a group join request
 @router.put("/members/{member_id}", response_model=GroupMembers)
 def update_member_status(member_id: int, status_sent: GroupMemberStatus, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    member = db.query(GroupMember).filter(GroupMember.id == member_id).first()
+    member = db.query(GroupMember).filter(GroupMember.id == member_id, GroupMember.group_id==status_sent.group_id).first()
     
     if not member or member.status != "pending":
         logger.warning(f"Pending invitation not found or already processed for member ID: {member_id} for user '{current_user.username}' (ID: {current_user.id})")
@@ -138,8 +138,8 @@ def create_and_split_group_expense(
     # Ensure user is a member of the group
     member = db.query(GroupMember).filter_by(user_id=current_user.id, group_id=group_id, status="active").first()
     if not member:
-        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not a member of group ID: {group_id}")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You must be a group member to add expenses")
+        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not an active member of group ID: {group_id}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You must be an active group member to add expenses")
 
     # Create the expense entry
     new_expense = GroupExpense(group_id=group_id, payer_id=current_user.id, amount=expense.amount, description=expense.description)
@@ -156,7 +156,7 @@ def create_and_split_group_expense(
     # Process each split
     expense_splits = []
     for split in splits:
-        group_member_check = db.query(GroupMember).filter(GroupMember.user_id == split.user_id, GroupMember.group_id == group_id).first()
+        group_member_check = db.query(GroupMember).filter(GroupMember.user_id == split.user_id, GroupMember.group_id == group_id, GroupMember.status=="active").first()
         if not group_member_check:
             logger.warning(f"User '{current_user.username}' (ID: {split.user_id}) is not a member of group ID: {group_id}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User {split.user_id} is not a member of the group")
@@ -214,10 +214,10 @@ def get_group_expenses(group_id: int, db: Session = Depends(get_db), current_use
 # 7. Get all members of a group
 @router.get("/{group_id}/members", response_model=list[GroupMembers])
 def get_group_members(group_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    member = db.query(GroupMember).filter_by(user_id=current_user.id, group_id=group_id).first()
+    member = db.query(GroupMember).filter(GroupMember.status=="active", GroupMember.user_id==current_user.id, GroupMember.group_id==group_id).first()
     if not member:
-        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not a member of group ID: {group_id}")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this group")
+        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not an active member of group ID: {group_id}")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not an active member of this group")
 
     members = db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
 
