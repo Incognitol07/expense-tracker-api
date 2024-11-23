@@ -223,3 +223,55 @@ def get_group_members(group_id: int, db: Session = Depends(get_db), current_user
 
     logger.info(f"Fetched all members for group ID: {group_id} successfully for user '{current_user.username}' (ID: {current_user.id})")
     return members
+
+@router.delete("/{group_id}/members/{member_id}", response_model=MessageResponse)
+def remove_member_as_admin(
+    group_id: int,
+    member_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Admin removes a member from the group.
+    """
+    # Verify the group exists
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        logger.warning(f"Group ID: {group_id} not found for user '{current_user.username}' (ID: {current_user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+
+    # Verify the current user is an admin in the group
+    admin_check = db.query(GroupMember).filter(
+        GroupMember.user_id == current_user.id,
+        GroupMember.group_id == group_id,
+        GroupMember.role == "admin",
+        GroupMember.status == "active",
+    ).first()
+    if not admin_check:
+        logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) attempted to remove a member from group ID: {group_id} without admin privileges.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only group admins can remove members")
+
+    # Verify the member to be removed exists and is part of the group
+    member_to_remove = db.query(GroupMember).filter(
+        GroupMember.id == member_id,
+        GroupMember.group_id == group_id,
+        GroupMember.status == "active",
+    ).first()
+    if not member_to_remove:
+        logger.warning(f"Member ID: {member_id} not found in group ID: {group_id} by admin '{current_user.username}' (ID: {current_user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found in the group")
+
+    # Prevent removing another admin
+    if member_to_remove.role == "admin":
+        logger.warning(f"Admin '{current_user.username}' (ID: {current_user.id}) attempted to remove another admin (ID: {member_id}) from group ID: {group_id}.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot remove another admin from the group")
+
+    # Remove the member from the group
+    db.delete(member_to_remove)
+    db.commit()
+
+    # Log the successful removal
+    logger.info(f"Admin '{current_user.username}' (ID: {current_user.id}) successfully removed member ID: {member_id} from group ID: {group_id}.")
+
+    # Return a success response
+    return {"message": f"Member ID {member_id} was removed from group '{group.name}' by admin '{current_user.username}'."}
