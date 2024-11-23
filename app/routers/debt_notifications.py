@@ -1,12 +1,13 @@
 # app/routers/debt_notifications.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import DebtNotification, User, Expense, Category
 from app.routers.auth import get_current_user
 from app.schemas import DebtNotificationResponse, DebtNotificationStatus, MessageResponse
 from app.utils import logger
+from app.routers.alerts import check_thresholds, check_budget
 
 router = APIRouter()
 
@@ -61,6 +62,7 @@ def send_debt_notification(
 
 @router.post("/respond_debt_notification/{debt_notification_id}", response_model=MessageResponse)
 def respond_debt_notification(
+    background_tasks: BackgroundTasks,
     debt_notification_id: int,
     accept: bool,
     db: Session = Depends(get_db),
@@ -80,7 +82,7 @@ def respond_debt_notification(
         HTTPException: If the debt notification doesn't exist or is not for the current user.
     """
     logger.info(f"Responding to debt notification {debt_notification_id} with {'accept' if accept else 'reject'} by user '{current_user.username}' (ID: {current_user.id})")
-    debt_notification = db.query(DebtNotification).filter(DebtNotification.id == debt_notification_id).first()
+    debt_notification = db.query(DebtNotification).filter(DebtNotification.id == debt_notification_id, DebtNotification.status==False).first()
 
     if not debt_notification:
         logger.error(f"Debt notification {debt_notification_id} not found for user '{current_user.username}' (ID: {current_user.id})")
@@ -115,6 +117,8 @@ def respond_debt_notification(
         logger.info(f"Expense created for debtor '{current_user.username}' (ID: {current_user.id}) with amount {debt_notification.amount}")
 
     db.commit()
+    background_tasks.add_task(check_budget, current_user.id)
+    background_tasks.add_task(check_thresholds, current_user.id)
     logger.info(f"Debt notification {debt_notification_id} responded successfully for user '{current_user.username}' (ID: {current_user.id})")
     return {"message": "Debt notification responded successfully"}
 

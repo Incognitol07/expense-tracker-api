@@ -134,13 +134,13 @@ def create_and_split_group_expense(
         if split.user_id != current_user.id:
             debt_notification = DebtNotification(
                 amount=split.amount,
-                description=f"You owe {split.amount} for '{new_expense.description}'",
+                description=f"You owe '{current_user.username}' {split.amount} for '{new_expense.description}'",
                 debtor_id=split.user_id,
                 creditor_id=current_user.id
             )
             db.add(debt_notification)
 
-            notification = Notification(user_id=split.user_id, message=f"You owe {split.amount} for '{new_expense.description}'")
+            notification = Notification(user_id=split.user_id, message=f"You owe '{current_user.username}' {split.amount} for '{new_expense.description}'")
             db.add(notification)
 
     db.commit()
@@ -189,23 +189,3 @@ def get_group_members(group_id: int, db: Session = Depends(get_db), current_user
 
     logger.info(f"Fetched all members for group ID: {group_id} successfully for user '{current_user.username}' (ID: {current_user.id})")
     return members
-
-# Responding to debt notification with dynamic category assignment
-@router.put("/debt_notifications/{debt_notification_id}", response_model=DebtNotifications)
-def respond_to_debt_notification(debt_notification_id: int, accept: bool, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    debt_notification = db.query(DebtNotification).filter(DebtNotification.id == debt_notification_id).first()
-    
-    if not debt_notification:
-        logger.warning(f"Failed to retrieve debt notifications for user '{current_user.username}' (ID: {current_user.id})")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Debt notification not found")
-    
-    # Ensure the current user is the debtor in the notification
-    if debt_notification.debtor_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the debtor in this notification")
-
-    debt_notification.accepted = accept
-    db.commit()
-    db.refresh(debt_notification)
-
-    logger.info(f"Responded to debt notification ID: {debt_notification.id} for user '{current_user.username}' (ID: {current_user.id}) with {'accept' if accept else 'reject'}")
-    return debt_notification
