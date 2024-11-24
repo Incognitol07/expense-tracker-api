@@ -433,40 +433,6 @@ def get_group_expenses(
     )
     return expenses
 
-
-# 7. Get all members of a group
-@router.get("/{group_id}/members", response_model=list[GroupMembers])
-def get_group_members(
-    group_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    member = (
-        db.query(GroupMember)
-        .filter(
-            GroupMember.status == "active",
-            GroupMember.user_id == current_user.id,
-            GroupMember.group_id == group_id,
-        )
-        .first()
-    )
-    if not member:
-        logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) is not an active member of group ID: {group_id}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not an active member of this group",
-        )
-
-    members = db.query(GroupMember).filter(GroupMember.group_id == group_id, GroupMember.status!="rejected").all()
-
-    logger.info(
-        f"Fetched all members for group ID: {group_id} successfully for user '{current_user.username}' (ID: {current_user.id})"
-    )
-    return members
-
-
 @router.delete("/{group_id}/members/{member_id}", response_model=DetailResponse)
 def remove_member_as_manager(
     group_id: int,
