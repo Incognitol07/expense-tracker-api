@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from datetime import date
-from app.schemas import ExpenseCreate, ExpenseResponse, ExpenseUpdate, CategoryExpenseResponse, MessageResponse
+from app.schemas import (
+    ExpenseCreate,
+    ExpenseResponse,
+    ExpenseUpdate,
+    CategoryExpenseResponse,
+    DetailResponse,
+)
 from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
@@ -21,7 +27,7 @@ def create_expense(
     background_tasks: BackgroundTasks,
     expense: ExpenseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Creates a new expense for the authenticated user.
@@ -33,26 +39,40 @@ def create_expense(
 
     Returns:
         ExpenseResponse: The newly created expense.
-    
+
     Raises:
         HTTPException: If there is an issue with creating the expense.
     """
-    logger.info(f"Creating expense for user '{current_user.username}' (ID: {current_user.id}) ")
+    logger.info(
+        f"Creating expense for user '{current_user.username}' (ID: {current_user.id}) "
+    )
     # Check if the category_id exists in the category table
     category = db.query(Category).filter(Category.name == expense.category_name).first()
     if not category:
-        logger.warning(f"Failed to create expense: Category '{expense.category_name}' not found for user '{current_user.username}' (ID: {current_user.id}) ")
+        logger.warning(
+            f"Failed to create expense: Category '{expense.category_name}' not found for user '{current_user.username}' (ID: {current_user.id}) "
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Please create the provided category first"
+            detail="Please create the provided category first",
         )
-    category_id = db.query(Category.id).filter(Category.name == expense.category_name).first()[0]
+    category_id = (
+        db.query(Category.id).filter(Category.name == expense.category_name).first()[0]
+    )
     # Proceed with creating the expense if category_id is valid
-    new_expense = Expense(amount=expense.amount, description=expense.description,date=expense.date, user_id=current_user.id, category_id=category_id)
+    new_expense = Expense(
+        amount=expense.amount,
+        description=expense.description,
+        date=expense.date,
+        user_id=current_user.id,
+        category_id=category_id,
+    )
     db.add(new_expense)  # Add the new expense to the session
     db.commit()  # Commit the transaction to the database
     db.refresh(new_expense)  # Refresh to get the latest state of the expense
-    logger.info(f"Created expense ID: {new_expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
+    logger.info(
+        f"Created expense ID: {new_expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
+    )
     background_tasks.add_task(check_budget, current_user.id)
     background_tasks.add_task(check_thresholds, current_user.id)
     return new_expense
@@ -63,7 +83,9 @@ def create_expense(
 def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of expenses to return."),
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of expenses to return."
+    ),
     offset: int = Query(0, ge=0, description="Number of expenses to skip."),
     start_date: date = Query(None, description="Start date for filtering expenses."),
     end_date: date = Query(None, description="End date for filtering expenses."),
@@ -88,8 +110,10 @@ def get_expenses(
     Returns:
         list[CategoryExpenseResponse]: List of retrieved, filtered, or searched expenses.
     """
-    logger.info(f"Fetching expenses for user '{current_user.username}' (ID: {current_user.id}) with query parameters.")
-    
+    logger.info(
+        f"Fetching expenses for user '{current_user.username}' (ID: {current_user.id}) with query parameters."
+    )
+
     # Base query with joins and user-specific filtering
     query = (
         db.query(
@@ -98,7 +122,7 @@ def get_expenses(
             Expense.description,
             Expense.date,
             Expense.category_id,
-            Category.name.label("category_name")
+            Category.name.label("category_name"),
         )
         .join(Category, Expense.category_id == Category.id)
         .filter(Expense.user_id == current_user.id)
@@ -115,8 +139,8 @@ def get_expenses(
         query = query.filter(Category.name.ilike(f"%{category_name}%"))
     if keyword:
         query = query.filter(
-            Expense.description.ilike(f"%{keyword}%") |
-            Category.name.ilike(f"%{keyword}%")
+            Expense.description.ilike(f"%{keyword}%")
+            | Category.name.ilike(f"%{keyword}%")
         )
 
     # Apply ordering, pagination, and execute query
@@ -128,8 +152,12 @@ def get_expenses(
     )
 
     if not expenses:
-        logger.warning(f"No expenses found for user '{current_user.username}' (ID: {current_user.id}) with applied filters or search.")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found.")
+        logger.warning(
+            f"No expenses found for user '{current_user.username}' (ID: {current_user.id}) with applied filters or search."
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found."
+        )
 
     return [
         {
@@ -143,12 +171,13 @@ def get_expenses(
         for expense in expenses
     ]
 
+
 # Route to get a specific expense by its ID
 @router.get("/id/{expense_id}", response_model=ExpenseResponse)
 def get_expense(
     expense_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Retrieves a specific expense by its ID for the authenticated user.
@@ -160,17 +189,30 @@ def get_expense(
 
     Returns:
         ExpenseResponse: The expense with the specified ID.
-    
+
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
-    logger.info(f"Retrieving expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
-    expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
+    logger.info(
+        f"Retrieving expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
+    )
+    expense = (
+        db.query(Expense)
+        .filter(Expense.id == expense_id, Expense.user_id == current_user.id)
+        .first()
+    )
     if not expense:
-        logger.warning(f"Failed to retrieve expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found")
-    logger.info(f"Retrieved expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
+        logger.warning(
+            f"Failed to retrieve expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found"
+        )
+    logger.info(
+        f"Retrieved expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
+    )
     return expense
+
 
 # Route to update an existing expense by its ID
 @router.put("/{expense_id}", response_model=ExpenseResponse)
@@ -178,7 +220,7 @@ def update_expense(
     expense_id: int,
     expense_update: ExpenseUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Updates a specific expense by its ID for the authenticated user.
@@ -191,31 +233,44 @@ def update_expense(
 
     Returns:
         ExpenseResponse: The updated expense.
-    
+
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
-    logger.info(f"Updating expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
-    expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
+    logger.info(
+        f"Updating expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
+    )
+    expense = (
+        db.query(Expense)
+        .filter(Expense.id == expense_id, Expense.user_id == current_user.id)
+        .first()
+    )
     if not expense:
-        logger.warning(f"Failed to update expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
-    
+        logger.warning(
+            f"Failed to update expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+        )
+
     # Update expense attributes with new values
     for key, value in expense_update.model_dump(exclude_unset=True).items():
         setattr(expense, key, value)
-    
+
     db.commit()  # Commit changes to the database
     db.refresh(expense)  # Refresh to get the updated state
-    logger.info(f"Updated expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
+    logger.info(
+        f"Updated expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
+    )
     return expense
 
+
 # Route to delete an expense by its ID
-@router.delete("/{expense_id}", response_model=MessageResponse)
+@router.delete("/{expense_id}", response_model=DetailResponse)
 def delete_expense(
     expense_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Deletes a specific expense by its ID for the authenticated user.
@@ -227,17 +282,31 @@ def delete_expense(
 
     Returns:
         None: Indicates that the expense has been successfully deleted.
-    
+
     Raises:
         HTTPException: If the expense is not found or does not belong to the user.
     """
-    logger.info(f"Deleting expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
-    expense = db.query(Expense).filter(Expense.id == expense_id, Expense.user_id == current_user.id).first()
+    logger.info(
+        f"Deleting expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
+    )
+    expense = (
+        db.query(Expense)
+        .filter(Expense.id == expense_id, Expense.user_id == current_user.id)
+        .first()
+    )
     if not expense:
-        logger.warning(f"Failed to delete expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) ")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
-    
-    logger.info(f"Deleted expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) ")
+        logger.warning(
+            f"Failed to delete expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+        )
+
+    logger.info(
+        f"Deleted expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
+    )
     db.delete(expense)  # Delete the expense from the session
     db.commit()  # Commit the deletion to the database
-    return {"message": f"Expense '{expense.description}' of amount {expense.amount} deleted successfully"}
+    return {
+        "detail": f"Expense '{expense.description}' of amount {expense.amount} deleted successfully"
+    }

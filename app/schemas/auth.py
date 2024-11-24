@@ -64,8 +64,8 @@ class LoginResponse(BaseModel):
     username:str
     user_id: int
 
-class MessageResponse(BaseModel):
-    message: str
+class DetailResponse(BaseModel):
+    detail: str
 
 
 class OAuth2PasswordRequestForm(BaseModel):
