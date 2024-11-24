@@ -85,3 +85,15 @@ class GroupResponse(BaseModel):
     group_name: Optional[str]
     member_status: Optional[str]
     member_id : Optional[int]
+
+class MemberDetailResponse(BaseModel):
+    member_id : int
+    user_id: int
+    username: str
+    role: str
+    status: str
+
+class GroupDetailResponse(BaseModel):
+    id: int
+    name: str
+    members: list[MemberDetailResponse]

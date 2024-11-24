@@ -40,6 +40,7 @@ from .groups import (
     ExpenseSplitCreate,
     GroupMemberResponse,
     GroupResponse,
+    GroupDetailResponse,
 )
 from .notifications import NotificationResponse
 from .debt_notifications import (

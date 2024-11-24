@@ -14,6 +14,7 @@ from app.schemas import (
     GroupMemberResponse,
     DetailResponse,
     GroupResponse,
+    GroupDetailResponse
 )
 from app.models import (
     User,
@@ -172,29 +173,19 @@ def remove_member(
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
         )
 
-    # Look up the user by email
-    user = db.query(User).filter(User.email == current_user.email).first()
-    if not user:
-        logger.warning(
-            f"User with email '{current_user.email}' not found for group ID: {group.id}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User with this email not found",
-        )
     # Check if user is already a member
     existing_member = (
         db.query(GroupMember)
-        .filter(GroupMember.user_id == user.id, GroupMember.group_id == group_id)
+        .filter(GroupMember.user_id == current_user.id, GroupMember.group_id == group_id, GroupMember.status=="active")
         .first()
     )
     if not existing_member:
         logger.warning(
-            f"User with email '{current_user.email}' is not a member of group ID: {group.id}"
+            f"User with email '{current_user.email}' is not an active member of group ID: {group.id}"
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a member of the group",
+            detail="User is not an active member of the group",
         )
 
     db.delete(existing_member)
@@ -275,16 +266,17 @@ def update_member_status(
     member.status = "active" if status_sent.status == "accepted" else "rejected"
     db.commit()
     db.refresh(member)
-    member = (
+    rejected_member = (
         db.query(GroupMember)
         .filter(
             GroupMember.user_id == current_user.id, GroupMember.group_id == status_sent.group_id, GroupMember.status=="rejected"
         )
         .first()
     )
-    db.delete(member)
-    db.commit()
-    logger.info(f"Removed member {member.id} from group_id {status_sent.group_id} ")
+    if rejected_member:
+        db.delete(rejected_member)
+        db.commit()
+        logger.info(f"Removed member {rejected_member.id} from group_id {status_sent.group_id} ")
 
     logger.info(
         f"Updated member status for user '{current_user.username}' (ID: {current_user.id}) to '{member.status}' in group ID: {member.group_id}"
@@ -560,7 +552,7 @@ def remove_member_as_manager(
 
 
 @router.get("/", response_model=list[GroupResponse] | None)
-def get_group_details(
+def get_all_groups_details(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     member_ids = (
@@ -602,14 +594,14 @@ def get_group_details(
 
 
 # 8. Get group details
-@router.get("/{group_id}/details", response_model=GroupResponse)
+@router.get("/{group_id}/details", response_model=GroupDetailResponse)
 def get_group_details(
     group_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Get details of a specific group, including members and expenses.
+    Get details of a specific group, including members and group name.
     """
     # Check if the group exists
     group = db.query(Group).filter(Group.id == group_id).first()
@@ -642,32 +634,22 @@ def get_group_details(
 
     # Fetch all group members
     members = db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
-
-    # Fetch all group expenses
-    expenses = db.query(GroupExpense).filter(GroupExpense.group_id == group_id).all()
+    member_list=[]
+    for member in members:
+        username=db.query(User.username).filter(User.id==member.user_id).first()[0]
+        member_list.append({
+                "member_id": member.id,
+                "user_id": member.user_id,
+                "username": username,
+                "role": member.role,
+                "status": member.status,
+            })
 
     # Build the response
     group_details = {
         "id": group.id,
         "name": group.name,
-        "members": [
-            {
-                "id": member.id,
-                "user_id": member.user_id,
-                "role": member.role,
-                "status": member.status,
-            }
-            for member in members
-        ],
-        "expenses": [
-            {
-                "id": expense.id,
-                "amount": expense.amount,
-                "description": expense.description,
-                "payer_id": expense.payer_id,
-            }
-            for expense in expenses
-        ],
+        "members": member_list
     }
 
     logger.info(
