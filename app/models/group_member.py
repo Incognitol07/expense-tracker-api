@@ -10,7 +10,7 @@ class GroupMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     group_id = Column(Integer, ForeignKey("groups.id"))
-    role = Column(String, default="member")  # e.g., 'admin'
+    role = Column(String, default="member")  # e.g., 'manager'
     status = Column(String, default="active")  # 'active' or 'pending'
 
     group = relationship("Group", back_populates="group_members")

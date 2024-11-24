@@ -51,9 +51,9 @@ def create_group(
     db.commit()
     db.refresh(new_group)
 
-    # Add current user as an admin of the group
+    # Add current user as a manager of the group
     group_member = GroupMember(
-        user_id=current_user.id, group_id=new_group.id, role="admin", status="active"
+        user_id=current_user.id, group_id=new_group.id, role="manager", status="active"
     )
     db.add(group_member)
     db.commit()
@@ -81,23 +81,23 @@ def add_member(
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
         )
 
-    # Check if current user is admin of the group
-    admin_check = (
+    # Check if current user is manager of the group
+    manager_check = (
         db.query(GroupMember)
         .filter(
             GroupMember.user_id == current_user.id,
             GroupMember.group_id == group_id,
-            GroupMember.role == "admin",
+            GroupMember.role == "manager",
         )
         .first()
     )
-    if not admin_check:
+    if not manager_check:
         logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) is not an admin in group ID: {group.id}"
+            f"User '{current_user.username}' (ID: {current_user.id}) is not a manager in group ID: {group.id}"
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only group admins can add members",
+            detail="Only group managers can add members",
         )
 
     # Look up the user by email
@@ -142,7 +142,7 @@ def add_member(
     db.add(notification)
     db.commit()
 
-    # Send notification to admin
+    # Send notification to manager
     notification = Notification(
         user_id=current_user.id,
         message=f"You've invited '{user.username}' to join group '{group.name}'.",
@@ -200,7 +200,7 @@ def remove_member(
     db.delete(existing_member)
     db.commit()
 
-    if existing_member.role == "admin":
+    if existing_member.role == "manager":
         db.delete(group)
         db.commit()
 
@@ -209,11 +209,38 @@ def remove_member(
     )
     return {"detail": f"Deleted from group '{group.name}' successfully"}
 
+@router.delete("/{group_id}", response_model=DetailResponse)
+def remove_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group does not exist")
+    existing_member = (
+        db.query(GroupMember)
+        .filter(GroupMember.user_id == current_user.id, GroupMember.group_id == group_id)
+        .first()
+    )
+    if not existing_member:
+        logger.warning(
+            f"User with email '{current_user.email}' is not a member of group ID: {group.id}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not a member of the group",
+        )
+    if existing_member.role == "manager":
+        db.delete(group)
+        db.commit()
+        return {"detail": f"Deleted group '{group.name}' successfully"}
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are not the manager of this group")
 
 # 3. Approve or reject a group join request
-@router.put("/members/{member_id}", response_model=GroupMembers)
+@router.put("/members", response_model=GroupMembers)
 def update_member_status(
-    member_id: int,
     status_sent: GroupMemberStatus,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -221,14 +248,14 @@ def update_member_status(
     member = (
         db.query(GroupMember)
         .filter(
-            GroupMember.id == member_id, GroupMember.group_id == status_sent.group_id
+            GroupMember.user_id == current_user.id, GroupMember.group_id == status_sent.group_id
         )
         .first()
     )
 
     if not member or member.status != "pending":
         logger.warning(
-            f"Pending invitation not found or already processed for member ID: {member_id} for user '{current_user.username}' (ID: {current_user.id})"
+            f"Pending invitation not found or already processed for group ID: {status_sent.group_id} for user '{current_user.username}' (ID: {current_user.id})"
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Pending invitation not found"
@@ -248,6 +275,16 @@ def update_member_status(
     member.status = "active" if status_sent.status == "accepted" else "rejected"
     db.commit()
     db.refresh(member)
+    member = (
+        db.query(GroupMember)
+        .filter(
+            GroupMember.user_id == current_user.id, GroupMember.group_id == status_sent.group_id, GroupMember.status=="rejected"
+        )
+        .first()
+    )
+    db.delete(member)
+    db.commit()
+    logger.info(f"Removed member {member.id} from group_id {status_sent.group_id} ")
 
     logger.info(
         f"Updated member status for user '{current_user.username}' (ID: {current_user.id}) to '{member.status}' in group ID: {member.group_id}"
@@ -388,10 +425,9 @@ def get_group_expenses(
             detail="You are not a member of this group",
         )
 
-    # Optional: Check user role to limit access (e.g., only admins can view full expense details)
-    if member.role != "admin":  # Assuming only admins can access all expenses
+    if member.role != "manager":
         logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) is not an admin in group ID: {group_id}"
+            f"User '{current_user.username}' (ID: {current_user.id}) is not a manager in group ID: {group_id}"
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -431,7 +467,7 @@ def get_group_members(
             detail="You are not an active member of this group",
         )
 
-    members = db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
+    members = db.query(GroupMember).filter(GroupMember.group_id == group_id, GroupMember.status!="rejected").all()
 
     logger.info(
         f"Fetched all members for group ID: {group_id} successfully for user '{current_user.username}' (ID: {current_user.id})"
@@ -440,14 +476,14 @@ def get_group_members(
 
 
 @router.delete("/{group_id}/members/{member_id}", response_model=DetailResponse)
-def remove_member_as_admin(
+def remove_member_as_manager(
     group_id: int,
     member_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Admin removes a member from the group.
+    Manager removes a member from the group.
     """
     # Verify the group exists
     group = db.query(Group).filter(Group.id == group_id).first()
@@ -459,24 +495,24 @@ def remove_member_as_admin(
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
         )
 
-    # Verify the current user is an admin in the group
-    admin_check = (
+    # Verify the current user is a manager in the group
+    manager_check = (
         db.query(GroupMember)
         .filter(
             GroupMember.user_id == current_user.id,
             GroupMember.group_id == group_id,
-            GroupMember.role == "admin",
+            GroupMember.role == "manager",
             GroupMember.status == "active",
         )
         .first()
     )
-    if not admin_check:
+    if not manager_check:
         logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) attempted to remove a member from group ID: {group_id} without admin privileges."
+            f"User '{current_user.username}' (ID: {current_user.id}) attempted to remove a member from group ID: {group_id} without manager privileges."
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only group admins can remove members",
+            detail="Only group managers can remove members",
         )
 
     # Verify the member to be removed exists and is part of the group
@@ -491,21 +527,21 @@ def remove_member_as_admin(
     )
     if not member_to_remove:
         logger.warning(
-            f"Member ID: {member_id} not found in group ID: {group_id} by admin '{current_user.username}' (ID: {current_user.id})."
+            f"Member ID: {member_id} not found in group ID: {group_id} by manager '{current_user.username}' (ID: {current_user.id})."
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Member not found in the group",
         )
 
-    # Prevent removing another admin
-    if member_to_remove.role == "admin":
+    # Prevent removing another manager
+    if member_to_remove.role == "manager":
         logger.warning(
-            f"Admin '{current_user.username}' (ID: {current_user.id}) attempted to remove another admin (ID: {member_id}) from group ID: {group_id}."
+            f"Manager '{current_user.username}' (ID: {current_user.id}) attempted to remove another manager (ID: {member_id}) from group ID: {group_id}."
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot remove another admin from the group",
+            detail="Cannot remove another manager from the group",
         )
 
     # Remove the member from the group
@@ -514,12 +550,12 @@ def remove_member_as_admin(
 
     # Log the successful removal
     logger.info(
-        f"Admin '{current_user.username}' (ID: {current_user.id}) successfully removed member ID: {member_id} from group ID: {group_id}."
+        f"Manager '{current_user.username}' (ID: {current_user.id}) successfully removed member ID: {member_id} from group ID: {group_id}."
     )
 
     # Return a success response
     return {
-        "detail": f"Member ID {member_id} was removed from group '{group.name}' by admin '{current_user.username}'."
+        "detail": f"Member ID {member_id} was removed from group '{group.name}' by manager '{current_user.username}'."
     }
 
 

@@ -25,6 +25,7 @@ class GroupMemberCreate(GroupMemberBase):
     pass
 
 class GroupMemberStatus(BaseModel):
+    group_id: int
     status: str = "active"  # "active", "pending", "rejected"
 
 class GroupMemberResponse(BaseModel):
@@ -40,7 +41,7 @@ class GroupMemberResponse(BaseModel):
 
 class GroupMembers(GroupMemberBase):
     id: int
-    role: str  # "admin", "member"
+    role: str  # "manager", "member"
     status: str  # "active", "pending", "rejected"
     user_id:int
 
