@@ -1,7 +1,7 @@
 # app/routers/admin.py
 
 import os
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.admin import Admin
@@ -143,9 +143,14 @@ def get_all_users(
 
 @router.get("/expenses", response_model=list[AdminExpenses])
 def get_all_expenses(
-    db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)
+    db: Session = Depends(get_db), 
+    admin: Admin = Depends(get_admin_user),
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of expenses to return."
+    ),
+    offset: int = Query(0, ge=0, description="Number of expenses to skip.")
 ):
-    expenses = db.query(Expense).all()
+    expenses = db.query(Expense).offset(offset).limit(limit).all()
     response = []
     for expense in expenses:
         username = db.query(User.username).filter(User.id == expense.user_id).first()[0]
@@ -168,7 +173,7 @@ def get_all_expenses(
                 "username": username,
             }
         )
-    logger.info(f"Admin '{admin.username}' retrieved all expenses.")
+    logger.info(f"Admin '{admin.username}' retrieved all expenses with (limit {limit}, offset {offset}).")
     return response
 
 
