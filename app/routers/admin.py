@@ -134,10 +134,13 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
 
 @router.get("/users", response_model=list[AdminUsers])
 def get_all_users(
-    db: Session = Depends(get_db), admin: Admin = Depends(get_admin_user)
+    db: Session = Depends(get_db), 
+    admin: Admin = Depends(get_admin_user),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of users to return."),
+    offset: int = Query(0, ge=0, description="Number of users to skip.")
 ):
-    users = db.query(User).all()
-    logger.info(f"Admin '{admin.username}' retrieved all users.")
+    users = db.query(User).offset(offset).limit(limit).all()
+    logger.info(f"Admin '{admin.username}' retrieved all users ( offset {offset}, limit {limit} ).")
     return users
 
 
@@ -173,7 +176,7 @@ def get_all_expenses(
                 "username": username,
             }
         )
-    logger.info(f"Admin '{admin.username}' retrieved all expenses with (limit {limit}, offset {offset}).")
+    logger.info(f"Admin '{admin.username}' retrieved all expenses ( offset {offset}, limit {limit}).")
     return response
 
 
