@@ -25,7 +25,7 @@ class Notification(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     message = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
-    created_at = Column(String, default=datetime.now().strftime("%d-%m-%Y %H:%M:%S %p"))
+    created_at = Column(DateTime, default=datetime.now())
     
     # Relationships
     owner = relationship("User", back_populates="notifications")

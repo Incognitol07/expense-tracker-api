@@ -1,6 +1,6 @@
 # app/models/admin.py
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime
 from app.database import Base
 from datetime import datetime
 
@@ -20,4 +20,4 @@ class Admin(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    created_at = Column(String, default=datetime.now().strftime("%d-%m-%Y %H:%M:%S %p"))
+    created_at = Column(DateTime, default=datetime.now())

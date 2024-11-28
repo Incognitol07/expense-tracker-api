@@ -1,6 +1,6 @@
 # app/models/alert.py
 
-from sqlalchemy import Column, Integer, Float, ForeignKey, String
+from sqlalchemy import Column, Integer, Float, ForeignKey, String, DateTime
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -21,7 +21,7 @@ class Alert(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     threshold = Column(Float, nullable=False)
-    created_at = Column(String, default=datetime.now().strftime("%d-%m-%Y"), nullable=False)
+    created_at = Column(DateTime, default=datetime.now(), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
     
     # Relationships
