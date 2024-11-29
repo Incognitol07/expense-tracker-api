@@ -2,7 +2,12 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas import CategoryCreate, CategoryResponse, CategoryUpdate, DetailResponse
+from app.schemas import (
+    CategoryCreate, 
+    CategoryResponse, 
+    CategoryUpdate, 
+    DetailResponse
+)
 from app.models.category import Category
 from app.database import get_db
 from app.routers.auth import get_current_user

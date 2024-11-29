@@ -146,7 +146,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
 
 
 # Login route for user authentication and token generation
-@router.post("/user/login")
+@router.post("/user/login", response_model=LoginResponse)
 async def user_login(user: UserLogin, db: Session = Depends(get_db)):
     """
     Logs in a user by verifying the username and password, and returning a JWT access token.
