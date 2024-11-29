@@ -1,6 +1,7 @@
 # app/schemas/notifications.py
 
 from pydantic import BaseModel
+from datetime import datetime
 
 class NotificationResponse(BaseModel):
     """
@@ -15,7 +16,7 @@ class NotificationResponse(BaseModel):
     id: int
     message: str
     is_read: bool
-    created_at: str  # Timestamp when the notification was created
+    created_at: datetime
 
     class Config:
         from_attributes = True

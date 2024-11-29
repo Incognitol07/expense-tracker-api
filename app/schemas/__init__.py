@@ -65,5 +65,7 @@ from .analytics import (
     DateRangeExpenses,
     Adherence,
     BudgetAdherence,
+    ExpenseDetail,
+    BudgetExpenseMapping
 )
 from .profile import UserProfile, ProfileResponse

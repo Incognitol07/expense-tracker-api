@@ -7,7 +7,7 @@ from sqlalchemy import func
 from datetime import date, timedelta
 from app.database import get_db
 from app.models import Expense, Budget, User, Category
-from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend,DailyExpensesResponse, DailyCategoryBreakdown, DailyOverview, DateRangeExpenses, Adherence, BudgetAdherence
+from app.schemas import ExpenseSummary, MonthlyBreakdown, WeeklyBreakdown, TrendData, CategorySummary, MonthlyTrend,DailyExpensesResponse, DailyCategoryBreakdown, DailyOverview, DateRangeExpenses, Adherence, BudgetAdherence, ExpenseDetail, BudgetExpenseMapping
 from app.routers.auth import get_current_user
 from app.utils import logger
 
@@ -378,3 +378,69 @@ def get_expenses_for_date_range(
     # Return as a list of DateRangeExpenses objects
     logger.info(f"Daily expenses for the range {start_date} to {end_date} successfully retrieved for user '{user.username}' (ID: {user.id}).")
     return [DateRangeExpenses(date=expense_date, total=total) for expense_date, total in daily_expenses]
+
+@router.get("/budget_expense_mapping", response_model=list[BudgetExpenseMapping])
+def get_budget_expense_mapping(
+    db: Session = Depends(get_db), 
+    user: User = Depends(get_current_user)
+):
+    """
+    Retrieve expenses grouped by their corresponding budgets based on date ranges.
+    Assign each expense to the most recent budget (latest end_date) within its date range.
+    """
+    logger.info(f"Fetching budget-expense mapping for user '{user.username}' (ID: {user.id}).")
+    
+    # Fetch all budgets for the user, ordered by end_date ascending
+    budgets = db.query(Budget).filter(Budget.user_id == user.id).order_by(Budget.end_date.asc()).all()
+    
+    if not budgets:
+        logger.warning(f"No budgets found for user '{user.username}' (ID: {user.id}).")
+        raise HTTPException(status_code=404, detail="No budgets found.")
+    
+    # Fetch all expenses for the user
+    expenses = db.query(Expense).filter(Expense.user_id == user.id).all()
+
+    # Map expenses to the most recent budget range
+    expense_to_budget_map = {}
+    for expense in expenses:
+        for budget in budgets:
+            if budget.start_date <= expense.date <= budget.end_date:
+                # Assign the expense to the first matching budget (latest due to order_by)
+                expense_to_budget_map[expense.id] = budget.id
+                break
+
+    # Prepare the response by grouping expenses under their assigned budgets
+    budget_expense_mapping = []
+    for budget in budgets:
+        mapped_expenses = [
+            ExpenseDetail(
+                id=expense.id,
+                amount=expense.amount,
+                description=expense.description,
+                date=expense.date,
+                category_name=db.query(Category.name).filter(
+                    Category.id == expense.category_id, 
+                    Category.user_id == user.id
+                ).scalar()
+            )
+            for expense in expenses
+            if expense_to_budget_map.get(expense.id) == budget.id
+        ]
+        
+        # Calculate total expenses for this budget
+        total_expenses = sum(expense.amount for expense in mapped_expenses)
+        
+        budget_expense_mapping.append(
+            BudgetExpenseMapping(
+                budget_id=budget.id,
+                start_date=budget.start_date,
+                end_date=budget.end_date,
+                amount_limit=budget.amount_limit,
+                total_expenses=total_expenses,  # Add the total expenses here
+                expenses=mapped_expenses
+            )
+        )
+    
+    logger.info(f"Budget-expense mapping successfully generated for user '{user.username}' (ID: {user.id}).")
+    return budget_expense_mapping
+

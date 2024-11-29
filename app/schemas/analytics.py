@@ -192,3 +192,18 @@ class DailyExpensesResponse(BaseModel):
         expenses (List[DailyExpense]): A list of daily expenses with their dates and totals.
     """
     expenses: List[DailyExpense]
+
+class ExpenseDetail(BaseModel):
+    id: int
+    amount: float
+    description: str
+    date: date
+    category_name: str
+
+class BudgetExpenseMapping(BaseModel):
+    budget_id: int
+    start_date: date
+    end_date: date
+    amount_limit: float
+    total_expenses: float
+    expenses: List[ExpenseDetail]
