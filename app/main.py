@@ -13,7 +13,7 @@ from app.database import engine, Base
 from app.config import settings  # Configuration settings (e.g., environment variables)
 from fastapi.middleware.cors import CORSMiddleware
 from app.utils import logger
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Create the FastAPI application
 app = FastAPI(
@@ -40,6 +40,30 @@ async def websocket_notifications(websocket: WebSocket, user_id: int):
 
 # Initialize the scheduler
 scheduler = BackgroundScheduler()
+
+def delete_old_notifications():
+    """
+    Deletes notifications that are older than 30 days.
+    """
+    db = SessionLocal()
+    try:
+        # Calculate the threshold date
+        threshold_date = datetime.now() - timedelta(days=30)
+
+        # Query and delete notifications older than the threshold
+        deleted_count = db.query(Notification).filter(Notification.created_at < threshold_date).delete()
+        db.commit()
+
+        # Log the cleanup process
+        if deleted_count > 0:
+            logger.info(f"Deleted {deleted_count} notifications older than 30 days.")
+        else:
+            logger.info("No notifications older than 30 days to delete.")
+    except Exception as e:
+        logger.error(f"Error occurred while deleting old notifications: {e}")
+    finally:
+        db.close()
+
 
 def check_and_deactivate_expired_budgets():
     """
@@ -89,8 +113,12 @@ def start_scheduler():
     This function will start the scheduler and run the threshold check job for all users.
     """
     # Add the job to check expired budgets every 5 minutes
-    scheduler.add_job(check_and_deactivate_expired_budgets, IntervalTrigger(seconds=5))
+    scheduler.add_job(check_and_deactivate_expired_budgets, IntervalTrigger(minutes=5))
     scheduler.add_job(check_all_thresholds, IntervalTrigger(minutes=5))  # Run every 5 minutes
+
+    # Schedule the cleanup task for old notifications every day
+    scheduler.add_job(delete_old_notifications, IntervalTrigger(days=1))
+
     scheduler.start()
 
 def check_all_thresholds():
