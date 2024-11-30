@@ -1,86 +1,93 @@
 # app/routers/categories.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import date
+from calendar import monthrange
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.schemas import CategoryCreate, CategoryResponse, CategoryUpdate, DetailResponse
-from app.models.category import Category
+from app.models import Category, CategoryBudget
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
+from app.background_tasks import check_category_budget
 from app.utils import logger
 
 # Create an instance of APIRouter for category-related routes
 router = APIRouter()
 
-
-# Route to create a new category
+# Route to create a new category and automatically create a default category budget
 @router.post("/", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 def create_category(
     category: CategoryCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     """
-    Creates a new category for the authenticated user.
-
-    Args: \n
-        category (CategoryCreate): The category data provided by the user.
-        db (Session): The database session to interact with the database.
-        user (User): The currently authenticated user.
-
-    Returns:
-        CategoryResponse: The newly created category.
-
-    Raises:
-        HTTPException: If there is an issue with creating the category.
+    Creates a new category for the authenticated user and automatically creates a default category budget.
     """
 
     db_user = db.query(User).filter(User.email == user.email).first()
-    db_category_name = (
-        db.query(Category)
-        .filter(Category.user_id == user.id, Category.name == category.name)
-        .first()
-    )
-    db_category_description = (
-        db.query(Category)
-        .filter(
-            Category.user_id == user.id, Category.description == category.description
-        )
-        .first()
-    )
+
+    # Check for existing category name and description
+    db_category_name = db.query(Category).filter(Category.user_id == user.id, Category.name == category.name).first()
+    db_category_description = db.query(Category).filter(Category.user_id == user.id, Category.description == category.description).first()
 
     if db_category_name:
-        logger.warning(
-            f"Category name '{category.name}' already exists for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category name already exists"
-        )
+        logger.warning(f"Category name '{category.name}' already exists for user '{user.username}' (ID: {user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category name already exists")
 
     if db_category_description:
-        logger.warning(
-            f"Category description '{category.description}' already exists for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category description already exists",
-        )
+        logger.warning(f"Category description '{category.description}' already exists for user '{user.username}' (ID: {user.id}).")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category description already exists")
 
-    # Create a new category with the generated category_id
+    # Create the new category
     new_category = Category(
         name=category.name,
         description=category.description,
         user_id=db_user.id,
     )
+    db.add(new_category)
+    db.commit()
+    db.refresh(new_category)
 
-    db.add(new_category)  # Add the new category to the session
-    db.commit()  # Commit the changes to the database
-    db.refresh(new_category)  # Refresh to get the latest state of the category
+    # Generate default category budget for the current month
+    today = date.today()
+    start_date = today.replace(day=1)  # Start of current month
+    end_date = today.replace(day=monthrange(today.year, today.month)[1])  # End of current month
 
-    logger.info(
-        f"Category '{category.name}' created successfully for user '{user.username}' (ID: {user.id})."
-    )
+    # Check if a default budget exists for the category
+    existing_budget = db.query(CategoryBudget).filter(
+        CategoryBudget.category_id == new_category.id,
+        CategoryBudget.user_id == db_user.id,
+        CategoryBudget.status == "active",
+        CategoryBudget.start_date <= end_date,
+        CategoryBudget.end_date >= start_date,
+    ).first()
+
+    if existing_budget:
+        logger.warning(f"An active budget already exists for category '{category.name}' (ID: {new_category.id}).")
+    else:
+        # Create a new default budget
+        new_budget = CategoryBudget(
+            category_id=new_category.id,
+            amount_limit=0,
+            start_date=start_date,
+            end_date=end_date,
+            user_id=db_user.id
+        )
+        db.add(new_budget)
+        db.commit()
+        db.refresh(new_budget)
+        logger.info(f"Default budget created for category '{category.name}' with ID {new_budget.id}.")
+
+    background_tasks.add_task(check_category_budget, user.id)
+
+    logger.info(f"Category '{category.name}' created successfully for user '{user.username}' (ID: {user.id}).")
+
+    # Optionally, you can return both category and budget details in the response
     return new_category
+
 
 
 # Route to get all categories of the authenticated user

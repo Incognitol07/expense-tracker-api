@@ -12,7 +12,7 @@ def start_scheduler():
     # Add jobs to the scheduler
     scheduler.add_job(delete_old_notifications, IntervalTrigger(days=1))
     scheduler.add_job(check_and_deactivate_expired_budgets, IntervalTrigger(minutes=5))
-    scheduler.add_job(async_to_sync(check_all_thresholds), IntervalTrigger(seconds=5))
+    scheduler.add_job(async_to_sync(check_all_thresholds), IntervalTrigger(minutes=5))
 
     # Start the scheduler
     scheduler.start()

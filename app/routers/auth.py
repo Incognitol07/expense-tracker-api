@@ -1,5 +1,7 @@
 # app/routers/auth.py
 
+from datetime import date
+from calendar import monthrange
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -10,7 +12,13 @@ from app.schemas import (
     LoginResponse,
     DetailResponse,
 )
-from app.models import User, Category, GroupMember, Group
+from app.models import (
+    User, 
+    Category, 
+    GroupMember, 
+    Group,
+    CategoryBudget
+)
 from app.utils.security import (
     hash_password,
     verify_password,
@@ -133,6 +141,36 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_category)  # Add the new category to the session
     db.commit()  # Commit the changes to the database
     db.refresh(new_category)  # Refresh to get the latest state of the category
+
+    # Generate default category budget for the current month
+    today = date.today()
+    start_date = today.replace(day=1)  # Start of current month
+    end_date = today.replace(day=monthrange(today.year, today.month)[1])  # End of current month
+
+    # Check if a default budget exists for the category
+    existing_budget = db.query(CategoryBudget).filter(
+        CategoryBudget.category_id == new_category.id,
+        CategoryBudget.user_id == db_user.id,
+        CategoryBudget.status == "active",
+        CategoryBudget.start_date <= end_date,
+        CategoryBudget.end_date >= start_date,
+    ).first()
+
+    if existing_budget:
+        logger.warning(f"An active budget already exists for category '{new_category.name}' (ID: {new_category.id}).")
+    else:
+        # Create a new default budget
+        new_budget = CategoryBudget(
+            category_id=new_category.id,
+            amount_limit=0,
+            start_date=start_date,
+            end_date=end_date,
+            user_id=db_user.id
+        )
+        db.add(new_budget)
+        db.commit()
+        db.refresh(new_budget)
+        logger.info(f"Default budget created for category '{new_category.name}' with ID {new_budget.id}.")
 
     logger.info(
         f"New user registered successfully: {new_user.username} ({new_user.email})."
