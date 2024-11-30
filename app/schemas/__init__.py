@@ -21,11 +21,11 @@ from .categories import (
     CategoryUpdate,
 )  # Category-related schemas
 from .budget import (
-    MonthlyBudgetCreate,
-    MonthlyBudgetResponse,
-    MonthlyBudgetHistory,
-    MonthlyBudgetStatus,
-    MonthlyBudgetUpdate,
+    GeneralBudgetCreate,
+    GeneralBudgetResponse,
+    GeneralBudgetHistory,
+    GeneralBudgetStatus,
+    GeneralBudgetUpdate,
 )
 from .alerts import AlertResponse, AlertUpdate, AlertCreate
 from .groups import (
@@ -64,8 +64,8 @@ from .analytics import (
     DailyExpensesResponse,
     DateRangeExpenses,
     Adherence,
-    MonthlyBudgetAdherence,
+    GeneralBudgetAdherence,
     ExpenseDetail,
-    MonthlyBudgetExpenseMapping,
+    GeneralBudgetExpenseMapping,
 )
 from .profile import UserProfile, ProfileResponse

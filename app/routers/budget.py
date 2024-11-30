@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 from app.schemas import (
-    MonthlyBudgetCreate,
-    MonthlyBudgetUpdate,
-    MonthlyBudgetResponse,
-    MonthlyBudgetStatus,
-    MonthlyBudgetHistory,
+    GeneralBudgetCreate,
+    GeneralBudgetUpdate,
+    GeneralBudgetResponse,
+    GeneralBudgetStatus,
+    GeneralBudgetHistory,
     DetailResponse,
 )
-from app.models import MonthlyBudget, Notification
+from app.models import GeneralBudget, Notification
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models import User
@@ -24,11 +24,11 @@ router = APIRouter()
 
 # Route to set a new budget for the user
 @router.post(
-    "/", response_model=MonthlyBudgetResponse, status_code=status.HTTP_201_CREATED
+    "/", response_model=GeneralBudgetResponse, status_code=status.HTTP_201_CREATED
 )
 def set_budget(
     background_tasks: BackgroundTasks,
-    budget_data: MonthlyBudgetCreate,
+    budget_data: GeneralBudgetCreate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -36,7 +36,7 @@ def set_budget(
     Creates a new budget for the authenticated user.
 
     Args:
-        budget_data (MonthlyBudgetCreate): The budget data to create a new budget.
+        budget_data (GeneralBudgetCreate): The budget data to create a new budget.
         db (Session): The database session for interacting with the database.
         user (User): The authenticated user requesting to set the budget.
 
@@ -44,16 +44,16 @@ def set_budget(
         HTTPException: If a budget is already set for the user, suggesting to use the update route.
 
     Returns:
-        MonthlyBudgetResponse: The newly created budget.
+        GeneralBudgetResponse: The newly created budget.
     """
     # Check if the user already has a set budget
     existing_budget = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == user.id,
-            MonthlyBudget.status == "active",
-            MonthlyBudget.start_date <= budget_data.end_date,
-            MonthlyBudget.end_date >= budget_data.start_date,
+            GeneralBudget.user_id == user.id,
+            GeneralBudget.status == "active",
+            GeneralBudget.start_date <= budget_data.end_date,
+            GeneralBudget.end_date >= budget_data.start_date,
         )
         .first()
     )
@@ -67,7 +67,7 @@ def set_budget(
         )
 
     # Create and save the new budget
-    new_budget = MonthlyBudget(**budget_data.model_dump(), user_id=user.id)
+    new_budget = GeneralBudget(**budget_data.model_dump(), user_id=user.id)
     db.add(new_budget)
     db.commit()
     db.refresh(new_budget)
@@ -81,7 +81,7 @@ def set_budget(
 
 
 # Route to get the current budget of the user
-@router.get("/", response_model=MonthlyBudgetResponse)
+@router.get("/", response_model=GeneralBudgetResponse)
 def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves the current budget set by the authenticated user.
@@ -94,11 +94,11 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
         HTTPException: If no budget is set for the user.
 
     Returns:
-        MonthlyBudgetResponse: The user's current budget.
+        GeneralBudgetResponse: The user's current budget.
     """
     budget = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id, MonthlyBudget.status == "active")
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.status == "active")
         .first()
     )
     if not budget:
@@ -106,7 +106,7 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
             f"No active budget found for user '{user.username}' (ID: {user.id})."
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyBudget not set."
+            status_code=status.HTTP_404_NOT_FOUND, detail="GeneralBudget not set."
         )
     logger.info(
         f"Retrieved active budget for user '{user.username}' (ID: {user.id}) with amount {budget.amount_limit}."
@@ -116,10 +116,10 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
 
 
 # Route to update the user's existing budget
-@router.put("/", response_model=MonthlyBudgetResponse)
+@router.put("/", response_model=GeneralBudgetResponse)
 def update_budget(
     background_tasks: BackgroundTasks,
-    budget_data: MonthlyBudgetUpdate,
+    budget_data: GeneralBudgetUpdate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -129,8 +129,8 @@ def update_budget(
 
     # Check if the user has an existing budget
     budget = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id, MonthlyBudget.status == "active")
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.status == "active")
         .first()
     )
     if not budget:
@@ -138,17 +138,17 @@ def update_budget(
             f"No active budget found for user '{user.username}' (ID: {user.id}) to update."
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyBudget not set."
+            status_code=status.HTTP_404_NOT_FOUND, detail="GeneralBudget not set."
         )
 
     conflicting_budget = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == user.id,
-            MonthlyBudget.status == "active",
-            MonthlyBudget.id != budget.id,  # Exclude the current budget being updated
-            MonthlyBudget.start_date <= budget_data.end_date,
-            MonthlyBudget.end_date >= budget_data.start_date,
+            GeneralBudget.user_id == user.id,
+            GeneralBudget.status == "active",
+            GeneralBudget.id != budget.id,  # Exclude the current budget being updated
+            GeneralBudget.start_date <= budget_data.end_date,
+            GeneralBudget.end_date >= budget_data.start_date,
         )
         .first()
     )
@@ -180,14 +180,14 @@ def update_budget(
     db.refresh(budget)
     background_tasks.add_task(check_budget, user.id)
     logger.info(
-        f"MonthlyBudget updated for user '{user.username}' (ID: {user.id}) with new values."
+        f"GeneralBudget updated for user '{user.username}' (ID: {user.id}) with new values."
     )
     budget.created_at = budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budget
 
 
 # Route to get the current budget status for the user (remaining budget)
-@router.get("/status", response_model=MonthlyBudgetStatus)
+@router.get("/status", response_model=GeneralBudgetStatus)
 def get_budget_status(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
@@ -202,12 +202,12 @@ def get_budget_status(
         HTTPException: If no budget is set for the user.
 
     Returns:
-        MonthlyBudgetStatus: The remaining budget, start date, and end date.
+        GeneralBudgetStatus: The remaining budget, start date, and end date.
     """
     # Retrieve the user's current budget
     budget = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id, MonthlyBudget.status == "active")
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.status == "active")
         .first()
     )
     if not budget:
@@ -215,7 +215,7 @@ def get_budget_status(
             f"No active budget found for user '{user.username}' (ID: {user.id})."
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyBudget not set."
+            status_code=status.HTTP_404_NOT_FOUND, detail="GeneralBudget not set."
         )
 
     # Calculate the remaining budget based on expenses within the specified date range
@@ -227,9 +227,9 @@ def get_budget_status(
     remaining_amount = budget.amount_limit - sum(expenses)
 
     logger.info(
-        f"MonthlyBudget status successfully returned for user '{user.username}' (ID: {user.id})."
+        f"GeneralBudget status successfully returned for user '{user.username}' (ID: {user.id})."
     )
-    return MonthlyBudgetStatus(
+    return GeneralBudgetStatus(
         remaining_amount=remaining_amount,
         start_date=budget.start_date,
         end_date=budget.end_date,
@@ -237,7 +237,7 @@ def get_budget_status(
 
 
 # Route to get the history of all budgets for the user
-@router.get("/history", response_model=list[MonthlyBudgetHistory])
+@router.get("/history", response_model=list[GeneralBudgetHistory])
 def get_budget_history(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
@@ -249,11 +249,11 @@ def get_budget_history(
         user (User): The authenticated user whose budget history is to be fetched.
 
     Returns:
-        list[MonthlyBudgetHistory]: A list of all previous budgets for the user.
+        list[GeneralBudgetHistory]: A list of all previous budgets for the user.
     """
-    budgets = db.query(MonthlyBudget).filter(MonthlyBudget.user_id == user.id).all()
+    budgets = db.query(GeneralBudget).filter(GeneralBudget.user_id == user.id).all()
     logger.info(
-        f"MonthlyBudget history successfully returned for user '{user.username}' (ID: {user.id})."
+        f"GeneralBudget history successfully returned for user '{user.username}' (ID: {user.id})."
     )
     for budget in budgets:
         budget.created_at = budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
@@ -280,8 +280,8 @@ def deactivate_budget(
     """
     # Check if the user has an existing budget to delete
     budget = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id, MonthlyBudget.status == "active")
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.status == "active")
         .first()
     )
     if not budget:
@@ -289,7 +289,7 @@ def deactivate_budget(
             f"No active budget found for user '{user.username}' (ID: {user.id}) to update."
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyBudget not set."
+            status_code=status.HTTP_404_NOT_FOUND, detail="GeneralBudget not set."
         )
 
     db.query(Notification).filter(
@@ -336,16 +336,16 @@ def delete_budget(
     """
     # Check if the user has an existing budget to delete
     budget = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id, MonthlyBudget.id == budget_id)
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.id == budget_id)
         .first()
     )
     if not budget:
         logger.error(
-            f"MonthlyBudget not found for user '{user.username}' (ID: {user.id})."
+            f"GeneralBudget not found for user '{user.username}' (ID: {user.id})."
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="MonthlyBudget not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="GeneralBudget not found."
         )
     if budget.status != "active":
         logger.warning(

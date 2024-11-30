@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, timedelta
 from app.database import get_db
-from app.models import Expense, MonthlyBudget, User, Category
+from app.models import Expense, GeneralBudget, User, Category
 from app.schemas import (
     ExpenseSummary,
     MonthlyBreakdown,
@@ -19,9 +19,9 @@ from app.schemas import (
     DailyOverview,
     DateRangeExpenses,
     Adherence,
-    MonthlyBudgetAdherence,
+    GeneralBudgetAdherence,
     ExpenseDetail,
-    MonthlyBudgetExpenseMapping,
+    GeneralBudgetExpenseMapping,
 )
 from app.routers.auth import get_current_user
 from app.utils import logger
@@ -57,8 +57,8 @@ def get_expense_summary(
         )
 
     budget = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id, MonthlyBudget.status == "active")
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.status == "active")
         .first()
     )
     budget_limit = budget.amount_limit if budget else 0
@@ -265,7 +265,7 @@ def export_expenses(
     )
 
 
-@router.get("/budget_adherence", response_model=MonthlyBudgetAdherence)
+@router.get("/budget_adherence", response_model=GeneralBudgetAdherence)
 def get_budget_adherence(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
@@ -294,13 +294,13 @@ def get_budget_adherence(
         or 0.0
     )
     monthly_limit = (
-        db.query(func.sum(MonthlyBudget.amount_limit))
+        db.query(func.sum(GeneralBudget.amount_limit))
         .filter(
-            MonthlyBudget.user_id == user.id,
-            func.extract("month", MonthlyBudget.start_date) <= current_month,
-            func.extract("month", MonthlyBudget.end_date) >= current_month,
-            func.extract("year", MonthlyBudget.start_date) == current_year,
-            MonthlyBudget.status == "active",
+            GeneralBudget.user_id == user.id,
+            func.extract("month", GeneralBudget.start_date) <= current_month,
+            func.extract("month", GeneralBudget.end_date) >= current_month,
+            func.extract("year", GeneralBudget.start_date) == current_year,
+            GeneralBudget.status == "active",
         )
         .scalar()
         or 0.0
@@ -325,14 +325,14 @@ def get_budget_adherence(
         or 0.0
     )
     quarterly_budget = (
-        db.query(func.sum(MonthlyBudget.amount_limit))
+        db.query(func.sum(GeneralBudget.amount_limit))
         .filter(
-            MonthlyBudget.user_id == user.id,
-            func.extract("month", MonthlyBudget.start_date).between(
+            GeneralBudget.user_id == user.id,
+            func.extract("month", GeneralBudget.start_date).between(
                 quarter_start_month, quarter_start_month + 2
             ),
-            func.extract("year", MonthlyBudget.start_date) == current_year,
-            MonthlyBudget.status == "active",
+            func.extract("year", GeneralBudget.start_date) == current_year,
+            GeneralBudget.status == "active",
         )
         .scalar()
         or 0.0
@@ -352,11 +352,11 @@ def get_budget_adherence(
         or 0.0
     )
     yearly_budget = (
-        db.query(func.sum(MonthlyBudget.amount_limit))
+        db.query(func.sum(GeneralBudget.amount_limit))
         .filter(
-            MonthlyBudget.user_id == user.id,
-            func.extract("year", MonthlyBudget.start_date) == current_year,
-            MonthlyBudget.status == "active",
+            GeneralBudget.user_id == user.id,
+            func.extract("year", GeneralBudget.start_date) == current_year,
+            GeneralBudget.status == "active",
         )
         .scalar()
         or 0.0
@@ -366,7 +366,7 @@ def get_budget_adherence(
     )
 
     logger.info(
-        f"MonthlyBudget adherence data successfully retrieved for user '{user.username}' (ID: {user.id})."
+        f"GeneralBudget adherence data successfully retrieved for user '{user.username}' (ID: {user.id})."
     )
     # Return results as a dictionary
     return {
@@ -438,12 +438,12 @@ def get_expense_summary_for_range(
         )
 
     overlapping_budgets = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == user.id,
-            MonthlyBudget.status == "active",
-            MonthlyBudget.end_date >= start_date,
-            MonthlyBudget.start_date <= end_date,
+            GeneralBudget.user_id == user.id,
+            GeneralBudget.status == "active",
+            GeneralBudget.end_date >= start_date,
+            GeneralBudget.start_date <= end_date,
         )
         .count()
     )
@@ -453,12 +453,12 @@ def get_expense_summary_for_range(
         )
     # Fetch user's budget for the date range
     budget = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == user.id,
-            MonthlyBudget.start_date <= end_date,
-            MonthlyBudget.end_date >= start_date,
-            MonthlyBudget.status == "active",
+            GeneralBudget.user_id == user.id,
+            GeneralBudget.start_date <= end_date,
+            GeneralBudget.end_date >= start_date,
+            GeneralBudget.status == "active",
         )
         .first()
     )
@@ -467,7 +467,7 @@ def get_expense_summary_for_range(
     adherence = (total_expenses / budget_limit) * 100 if budget_limit else None
     if not budget_limit:
         logger.warning(
-            f"MonthlyBudget limit is zero or unavailable for user '{user.username}' (ID: {user.id}). Adherence cannot be calculated."
+            f"GeneralBudget limit is zero or unavailable for user '{user.username}' (ID: {user.id}). Adherence cannot be calculated."
         )
         adherence = 0
 
@@ -621,7 +621,7 @@ def get_expenses_for_date_range(
     ]
 
 
-@router.get("/budget_expense_mapping", response_model=list[MonthlyBudgetExpenseMapping])
+@router.get("/budget_expense_mapping", response_model=list[GeneralBudgetExpenseMapping])
 def get_budget_expense_mapping(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
@@ -635,9 +635,9 @@ def get_budget_expense_mapping(
 
     # Fetch all budgets for the user, ordered by end_date ascending
     budgets = (
-        db.query(MonthlyBudget)
-        .filter(MonthlyBudget.user_id == user.id)
-        .order_by(MonthlyBudget.end_date.asc())
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id)
+        .order_by(GeneralBudget.end_date.asc())
         .all()
     )
 
@@ -678,7 +678,7 @@ def get_budget_expense_mapping(
         total_expenses = sum(expense.amount for expense in mapped_expenses)
 
         budget_expense_mapping.append(
-            MonthlyBudgetExpenseMapping(
+            GeneralBudgetExpenseMapping(
                 budget_id=budget.id,
                 start_date=budget.start_date,
                 end_date=budget.end_date,
@@ -689,6 +689,6 @@ def get_budget_expense_mapping(
         )
 
     logger.info(
-        f"MonthlyBudget-expense mapping successfully generated for user '{user.username}' (ID: {user.id})."
+        f"GeneralBudget-expense mapping successfully generated for user '{user.username}' (ID: {user.id})."
     )
     return budget_expense_mapping

@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from datetime import date
 
 
-# Base schema for MonthlyBudget-related attributes
-class MonthlyBudgetBase(BaseModel):
+# Base schema for GeneralBudget-related attributes
+class GeneralBudgetBase(BaseModel):
     """
     Base schema for budget-related attributes. This serves as the foundation for creating or updating budgets.
 
@@ -20,28 +20,28 @@ class MonthlyBudgetBase(BaseModel):
     end_date: date
 
 
-# Schema for creating a new budget (inherits from MonthlyBudgetBase)
-class MonthlyBudgetCreate(MonthlyBudgetBase):
+# Schema for creating a new budget (inherits from GeneralBudgetBase)
+class GeneralBudgetCreate(GeneralBudgetBase):
     """
-    Schema for creating a new budget, extending the MonthlyBudgetBase schema.
-    Inherits all attributes from MonthlyBudgetBase.
+    Schema for creating a new budget, extending the GeneralBudgetBase schema.
+    Inherits all attributes from GeneralBudgetBase.
     """
 
     pass
 
 
-# Schema for updating an existing budget (inherits from MonthlyBudgetBase)
-class MonthlyBudgetUpdate(MonthlyBudgetBase):
+# Schema for updating an existing budget (inherits from GeneralBudgetBase)
+class GeneralBudgetUpdate(GeneralBudgetBase):
     """
-    Schema for updating an existing budget, extending the MonthlyBudgetBase schema.
-    Inherits all attributes from MonthlyBudgetBase.
+    Schema for updating an existing budget, extending the GeneralBudgetBase schema.
+    Inherits all attributes from GeneralBudgetBase.
     """
 
     pass
 
 
 # Schema for budget response (includes the budget ID)
-class MonthlyBudgetResponse(MonthlyBudgetBase):
+class GeneralBudgetResponse(GeneralBudgetBase):
     """
     Schema for returning a budget's details in the response, including the budget ID.
 
@@ -58,7 +58,7 @@ class MonthlyBudgetResponse(MonthlyBudgetBase):
 
 
 # Schema for displaying the current status of a budget (remaining amount and budget period)
-class MonthlyBudgetStatus(BaseModel):
+class GeneralBudgetStatus(BaseModel):
     """
     Schema for displaying the current status of a budget, including the remaining amount.
 
@@ -73,8 +73,8 @@ class MonthlyBudgetStatus(BaseModel):
     end_date: date
 
 
-# Schema for budget history (includes creation date and extends MonthlyBudgetResponse)
-class MonthlyBudgetHistory(MonthlyBudgetResponse):
+# Schema for budget history (includes creation date and extends GeneralBudgetResponse)
+class GeneralBudgetHistory(GeneralBudgetResponse):
     """
     Schema for budget history, including the created_at timestamp.
 

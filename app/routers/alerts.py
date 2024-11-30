@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db, SessionLocal
 from app.routers.auth import get_current_user
-from app.models import User, Alert, Expense, MonthlyBudget
+from app.models import User, Alert, Expense, GeneralBudget
 from app.models import Notification
 from app.schemas import AlertCreate, AlertUpdate, AlertResponse, DetailResponse
 from fastapi import BackgroundTasks
@@ -84,8 +84,8 @@ async def check_budget(user_id: int):
     try:
         logger.info(f"Initiating budget check for user ID: {user_id}")
         budget = (
-            db.query(MonthlyBudget)
-            .filter(MonthlyBudget.user_id == user_id, MonthlyBudget.status == "active")
+            db.query(GeneralBudget)
+            .filter(GeneralBudget.user_id == user_id, GeneralBudget.status == "active")
             .first()
         )
         if not budget:
@@ -115,7 +115,7 @@ async def check_budget(user_id: int):
         # Only send a notification if expenses exceed the current budget
         if remaining_amount < 0:
             logger.info(
-                f"MonthlyBudget exceeded for user ID {user_id}. Exceedance amount: {abs(remaining_amount)}"
+                f"GeneralBudget exceeded for user ID {user_id}. Exceedance amount: {abs(remaining_amount)}"
             )
             message = f"You've exceeded your budget of {budget.amount_limit} by {abs(remaining_amount)}."
             existing_notification = (
@@ -135,7 +135,7 @@ async def check_budget(user_id: int):
                 db.add(notification)
                 db.commit()
                 await manager.send_notification(user_id, message)
-            logger.info(f"MonthlyBudget check completed for user ID: {user_id}")
+            logger.info(f"GeneralBudget check completed for user ID: {user_id}")
     finally:
         db.close()
 
@@ -185,9 +185,9 @@ def create_alert(
         )
 
     active_budget = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == current_user.id, MonthlyBudget.status == "active"
+            GeneralBudget.user_id == current_user.id, GeneralBudget.status == "active"
         )
         .first()
     )
@@ -241,9 +241,9 @@ def get_alerts(
         f"Retrieved {len(alerts)} alerts for user '{current_user.username}' (ID: {current_user.id})"
     )
     active_budget = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == current_user.id, MonthlyBudget.status == "active"
+            GeneralBudget.user_id == current_user.id, GeneralBudget.status == "active"
         )
         .first()
     )
@@ -290,9 +290,9 @@ def update_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     active_budget = (
-        db.query(MonthlyBudget)
+        db.query(GeneralBudget)
         .filter(
-            MonthlyBudget.user_id == current_user.id, MonthlyBudget.status == "active"
+            GeneralBudget.user_id == current_user.id, GeneralBudget.status == "active"
         )
         .first()
     )

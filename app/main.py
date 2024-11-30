@@ -10,7 +10,7 @@ from app.routers.alerts import (
     check_thresholds,
     check_budget,
 )  # Import the function to be scheduled
-from app.models import User, MonthlyBudget, Notification
+from app.models import User, GeneralBudget, Notification
 from app.routers import (
     auth_router,
     expenses_router,
@@ -95,7 +95,7 @@ def check_and_deactivate_expired_budgets():
     db = SessionLocal()
     try:
         # Query all active budgets that haven't passed their 'end_date'
-        budgets = db.query(MonthlyBudget).filter(MonthlyBudget.status == "active").all()
+        budgets = db.query(GeneralBudget).filter(GeneralBudget.status == "active").all()
 
         for budget in budgets:
             if budget.end_date and budget.end_date < datetime.now().date():
@@ -103,7 +103,7 @@ def check_and_deactivate_expired_budgets():
                 budget.status = "deactivated"
                 db.commit()  # Commit the changes to the database
                 logger.info(
-                    f"MonthlyBudget (ID: {budget.id}) for user {budget.user_id} has been deactivated."
+                    f"GeneralBudget (ID: {budget.id}) for user {budget.user_id} has been deactivated."
                 )
 
                 # Send a notification to the user informing them that their budget was deactivated
@@ -177,7 +177,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(expenses_router, prefix="/expenses", tags=["Expenses"])
 app.include_router(categories_router, prefix="/categories", tags=["Categories"])
-app.include_router(budget_router, prefix="/budget", tags=["MonthlyBudget"])
+app.include_router(budget_router, prefix="/budget", tags=["GeneralBudget"])
 app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
 app.include_router(alerts_router, prefix="/alert", tags=["Alerts"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])

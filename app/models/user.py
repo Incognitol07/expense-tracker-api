@@ -30,7 +30,7 @@ class User(Base):
         "Expense", back_populates="owner", cascade="all, delete-orphan"
     )
     budgets = relationship(
-        "MonthlyBudget", back_populates="owner", cascade="all, delete-orphan"
+        "GeneralBudget", back_populates="owner", cascade="all, delete-orphan"
     )
     categories = relationship(
         "Category", back_populates="owner", cascade="all, delete-orphan"
