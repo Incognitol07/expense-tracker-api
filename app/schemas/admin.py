@@ -16,7 +16,7 @@ class AdminExpenses(BaseModel):
     date:date
     category_id:int
     category_name: str 
-    description:str
+    name:str
     amount : float
     user_id: int
     username: str

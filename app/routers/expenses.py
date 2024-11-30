@@ -62,7 +62,7 @@ def create_expense(
     # Proceed with creating the expense if category_id is valid
     new_expense = Expense(
         amount=expense.amount,
-        description=expense.description,
+        name=expense.name,
         date=expense.date,
         user_id=current_user.id,
         category_id=category_id,
@@ -89,9 +89,9 @@ def get_expenses(
     offset: int = Query(0, ge=0, description="Number of expenses to skip."),
     start_date: date = Query(None, description="Start date for filtering expenses."),
     end_date: date = Query(None, description="End date for filtering expenses."),
-    description: str = Query(None, description="Filter by expense description."),
-    category_name: str = Query(None, description="Filter by category name."),
-    keyword: str = Query(None, description="Keyword to search in expenses."),
+    name: str = Query(None, name="Filter by expense name."),
+    category_name: str = Query(None, name="Filter by category name."),
+    keyword: str = Query(None, name="Keyword to search in expenses."),
 ):
     """
     Retrieves, filters, and searches expenses for the authenticated user.
@@ -103,7 +103,7 @@ def get_expenses(
         offset (int): Number of expenses to skip.
         start_date (date): Start date for filtering.
         end_date (date): End date for filtering.
-        description (str): Filter by description.
+        name (str): Filter by name.
         category_name (str): Filter by category name.
         keyword (str): Keyword to search in expenses.
 
@@ -119,7 +119,7 @@ def get_expenses(
         db.query(
             Expense.id,
             Expense.amount,
-            Expense.description,
+            Expense.name,
             Expense.date,
             Expense.category_id,
             Category.name.label("category_name"),
@@ -133,14 +133,13 @@ def get_expenses(
         query = query.filter(Expense.date >= start_date)
     if end_date:
         query = query.filter(Expense.date <= end_date)
-    if description:
-        query = query.filter(Expense.description.ilike(f"%{description}%"))
+    if name:
+        query = query.filter(Expense.name.ilike(f"%{name}%"))
     if category_name:
         query = query.filter(Category.name.ilike(f"%{category_name}%"))
     if keyword:
         query = query.filter(
-            Expense.description.ilike(f"%{keyword}%")
-            | Category.name.ilike(f"%{keyword}%")
+            Expense.name.ilike(f"%{keyword}%") | Category.name.ilike(f"%{keyword}%")
         )
 
     # Apply ordering, pagination, and execute query
@@ -163,7 +162,7 @@ def get_expenses(
         {
             "id": expense.id,
             "amount": expense.amount,
-            "description": expense.description,
+            "name": expense.name,
             "date": expense.date,
             "category_id": expense.category_id,
             "category_name": expense.category_name,
@@ -308,5 +307,5 @@ def delete_expense(
     db.delete(expense)  # Delete the expense from the session
     db.commit()  # Commit the deletion to the database
     return {
-        "detail": f"Expense '{expense.description}' of amount {expense.amount} deleted successfully"
+        "detail": f"Expense '{expense.name}' of amount {expense.amount} deleted successfully"
     }

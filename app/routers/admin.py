@@ -134,24 +134,28 @@ async def register(user: AdminCreate, db: Session = Depends(get_db)):
 
 @router.get("/users", response_model=list[AdminUsers])
 def get_all_users(
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     admin: Admin = Depends(get_admin_user),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of users to return."),
-    offset: int = Query(0, ge=0, description="Number of users to skip.")
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of users to return."
+    ),
+    offset: int = Query(0, ge=0, description="Number of users to skip."),
 ):
     users = db.query(User).offset(offset).limit(limit).all()
-    logger.info(f"Admin '{admin.username}' retrieved all users ( offset {offset}, limit {limit} ).")
+    logger.info(
+        f"Admin '{admin.username}' retrieved all users ( offset {offset}, limit {limit} )."
+    )
     return users
 
 
 @router.get("/expenses", response_model=list[AdminExpenses])
 def get_all_expenses(
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     admin: Admin = Depends(get_admin_user),
     limit: int = Query(
         10, ge=1, le=100, description="Maximum number of expenses to return."
     ),
-    offset: int = Query(0, ge=0, description="Number of expenses to skip.")
+    offset: int = Query(0, ge=0, description="Number of expenses to skip."),
 ):
     expenses = db.query(Expense).offset(offset).limit(limit).all()
     response = []
@@ -170,13 +174,15 @@ def get_all_expenses(
                 "date": expense.date,
                 "category_id": expense.category_id,
                 "category_name": category_name,
-                "description": expense.description,
+                "name": expense.name,
                 "amount": expense.amount,
                 "user_id": expense.user_id,
                 "username": username,
             }
         )
-    logger.info(f"Admin '{admin.username}' retrieved all expenses ( offset {offset}, limit {limit}).")
+    logger.info(
+        f"Admin '{admin.username}' retrieved all expenses ( offset {offset}, limit {limit})."
+    )
     return response
 
 
