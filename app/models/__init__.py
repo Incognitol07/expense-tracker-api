@@ -1,7 +1,7 @@
 from .user import User
 from .expense import Expense
 from .category import Category
-from .budget import Budget
+from .budget import MonthlyBudget
 from .alert import Alert
 from .admin import Admin
 from .notification import Notification
@@ -9,4 +9,4 @@ from .expense_split import ExpenseSplit
 from .group import Group
 from .group_expense import GroupExpense
 from .group_member import GroupMember
-from .debt_notifications import DebtNotification 
+from .debt_notifications import DebtNotification

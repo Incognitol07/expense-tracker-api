@@ -166,7 +166,7 @@ class DailyOverview(BaseModel):
     daily_expenses: Dict[str, float]
 
 
-class BudgetAdherence(BaseModel):
+class MonthlyBudgetAdherence(BaseModel):
     """
     Schema for summarizing daily expenses and overall metrics for the current month.
 
@@ -227,7 +227,7 @@ class ExpenseDetail(BaseModel):
     category_name: str
 
 
-class BudgetExpenseMapping(BaseModel):
+class MonthlyBudgetExpenseMapping(BaseModel):
     budget_id: int
     start_date: date
     end_date: date

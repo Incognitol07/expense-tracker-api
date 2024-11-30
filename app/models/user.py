@@ -11,6 +11,7 @@ class User(Base):
     Represents a user in the system, who can have expenses, budgets, categories, alerts, notifications,
     and can participate in groups for shared expense tracking.
     """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -25,11 +26,25 @@ class User(Base):
     bio = Column(Text, nullable=True)
 
     # Relationships
-    expenses = relationship("Expense", back_populates="owner", cascade="all, delete-orphan")
-    budgets = relationship("Budget", back_populates="owner", cascade="all, delete-orphan")
-    categories = relationship("Category", back_populates="owner", cascade="all, delete-orphan")
+    expenses = relationship(
+        "Expense", back_populates="owner", cascade="all, delete-orphan"
+    )
+    budgets = relationship(
+        "MonthlyBudget", back_populates="owner", cascade="all, delete-orphan"
+    )
+    categories = relationship(
+        "Category", back_populates="owner", cascade="all, delete-orphan"
+    )
     alerts = relationship("Alert", back_populates="owner", cascade="all, delete-orphan")
-    notifications = relationship("Notification", back_populates="owner", cascade="all, delete-orphan")
-    group_members = relationship("GroupMember", back_populates="user", cascade="all, delete-orphan")
-    group_expenses = relationship("GroupExpense", back_populates="user", cascade="all, delete-orphan")
-    expense_splits = relationship("ExpenseSplit", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship(
+        "Notification", back_populates="owner", cascade="all, delete-orphan"
+    )
+    group_members = relationship(
+        "GroupMember", back_populates="user", cascade="all, delete-orphan"
+    )
+    group_expenses = relationship(
+        "GroupExpense", back_populates="user", cascade="all, delete-orphan"
+    )
+    expense_splits = relationship(
+        "ExpenseSplit", back_populates="user", cascade="all, delete-orphan"
+    )

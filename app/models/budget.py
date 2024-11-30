@@ -5,13 +5,14 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 
-class Budget(Base):
+
+class MonthlyBudget(Base):
     """
     Represents a budget set by a user, with a specific limit and date range.
 
     Attributes:
         id (Integer): Unique identifier for each budget record.
-        amount_limit (Float): Budget amount limit set by the user.
+        amount_limit (Float): MonthlyBudget amount limit set by the user.
         start_date (Date): Start date for the budget period.
         end_date (Date): End date for the budget period.
         user_id (Integer): Foreign key linking to the user associated with this budget.
@@ -20,8 +21,9 @@ class Budget(Base):
     Relationships:
         owner (User): Reference to the User who owns the budget, with a back-populated 'budgets' attribute.
     """
+
     __tablename__ = "budgets"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     amount_limit = Column(Float, nullable=False)
     start_date = Column(Date, nullable=False)
