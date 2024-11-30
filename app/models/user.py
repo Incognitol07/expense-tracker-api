@@ -38,7 +38,6 @@ class User(Base):
     categories = relationship(
         "Category", back_populates="owner", cascade="all, delete-orphan"
     )
-    alerts = relationship("Alert", back_populates="owner", cascade="all, delete-orphan")
     notifications = relationship(
         "Notification", back_populates="owner", cascade="all, delete-orphan"
     )

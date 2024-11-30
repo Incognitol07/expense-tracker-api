@@ -3,7 +3,6 @@ from .expense import Expense
 from .category import Category
 from .category_budget import CategoryBudget
 from .budget import GeneralBudget
-from .alert import Alert
 from .admin import Admin
 from .notification import Notification
 from .expense_split import ExpenseSplit

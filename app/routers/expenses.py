@@ -15,8 +15,7 @@ from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models import User
-from app.routers.alerts import check_budget
-from app.routers.category_budgets import check_category_budget
+from app.background_tasks import check_budget
 from app.utils import logger
 
 # Create an instance of APIRouter for expense-related routes

@@ -14,79 +14,11 @@ from app.models import CategoryBudget, Category, Notification, Expense
 from app.database import get_db, SessionLocal
 from app.routers.auth import get_current_user
 from app.models import User
+from app.background_tasks import check_category_budget
 from app.websocket_manager import manager
 from app.utils import logger
 
 router = APIRouter()
-
-
-# Background task to check category-specific budgets
-async def check_category_budget(user_id: int):
-    db = SessionLocal()
-    try:
-        logger.info(f"Initiating category budget check for user ID: {user_id}")
-        active_budgets = (
-            db.query(CategoryBudget)
-            .filter(CategoryBudget.user_id == user_id, CategoryBudget.status == "active")
-            .all()
-        )
-        if not active_budgets:
-            logger.warning(f"No active category budgets found for user ID: {user_id}")
-            return
-
-        categories = {budget.category_id: budget for budget in active_budgets}
-        user_expenses = (
-            db.query(Expense)
-            .filter(
-                Expense.user_id == user_id,
-                Expense.category_id.in_(categories.keys()),
-            )
-            .all()
-        )
-
-        category_totals = {}
-        for expense in user_expenses:
-            category_totals[expense.category_id] = (
-                category_totals.get(expense.category_id, 0) + expense.amount
-            )
-
-        for category_id, total_expense in category_totals.items():
-            budget = categories[category_id]
-            remaining_budget = budget.amount_limit - total_expense
-
-            logger.info(
-                f"Category {category_id}: Total expense = {total_expense}, Remaining budget = {remaining_budget}"
-            )
-
-            if remaining_budget < 0:
-                exceed_amount = abs(remaining_budget)
-                message = (
-                    f"You've exceeded your budget for category {budget.category_id} "
-                    f"by {exceed_amount:.2f}. Your limit was {budget.amount_limit}."
-                )
-
-                existing_notification = (
-                    db.query(Notification)
-                    .filter(
-                        Notification.user_id == user_id,
-                        Notification.message == message,
-                        Notification.is_read == False,
-                    )
-                    .first()
-                )
-                if not existing_notification:
-                    notification = Notification(user_id=user_id, message=message)
-                    db.add(notification)
-                    db.commit()
-                    db.refresh(notification)
-                    logger.info(f"Notification created: {notification.message}")
-                    manager.send_notification(user_id, message)
-        logger.info(f"Category budget check completed for user ID: {user_id}")
-    except Exception as e:
-        logger.error(f"Error in category budget check: {e}")
-    finally:
-        db.close()
-
 
 
 @router.post(
@@ -254,6 +186,12 @@ def modify_category_budget(
             detail="No active budget found for the specified category.",
         )
 
+    db.query(Notification).filter(
+        Notification.user_id == user.id,
+        Notification.message.ilike("%category%"),
+        Notification.is_read == False,
+    ).update({"is_read": True})
+    db.commit()
     for key, value in budget_data.model_dump(exclude_unset=True).items():
         setattr(budget, key, value)
 
@@ -311,6 +249,12 @@ def deactivate_category_budget(
             detail="No active budget found for the specified category.",
         )
 
+    db.query(Notification).filter(
+        Notification.user_id == user.id,
+        Notification.message.ilike("%category%"),
+        Notification.is_read == False,
+    ).update({"is_read": True})
+    db.commit()
     budget.status = "deactivated"
     db.commit()
     logger.info(

@@ -7,7 +7,7 @@ from app.models import DebtNotification, User, Expense, Category, Notification
 from app.routers.auth import get_current_user
 from app.schemas import DebtNotificationResponse, DebtNotificationStatus, DetailResponse
 from app.utils import logger
-from app.routers.alerts import check_budget
+from app.background_tasks import check_budget
 
 router = APIRouter()
 
