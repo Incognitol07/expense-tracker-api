@@ -225,8 +225,6 @@ def get_budget_status(
         if budget.start_date <= expense.date <= budget.end_date
     ]
     remaining_amount = budget.amount_limit - sum(expenses)
-    if remaining_amount < 0:
-        remaining_amount = 0
 
     logger.info(
         f"MonthlyBudget status successfully returned for user '{user.username}' (ID: {user.id})."
