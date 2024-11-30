@@ -217,8 +217,7 @@ def export_expenses(
             .filter(
                 Category.id == expense.category_id, Category.user_id == expense.user_id
             )
-            .first()[0],
-            "category_id": expense.category_id,
+            .first()[0]
         }
         for expense in expenses
     ]
