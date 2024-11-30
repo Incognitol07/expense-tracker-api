@@ -93,28 +93,6 @@ MASTER_KEY=master_key
    docker-compose down  
    ```  
 
-#### Using Pipenv (Virtual Environment)  
-1. **Install Pipenv**:  
-   ```bash  
-   pip install pipenv  
-   ```  
-
-2. **Install dependencies**:  
-   ```bash  
-   pipenv install --ignore-pipfile  
-   ```  
-
-3. **Activate the virtual environment**:  
-   ```bash  
-   pipenv shell  
-   ```  
-
-4. **Run the application**:  
-   ```bash  
-   uvicorn app.main:app --reload  
-   ```  
-   The app will be available at `http://127.0.0.1:8000`.  
-
 #### Without Virtual Environment  
 1. **Install dependencies**:  
    ```bash  
@@ -189,8 +167,6 @@ expense-tracker-api/
 │   ├── database.py          # Database connection and session handling
 │   └── config.py            # Configuration settings
 ├── requirements.txt         # Versions of installed packages
-├── Pipfile                  # Pipenv dependencies
-├── Pipfile.lock             # Locked dependency versions
 ├── docker-compose.yml       # Docker Compose configuration for the app and database
 ├── Dockerfile               # Dockerfile for building the web service image
 ├── .env                     # Environment variables
