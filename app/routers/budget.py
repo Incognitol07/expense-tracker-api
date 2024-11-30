@@ -35,7 +35,7 @@ def set_budget(
     """
     Creates a new budget for the authenticated user.
 
-    Args:
+    Args: \n
         budget_data (GeneralBudgetCreate): The budget data to create a new budget.
         db (Session): The database session for interacting with the database.
         user (User): The authenticated user requesting to set the budget.
@@ -86,7 +86,7 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
     """
     Retrieves the current budget set by the authenticated user.
 
-    Args:
+    Args: \n
         db (Session): The database session for querying the budget.
         user (User): The authenticated user whose budget is to be fetched.
 
@@ -194,7 +194,7 @@ def get_budget_status(
     """
     Retrieves the current status of the user's budget, including the remaining amount.
 
-    Args:
+    Args: \n
         db (Session): The database session for querying the budget and expenses.
         user (User): The authenticated user whose budget status is to be fetched.
 
@@ -244,7 +244,7 @@ def get_budget_history(
     """
     Retrieves the history of all budgets set by the authenticated user.
 
-    Args:
+    Args: \n
         db (Session): The database session for querying all budgets.
         user (User): The authenticated user whose budget history is to be fetched.
 
@@ -268,7 +268,7 @@ def deactivate_budget(
     """
     Deletes the currently set budget for the authenticated user.
 
-    Args:
+    Args: \n
         db (Session): The database session for querying and deleting the budget.
         user (User): The authenticated user requesting to delete their budget.
 
@@ -324,7 +324,7 @@ def delete_budget(
     """
     Deletes the currently set budget for the authenticated user.
 
-    Args:
+    Args: \n
         db (Session): The database session for querying and deleting the budget.
         user (User): The authenticated user requesting to delete their budget.
 

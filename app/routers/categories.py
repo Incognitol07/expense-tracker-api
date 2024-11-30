@@ -2,12 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas import (
-    CategoryCreate, 
-    CategoryResponse, 
-    CategoryUpdate, 
-    DetailResponse
-)
+from app.schemas import CategoryCreate, CategoryResponse, CategoryUpdate, DetailResponse
 from app.models.category import Category
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -28,7 +23,7 @@ def create_category(
     """
     Creates a new category for the authenticated user.
 
-    Args:
+    Args: \n
         category (CategoryCreate): The category data provided by the user.
         db (Session): The database session to interact with the database.
         user (User): The currently authenticated user.
@@ -96,7 +91,7 @@ def get_categories(
     """
     Retrieves all categories for the authenticated user.
 
-    Args:
+    Args: \n
         db (Session): The database session to interact with the database.
         user (User): The currently authenticated user.
 
@@ -131,7 +126,7 @@ def get_category_by_id(
     """
     Retrieves a specific category by its ID for the authenticated user.
 
-    Args:
+    Args: \n
         category_id (int): The ID of the category to retrieve.
         db (Session): The database session to interact with the database.
         user (User): The currently authenticated user.
@@ -173,7 +168,7 @@ def update_category_by_id(
     """
     Updates a category by its ID for the authenticated user.
 
-    Args:
+    Args: \n
         category_id (int): The ID of the category to update.
         category_data (CategoryUpdate): The updated data for the category.
         db (Session): The database session to interact with the database.
@@ -223,7 +218,7 @@ def update_category_by_name(
     """
     Updates a category by its name for the authenticated user.
 
-    Args:
+    Args: \n
         category_name (str): The name of the category to update.
         category_data (CategoryUpdate): The updated data for the category.
         db (Session): The database session to interact with the database.
@@ -272,7 +267,7 @@ def delete_category_by_id(
     """
     Deletes a category by its ID for the authenticated user.
 
-    Args:
+    Args: \n
         category_id (int): The ID of the category to delete.
         db (Session): The database session to interact with the database.
         user (User): The currently authenticated user.
@@ -325,7 +320,7 @@ def delete_category_by_name(
     """
     Deletes a category by its name for the authenticated user.
 
-    Args:
+    Args: \n
         category_name (str): The name of the category to delete.
         db (Session): The database session to interact with the database.
         user (User): The currently authenticated user.

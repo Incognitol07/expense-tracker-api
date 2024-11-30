@@ -7,9 +7,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from app.database import get_db, SessionLocal
 from app.routers.alerts import (
-    check_thresholds,
     check_budget,
 )  # Import the function to be scheduled
+from app.routers.category_budgets import check_category_budget
 from app.models import User, GeneralBudget, Notification
 from app.routers import (
     auth_router,
@@ -23,12 +23,16 @@ from app.routers import (
     groups_router,
     debt_router,
     profile_router,
+    category_budgets_router
 )
 from app.database import engine, Base
 from app.config import settings  # Configuration settings (e.g., environment variables)
 from fastapi.middleware.cors import CORSMiddleware
 from app.utils import logger
 from datetime import datetime, timedelta
+from asgiref.sync import async_to_sync
+
+
 
 # Create the FastAPI application
 app = FastAPI(
@@ -146,9 +150,7 @@ def start_scheduler():
     """
     # Add the job to check expired budgets every 5 minutes
     scheduler.add_job(check_and_deactivate_expired_budgets, IntervalTrigger(minutes=5))
-    scheduler.add_job(
-        check_all_thresholds, IntervalTrigger(minutes=5)
-    )  # Run every 5 minutes
+    scheduler.add_job(async_to_sync(check_all_thresholds), IntervalTrigger(seconds=5)) # Run every 5 minutes
 
     # Schedule the cleanup task for old notifications every day
     scheduler.add_job(delete_old_notifications, IntervalTrigger(days=1))
@@ -156,16 +158,16 @@ def start_scheduler():
     scheduler.start()
 
 
-def check_all_thresholds():
+async def check_all_thresholds():
     """
     Checks budget and alert thresholds for all users in a single job.
     """
     db = SessionLocal()
     try:
         users = db.query(User).all()
-        for user in users:
-            check_thresholds(user.id)  # Check thresholds for each user
-            check_budget(user.id)  # Check budget for each user
+        for user in users: # Check thresholds for each user
+            await check_budget(user.id)  # Check budget for each user
+            await check_category_budget(user.id)
     finally:
         db.close()
 
@@ -177,13 +179,12 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(expenses_router, prefix="/expenses", tags=["Expenses"])
 app.include_router(categories_router, prefix="/categories", tags=["Categories"])
-app.include_router(budget_router, prefix="/budget", tags=["GeneralBudget"])
+app.include_router(category_budgets_router, prefix="/category_budgets", tags=["Category Budget"])
+app.include_router(budget_router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
 app.include_router(alerts_router, prefix="/alert", tags=["Alerts"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
-app.include_router(
-    notifications_router, prefix="/notifications", tags=["Notifications"]
-)
+app.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 app.include_router(groups_router, prefix="/groups", tags=["Groups"])
 app.include_router(debt_router, prefix="/debts", tags=["Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])

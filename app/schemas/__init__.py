@@ -27,6 +27,13 @@ from .budget import (
     GeneralBudgetStatus,
     GeneralBudgetUpdate,
 )
+from .category_budget import (
+    CategoryBudgetCreate,
+    CategoryBudgetHistory,
+    CategoryBudgetResponse,
+    CategoryBudgetStatus,
+    CategoryBudgetUpdate,
+)
 from .alerts import AlertResponse, AlertUpdate, AlertCreate
 from .groups import (
     Groups,

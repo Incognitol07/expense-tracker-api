@@ -15,7 +15,8 @@ from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models import User
-from app.routers.alerts import check_thresholds, check_budget
+from app.routers.alerts import check_budget
+from app.routers.category_budgets import check_category_budget
 from app.utils import logger
 
 # Create an instance of APIRouter for expense-related routes
@@ -32,7 +33,7 @@ def create_expense(
     """
     Creates a new expense for the authenticated user.
 
-    Args:
+    Args: \n
         expense (ExpenseCreate): The expense data provided by the user.
         db (Session): The database session to interact with the database.
         current_user (User): The currently authenticated user.
@@ -74,7 +75,6 @@ def create_expense(
         f"Created expense ID: {new_expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
     )
     background_tasks.add_task(check_budget, current_user.id)
-    background_tasks.add_task(check_thresholds, current_user.id)
     return new_expense
 
 
@@ -96,7 +96,7 @@ def get_expenses(
     """
     Retrieves, filters, and searches expenses for the authenticated user.
 
-    Args:
+    Args: \n
         db (Session): The database session.
         current_user (User): The authenticated user.
         limit (int): Maximum number of expenses to return.
@@ -181,7 +181,7 @@ def get_expense(
     """
     Retrieves a specific expense by its ID for the authenticated user.
 
-    Args:
+    Args: \n
         expense_id (int): The ID of the expense to retrieve.
         db (Session): The database session to interact with the database.
         current_user (User): The currently authenticated user.
@@ -224,7 +224,7 @@ def update_expense(
     """
     Updates a specific expense by its ID for the authenticated user.
 
-    Args:
+    Args: \n
         expense_id (int): The ID of the expense to update.
         expense_update (ExpenseUpdate): The updated data for the expense.
         db (Session): The database session to interact with the database.
@@ -274,7 +274,7 @@ def delete_expense(
     """
     Deletes a specific expense by its ID for the authenticated user.
 
-    Args:
+    Args: \n
         expense_id (int): The ID of the expense to delete.
         db (Session): The database session to interact with the database.
         current_user (User): The currently authenticated user.

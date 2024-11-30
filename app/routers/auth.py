@@ -36,7 +36,7 @@ async def get_current_user(
     """
     Retrieves the current authenticated user by verifying the provided token.
 
-    Args:
+    Args: \n
         token (str): The authentication token passed in the Authorization header.
         db (Session): The database session to query user information.
 
@@ -83,7 +83,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     """
     Registers a new user account.
 
-    Args:
+    Args: \n
         user (UserCreate): The user data containing the username, email, and password.
         db (Session): The database session to check for existing users and add new ones.
 
@@ -151,7 +151,7 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
     """
     Logs in a user by verifying the username and password, and returning a JWT access token.
 
-    Args:
+    Args: \n
         user (UserLogin): The user data containing the email and password.
         db (Session): The database session to validate user credentials.
 
@@ -194,7 +194,7 @@ async def protected_route(current_user: User = Depends(get_current_user)):
     """
     A protected route that can only be accessed by authenticated users.
 
-    Args:
+    Args: \n
         current_user (User): The currently authenticated user, provided by the `get_current_user` dependency.
 
     Returns:
@@ -212,7 +212,7 @@ def delete_account(
     """
     Deletes a user along with their related expenses, budgets, alerts, and categories.
 
-    Args:
+    Args: \n
         user_id (int): The ID of the user to be deleted.
         db (Session): Database session for querying and modifying the database.
         admin (Admin): The current admin user.

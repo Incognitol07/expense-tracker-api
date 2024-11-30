@@ -7,7 +7,7 @@ from app.models import DebtNotification, User, Expense, Category, Notification
 from app.routers.auth import get_current_user
 from app.schemas import DebtNotificationResponse, DebtNotificationStatus, DetailResponse
 from app.utils import logger
-from app.routers.alerts import check_thresholds, check_budget
+from app.routers.alerts import check_budget
 
 router = APIRouter()
 
@@ -23,7 +23,7 @@ def send_debt_notification(
     """
     Sends a debt notification to the specified group members.
 
-    Args:
+    Args: \n
         amount (float): The amount of the debt.
         description (str): The description for the debt.
         debtor_ids (list): List of user IDs who owe the debt.
@@ -94,7 +94,7 @@ def respond_debt_notification(
     """
     Allows a debtor to accept or reject a debt notification.
 
-    Args:
+    Args: \n
         debt_notification_id (int): The ID of the debt notification.
         accept (bool): Whether the debt is accepted or rejected.
 
@@ -170,7 +170,6 @@ def respond_debt_notification(
 
     db.commit()
     background_tasks.add_task(check_budget, current_user.id)
-    background_tasks.add_task(check_thresholds, current_user.id)
     new_notification = Notification(
         message=f"Debt notification for {debt_notification.amount} responded successfully",
         user_id=current_user.id,
@@ -193,7 +192,7 @@ def get_debt_notifications(
     """
     Retrieves all debt notifications for the current user.
 
-    Args:
+    Args: \n
         None.
 
     Returns:

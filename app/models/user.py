@@ -32,6 +32,9 @@ class User(Base):
     budgets = relationship(
         "GeneralBudget", back_populates="owner", cascade="all, delete-orphan"
     )
+    category_budgets = relationship(
+        "CategoryBudget", back_populates="owner", cascade="all, delete-orphan"
+    )
     categories = relationship(
         "Category", back_populates="owner", cascade="all, delete-orphan"
     )

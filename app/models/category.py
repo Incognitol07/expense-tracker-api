@@ -31,4 +31,5 @@ class Category(Base):
 
     # Relationships
     expenses = relationship("Expense", back_populates="categories", cascade="all, delete-orphan")
+    category_budgets = relationship("CategoryBudget", back_populates="categories", cascade="all, delete-orphan")
     owner = relationship("User", back_populates="categories")
