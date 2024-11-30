@@ -234,3 +234,9 @@ class GeneralBudgetExpenseMapping(BaseModel):
     amount_limit: float
     total_expenses: float
     expenses: List[ExpenseDetail]
+
+class CategoryBudgetExpenses(BaseModel):
+    category_budget_id: int
+    category_name: str
+    amount_limit: int
+    total_expenses: int

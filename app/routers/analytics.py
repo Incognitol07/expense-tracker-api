@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, timedelta
 from app.database import get_db
-from app.models import Expense, GeneralBudget, User, Category
+from app.models import (
+    Expense, 
+    GeneralBudget, 
+    User, 
+    Category,
+    CategoryBudget
+)
 from app.schemas import (
     ExpenseSummary,
     MonthlyBreakdown,
@@ -22,6 +28,7 @@ from app.schemas import (
     GeneralBudgetAdherence,
     ExpenseDetail,
     GeneralBudgetExpenseMapping,
+    CategoryBudgetExpenses
 )
 from app.routers.auth import get_current_user
 from app.utils import logger
@@ -692,3 +699,56 @@ def get_budget_expense_mapping(
         f"GeneralBudget-expense mapping successfully generated for user '{user.username}' (ID: {user.id})."
     )
     return budget_expense_mapping
+
+@router.get("/category-budgets-expenses", response_model=list[CategoryBudgetExpenses])
+def get_active_category_budgets_with_expenses(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Retrieve analytics for active category budgets and their total expenses.
+    
+    Args:
+        user_id (int): The ID of the user requesting analytics.
+        db (Session): The database session.
+    
+    Returns:
+        List[dict]: A list of active category budgets with their amount limits and total expenses.
+    """
+    # Query active category budgets for the user
+    active_budgets = (
+        db.query(CategoryBudget)
+        .filter(
+            CategoryBudget.user_id == user.id,
+            CategoryBudget.status == "active",
+            CategoryBudget.start_date <= date.today(),
+            CategoryBudget.end_date >= date.today()
+        )
+        .all()
+    )
+
+    if not active_budgets:
+        raise HTTPException(status_code=404, detail="No active category budgets found.")
+
+    # Prepare the response
+    analytics = []
+    for budget in active_budgets:
+        # Calculate the total expenses for the current category within the date range
+        total_expenses = (
+            db.query(Expense)
+            .filter(
+                Expense.user_id == user.id,
+                Expense.category_id == budget.category_id,
+                Expense.date >= budget.start_date,
+                Expense.date <= budget.end_date
+            )
+            .with_entities(func.sum(Expense.amount).label("total"))
+            .scalar() or 0.0
+        )
+
+        # Append budget and expense data to the analytics
+        analytics.append({
+            "category_budget_id": budget.id,
+            "category_name": db.query(Category.name).filter(Category.id == budget.category_id).scalar(),
+            "amount_limit": budget.amount_limit,
+            "total_expenses": total_expenses
+        })
+
+    return analytics

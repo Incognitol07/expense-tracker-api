@@ -73,5 +73,6 @@ from .analytics import (
     GeneralBudgetAdherence,
     ExpenseDetail,
     GeneralBudgetExpenseMapping,
+    CategoryBudgetExpenses
 )
 from .profile import UserProfile, ProfileResponse

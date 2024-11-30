@@ -15,7 +15,7 @@ from app.models import Expense, Category
 from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models import User
-from app.background_tasks import check_budget
+from app.background_tasks import check_budget, check_category_budget
 from app.utils import logger
 
 # Create an instance of APIRouter for expense-related routes
@@ -74,6 +74,7 @@ def create_expense(
         f"Created expense ID: {new_expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
     )
     background_tasks.add_task(check_budget, current_user.id)
+    background_tasks.add_task(check_category_budget, current_user.id)
     return new_expense
 
 
