@@ -1,10 +1,9 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from app.background_tasks.jobs.notification_cleanup import delete_old_notifications
+from app.background_tasks import delete_old_notifications, check_and_deactivate_expired_budgets, check_budget, check_category_budget
 from app.database import SessionLocal
 from app.models import User
 from asgiref.sync import async_to_sync
-from .jobs import check_and_deactivate_expired_budgets, check_budget, check_category_budget
 
 scheduler = BackgroundScheduler()
 
