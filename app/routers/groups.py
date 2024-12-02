@@ -518,7 +518,7 @@ def remove_member_as_manager(
 
 
 @router.get("/", response_model=list[GroupResponse] | None)
-def get_all_groups_details(
+def get_all_groups_details_for_user(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     member_ids = (
