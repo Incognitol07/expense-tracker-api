@@ -26,7 +26,7 @@ router = APIRouter()
 @router.post(
     "/", response_model=GeneralBudgetResponse, status_code=status.HTTP_201_CREATED
 )
-def set_budget(
+def set_general_budget(
     background_tasks: BackgroundTasks,
     budget_data: GeneralBudgetCreate,
     db: Session = Depends(get_db),
@@ -82,7 +82,7 @@ def set_budget(
 
 # Route to get the current budget of the user
 @router.get("/", response_model=GeneralBudgetResponse)
-def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_general_budget(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """
     Retrieves the current budget set by the authenticated user.
 
@@ -117,7 +117,7 @@ def get_budget(db: Session = Depends(get_db), user: User = Depends(get_current_u
 
 # Route to update the user's existing budget
 @router.put("/", response_model=GeneralBudgetResponse)
-def update_budget(
+def update_general_budget(
     background_tasks: BackgroundTasks,
     budget_data: GeneralBudgetUpdate,
     db: Session = Depends(get_db),
@@ -188,7 +188,7 @@ def update_budget(
 
 # Route to get the current budget status for the user (remaining budget)
 @router.get("/status", response_model=GeneralBudgetStatus)
-def get_budget_status(
+def get_general_budget_status(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
     """
@@ -238,7 +238,7 @@ def get_budget_status(
 
 # Route to get the history of all budgets for the user
 @router.get("/history", response_model=list[GeneralBudgetHistory])
-def get_budget_history(
+def get_general_budget_history(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
     """
@@ -262,7 +262,7 @@ def get_budget_history(
 
 # Route to deactivate the user's current budget
 @router.post("/deactivate", response_model=DetailResponse)
-def deactivate_budget(
+def deactivate_general_budget(
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
     """
@@ -316,7 +316,7 @@ def deactivate_budget(
 
 # Route to delete the user's current budget
 @router.delete("/{budget_id}", response_model=DetailResponse)
-def delete_budget(
+def delete_general_budget(
     budget_id: int,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
