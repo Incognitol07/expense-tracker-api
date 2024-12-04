@@ -47,7 +47,45 @@ git clone https://github.com/Incognitol07/expense-tracker-api.git
 cd expense-tracker-api  
 ```  
 
-#### 2. Set Up Environment Variables  
+#### 2. Set Up Virtual Environment  
+
+To isolate your project dependencies, set up a Python virtual environment:
+
+1. **Create the virtual environment**:  
+   ```bash
+   python -m venv venv
+   ```
+
+2. **Activate the virtual environment**:  
+
+   - **Command Prompt (Windows)**:  
+     ```cmd
+     .\venv\Scripts\activate
+     ```
+
+   - **PowerShell (Windows)**:  
+     ```powershell
+     .\venv\Scripts\Activate.ps1
+     ```
+
+   - **Bash (Linux/Mac)**:  
+     ```bash
+     source venv/bin/activate
+     ```
+
+3. **Install dependencies**:  
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Deactivate the virtual environment (when done)**:  
+   ```bash
+   deactivate
+   ```
+
+---
+
+#### 3. Set Up Environment Variables  
 Create a `.env` file by copying the provided example file:  
 - **Mac/Linux**:  
   ```bash  
@@ -93,12 +131,9 @@ MASTER_KEY=master_key
    docker-compose down  
    ```  
 
-#### Without Virtual Environment  
-1. **Install dependencies**:  
-   ```bash  
-   pip install -r requirements.txt  
-   ```  
+#### Without Docker  
 
+1. **Activate the virtual environment** (see instructions above).  
 2. **Run the application**:  
    ```bash  
    uvicorn app.main:app --reload  

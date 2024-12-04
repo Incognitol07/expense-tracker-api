@@ -8,3 +8,4 @@ databases~=0.5
 psycopg2-binary~=2.9
 uvicorn[standard]~=0.23
 asgiref
+pytest
