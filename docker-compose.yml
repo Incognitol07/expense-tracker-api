@@ -6,7 +6,9 @@ services:
     ports:
       - "8000:8000"  # Maps the FastAPI app to localhost:8000
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MASTER_KEY=${MASTER_KEY}
     depends_on:
       - db  # Ensures the web service starts after the database is ready
 
@@ -15,13 +17,13 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Datapointsl07$
-      POSTGRES_DB: expense_tracker
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"  # Maps the PostgreSQL database to localhost:5432
+      - "5432:5432"
 
 volumes:
   postgres_data:
