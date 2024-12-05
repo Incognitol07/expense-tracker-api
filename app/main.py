@@ -71,13 +71,27 @@ app.include_router(debt_router, prefix="/debts", tags=["Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
 # CORS settings
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,  # Allow origins from config
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all HTTP headers
-)
+if settings.ENVIRONMENT == "production":
+    # Disable debug and other settings for production
+    app.debug = False
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allow all origins in production
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Development-specific settings
+    app.debug = True
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 # Root endpoint for health check
 @app.get("/")
