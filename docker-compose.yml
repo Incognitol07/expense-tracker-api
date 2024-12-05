@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"  # Maps the FastAPI app to localhost:8000
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=${{ Postgres.DATABASE_URL }} 
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - MASTER_KEY=${MASTER_KEY}
     depends_on:
