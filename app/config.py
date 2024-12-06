@@ -12,12 +12,6 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")  # Default to 'development'
     DEBUG: bool = ENVIRONMENT == "development"
 
-    # Database configuration
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")  # Default to localhost
-    DB_NAME: str = os.getenv("DB_NAME", "expense_tracker")  # Default to expense_tracker
-    DB_USER: str = os.getenv("DB_USER", "postgres")  # Default to postgres
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "password")  # Default password
-
     # Uncomment this to use a PostgreSQL database
     DATABASE_URL: str =os.getenv("DATABASE_URL")
 

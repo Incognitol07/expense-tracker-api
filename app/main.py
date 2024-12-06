@@ -70,10 +70,9 @@ app.include_router(groups_router, prefix="/groups", tags=["Groups"])
 app.include_router(debt_router, prefix="/debts", tags=["Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
+app.debug = settings.DEBUG
 # CORS settings
 if settings.ENVIRONMENT == "production":
-    # Disable debug and other settings for production
-    app.debug = False
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],  # Allow all origins in production
@@ -83,7 +82,6 @@ if settings.ENVIRONMENT == "production":
     )
 else:
     # Development-specific settings
-    app.debug = True
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
