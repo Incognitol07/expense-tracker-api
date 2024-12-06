@@ -102,14 +102,30 @@ Create a `.env` file by copying the provided example file:
 
 Edit the `.env` file and update the variables with your configuration:  
 ```plaintext  
-ENVIRONMENT=development  
-DB_HOST=localhost  
-DB_NAME=expense_tracker  
-DB_USER=postgres  
-DB_PASSWORD=password  
+ENVIRONMENT=development 
+DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<dbname> 
 JWT_SECRET_KEY=myjwtsecretkey  
 MASTER_KEY=master_key  
 ```  
+
+---
+
+### Setup for Database
+
+By default, the project uses **PostgreSQL** for the database. However, you can easily switch to **SQLite** by making a simple change in the configuration file.
+
+1. Open the `app/config.py` file.
+2. By default, the PostgreSQL database URL is set to be used:
+   ```python
+   DATABASE_URL: str = os.getenv("DATABASE_URL")
+   ```
+3. If you prefer to use **SQLite** instead, **uncomment the following line** and **comment out** the PostgreSQL line:
+   ```python
+   # DATABASE_URL: str = os.getenv("DATABASE_URL")  # Use PostgreSQL by default
+   DATABASE_URL: str = 'sqlite:///expense.db'  # Use SQLite instead
+   ```
+
+This allows you to quickly switch between PostgreSQL and SQLite based on your preference or environment.
 
 ---
 
