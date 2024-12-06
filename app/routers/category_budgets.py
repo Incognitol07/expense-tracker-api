@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.schemas import (
     CategoryBudgetCreate,
     CategoryBudgetUpdate,
@@ -10,7 +11,12 @@ from app.schemas import (
     CategoryBudgetHistory,
     DetailResponse,
 )
-from app.models import CategoryBudget, Category, Notification, Expense
+from app.models import (
+    CategoryBudget, 
+    Category, 
+    Notification, 
+    GeneralBudget
+)
 from app.database import get_db, SessionLocal
 from app.routers.auth import get_current_user
 from app.models import User
@@ -116,6 +122,25 @@ def modify_category_budget(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active budget found for the specified category.",
         )
+    total_general_budget = (
+        db.query(GeneralBudget)
+        .filter(GeneralBudget.user_id == user.id, GeneralBudget.status == "active")
+        .first()
+    )
+    total_category_budget = (
+        db.query(func.sum(CategoryBudget.amount_limit))
+        .filter(CategoryBudget.user_id==user.id,
+                CategoryBudget.status =="active", 
+                CategoryBudget.category_id!=category.id
+                )
+        .scalar() or 0.0
+    )
+    if total_general_budget:
+        if total_general_budget.amount_limit<(total_category_budget + budget_data.amount_limit):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail=f"Category budget '{category_name}' cannot be greater than general budget {total_general_budget.amount_limit}"
+                )
 
     db.query(Notification).filter(
         Notification.user_id == user.id,
