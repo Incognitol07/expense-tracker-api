@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
 
 class UserProfile(BaseModel):
@@ -19,4 +20,4 @@ class ProfileResponse(BaseModel):
     full_name: Optional[str]
     phone_number: Optional[str]
     bio: Optional[str]
-    created_at: str
+    created_at: datetime
