@@ -1,7 +1,7 @@
 # app/schemas/budget.py
 
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, datetime
 
 
 # Base schema for GeneralBudget-related attributes
@@ -50,7 +50,7 @@ class GeneralBudgetResponse(GeneralBudgetBase):
     """
 
     id: int
-    created_at: str
+    created_at: datetime
 
     class Config:
         # This allows Pydantic to pull attributes from ORM models
@@ -82,5 +82,5 @@ class GeneralBudgetHistory(GeneralBudgetResponse):
         created_at (date): The date when the budget was created.
     """
 
-    created_at: str
+    created_at: datetime
     status: str

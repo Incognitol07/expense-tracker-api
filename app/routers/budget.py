@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.schemas import (
     GeneralBudgetCreate,
     GeneralBudgetUpdate,
@@ -11,11 +12,11 @@ from app.schemas import (
     GeneralBudgetHistory,
     DetailResponse,
 )
-from app.models import GeneralBudget, Notification
+from app.models import GeneralBudget, Notification, CategoryBudget
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models import User
-from app.background_tasks import check_budget
+from app.background_tasks import check_budget, check_and_deactivate_expired_budgets
 from app.utils import logger
 
 # Create an instance of APIRouter to handle budget-related routes
@@ -65,6 +66,20 @@ def set_general_budget(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An active budget already exists in the given date range. Use update instead.",
         )
+    
+    total_category_budget = (
+        db.query(func.sum(CategoryBudget.amount_limit))
+        .filter(CategoryBudget.user_id==user.id,
+                CategoryBudget.status =="active"
+                )
+        .scalar() or 0.0
+    )
+    
+    if budget_data.amount_limit<total_category_budget:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail=f"General budget cannot be less than total category budget of {total_category_budget}"
+            )
 
     # Create and save the new budget
     new_budget = GeneralBudget(**budget_data.model_dump(), user_id=user.id)
@@ -72,11 +87,11 @@ def set_general_budget(
     db.commit()
     db.refresh(new_budget)
     background_tasks.add_task(check_budget, user.id)
+    background_tasks.add_task(check_and_deactivate_expired_budgets)
     logger.info(
         f"New budget created for user '{user.username}' (ID: {user.id}) with amount {new_budget.amount_limit} from {new_budget.start_date} to {new_budget.end_date}."
     )
 
-    new_budget.created_at = new_budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return new_budget
 
 
@@ -111,7 +126,6 @@ def get_general_budget(db: Session = Depends(get_db), user: User = Depends(get_c
     logger.info(
         f"Retrieved active budget for user '{user.username}' (ID: {user.id}) with amount {budget.amount_limit}."
     )
-    budget.created_at = budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budget
 
 
@@ -179,10 +193,10 @@ def update_general_budget(
     db.commit()
     db.refresh(budget)
     background_tasks.add_task(check_budget, user.id)
+    background_tasks.add_task(check_and_deactivate_expired_budgets)
     logger.info(
         f"GeneralBudget updated for user '{user.username}' (ID: {user.id}) with new values."
     )
-    budget.created_at = budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budget
 
 
@@ -255,8 +269,6 @@ def get_general_budget_history(
     logger.info(
         f"GeneralBudget history successfully returned for user '{user.username}' (ID: {user.id})."
     )
-    for budget in budgets:
-        budget.created_at = budget.created_at.strftime("%Y-%m-%d %H:%M:%S %p")
     return budgets
 
 
