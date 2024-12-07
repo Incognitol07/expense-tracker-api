@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import asyncio
 from app.websocket_manager import manager
@@ -41,6 +42,12 @@ app = FastAPI(
     debug=settings.DEBUG,  # Enable debug mode if in development
     lifespan=lifespan,
 )
+
+favicon_path = 'expense_tracker.png'
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse(favicon_path)
 
 # Initialize database (create tables if they don't exist)
 Base.metadata.create_all(bind=engine)
