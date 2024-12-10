@@ -10,7 +10,7 @@ class GroupExpense(Base):
     group_id = Column(Integer, ForeignKey("groups.id"))
     payer_id = Column(Integer, ForeignKey("users.id"))
     amount = Column(Float, nullable=False)
-    description = Column(String)
+    description = Column(String, nullable=False)
     
     group = relationship("Group", back_populates="group_expenses")
     expense_splits = relationship("ExpenseSplit", back_populates="group_expenses", cascade="all, delete")
