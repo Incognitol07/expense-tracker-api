@@ -48,20 +48,21 @@ def get_expense_summary(
         or 0.0
     )
     expenses_by_category = [
-        CategorySummary(category_id=category_id, total=total, category_name="name")
-        for category_id, total in db.query(
-            Expense.category_id, func.sum(Expense.amount).label("total")
+        CategorySummary(
+            category_id=category_id,
+            total=total,
+            category_name=category_name or "Unknown",
         )
+        for category_id, total, category_name in db.query(
+            Expense.category_id,
+            func.sum(Expense.amount).label("total"),
+            Category.name,
+        )
+        .join(Category, Expense.category_id == Category.id, isouter=True)
         .filter(Expense.user_id == user.id)
-        .group_by(Expense.category_id)
+        .group_by(Expense.category_id, Category.name)
         .all()
     ]
-    for expenses in expenses_by_category:
-        expenses.category_name = (
-            db.query(Category.name)
-            .filter(Category.user_id == user.id, Category.id == expenses.category_id)
-            .first()[0]
-        )
 
     budget = (
         db.query(GeneralBudget)
