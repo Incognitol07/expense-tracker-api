@@ -11,6 +11,8 @@ from app.schemas import (
     RegisterResponse,
     LoginResponse,
     DetailResponse,
+    RefreshResponse,
+    RefreshToken
 )
 from app.models import (
     User, 
@@ -24,6 +26,8 @@ from app.utils.security import (
     verify_password,
     create_access_token,
     verify_access_token,
+    create_refresh_token,
+    verify_refresh_token
 )
 from app.database import get_db
 from app.utils.logging_config import logger
@@ -202,10 +206,7 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
     # Query the database for the user and verify password
     db_user = (
         db.query(User)
-        .filter(
-            User.email == user.email
-            and User.hashed_password == hash_password(user.password)
-        )
+        .filter(User.email == user.email)
         .first()
     )
 
@@ -215,11 +216,14 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid credentials"
         )
 
-    # Create and return the JWT access token
+    # Create access and refresh tokens
     access_token = create_access_token(data={"sub": db_user.username})
+    refresh_token = create_refresh_token(data={"sub": db_user.username})
+
     logger.info(f"User '{db_user.username}' logged in successfully.")
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "username": db_user.username,
         "user_id": db_user.id,
@@ -241,6 +245,41 @@ async def protected_route(current_user: User = Depends(get_current_user)):
     return {
         "detail": f"Hello, {current_user.username}! You have access to this protected route."
     }
+
+
+@router.post("/user/refresh-token", response_model=RefreshResponse)
+async def get_refresh_token(token: RefreshToken, db: Session = Depends(get_db)):
+    """
+    Generate a new access token using a valid refresh token.
+
+    Args:
+        refresh_token (str): The JWT refresh token.
+
+    Raises:
+        HTTPException: If the refresh token is invalid.
+
+    Returns:
+        dict: A new access token.
+    """
+    payload = verify_refresh_token(token.refresh_token)
+    username: str = payload.get("sub")
+    if username is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token payload",
+        )
+
+    # Verify user existence
+    db_user = db.query(User).filter(User.username == username).first()
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    # Generate new access token
+    access_token = create_access_token(data={"sub": username})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.delete("/account", response_model=DetailResponse)

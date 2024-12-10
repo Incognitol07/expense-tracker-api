@@ -60,9 +60,17 @@ class RegisterResponse(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token:str
+    refresh_token: str
     token_type: str
     username:str
     user_id: int
 
 class DetailResponse(BaseModel):
     detail: str
+
+class RefreshResponse(BaseModel):
+    access_token:str
+    token_type: str
+
+class RefreshToken(BaseModel):
+    refresh_token: str

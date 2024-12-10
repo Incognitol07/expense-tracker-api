@@ -65,6 +65,7 @@ def create_access_token(data: dict) -> str:
     expire = datetime.now() + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )  # Use UTC time for consistency
+    to_encode.update({"token_type": "access"})
     to_encode.update({"exp": expire})  # Add expiration time to the payload
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -87,6 +88,11 @@ def verify_access_token(token: str) -> dict:
         payload = jwt.decode(
             token, SECRET_KEY, algorithms=[ALGORITHM]
         )  # Decode the token using the secret key
+        if payload["token_type"] != "access":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type for access",
+            )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -104,5 +110,60 @@ def verify_access_token(token: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Malformed token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+# Refresh token expiration time (e.g., 7 days)
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+# Create a refresh token with a longer expiration time
+def create_refresh_token(data: dict) -> str:
+    """
+    Create a JWT refresh token with a longer expiration time.
+
+    Args:
+        data (dict): The data to encode in the JWT token.
+
+    Returns:
+        str: The generated JWT refresh token.
+    """
+    to_encode = data.copy()
+    expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"token_type": "refresh"})
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+# Verify and decode the refresh token
+def verify_refresh_token(token: str) -> dict:
+    """
+    Verify and decode the JWT refresh token.
+
+    Args:
+        token (str): The JWT token to verify and decode.
+
+    Returns:
+        dict: The decoded payload of the JWT token.
+
+    Raises:
+        HTTPException: If the token is expired, invalid, or malformed.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload["token_type"] != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type for refresh",
+            )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
