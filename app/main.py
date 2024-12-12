@@ -63,10 +63,6 @@ favicon_path = 'expense_tracker.png'
 async def favicon():
     return FileResponse(favicon_path)
 
-@app.get("/sentry-debug")
-async def trigger_error():
-    division_by_zero = 1 / 0
-
 # Initialize database (create tables if they don't exist)
 Base.metadata.create_all(bind=engine)
 
