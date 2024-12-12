@@ -85,6 +85,7 @@ class AllCategoryBudgetResponse(CategoryBudgetBase):
     status: str
     created_at: datetime
     amount_used: float
+    category_name: str
 
     class Config:
         # This allows Pydantic to pull attributes from ORM models
