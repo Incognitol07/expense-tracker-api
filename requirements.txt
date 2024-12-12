@@ -9,3 +9,4 @@ psycopg2-binary
 uvicorn[standard]~=0.23
 asgiref~=3.7
 pytest~=7.4
+sentry-sdk[fastapi]

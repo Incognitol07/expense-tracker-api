@@ -21,6 +21,22 @@ from app.routers import (
     profile_router,
     category_budgets_router,
 )
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://061e79265e0ff44b4917bd9e341271df@o4508454826082304.ingest.us.sentry.io/4508454828310528",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
+        "continuous_profiling_auto_start": True,
+    },
+)
+
+app = FastAPI()
 
 # Create the FastAPI application
 @asynccontextmanager
