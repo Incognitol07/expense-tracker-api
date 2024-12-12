@@ -92,23 +92,25 @@ def get_monthly_breakdown(
     )
     current_month = date.today().month
     monthly_expenses = [
-        CategorySummary(category_id=category_id, total=total, category_name="name")
-        for category_id, total in db.query(
-            Expense.category_id, func.sum(Expense.amount).label("total")
-        )
-        .filter(
-            Expense.user_id == user.id,
-            func.extract("month", Expense.date) == current_month,
-        )
-        .group_by(Expense.category_id)
-        .all()
-    ]
-    for expenses in monthly_expenses:
-        expenses.category_name = (
-            db.query(Category.name)
-            .filter(Category.user_id == user.id, Category.id == expenses.category_id)
-            .first()[0]
-        )
+    CategorySummary(
+        category_id=category_id, 
+        total=total, 
+        category_name=category_name
+    )
+    for category_id, total, category_name in db.query(
+        Expense.category_id, 
+        func.sum(Expense.amount).label("total"), 
+        Category.name
+    )
+    .join(Category, Category.id == Expense.category_id)
+    .filter(
+        Expense.user_id == user.id,
+        Category.user_id == user.id,
+        func.extract("month", Expense.date) == current_month,
+    )
+    .group_by(Expense.category_id, Category.name)
+    .all()
+]
     logger.info(
         f"Monthly expense breakdown successfully generated for user '{user.username}' (ID: {user.id})."
     )
@@ -159,20 +161,26 @@ def get_weekly_breakdown(
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())
     weekly_expenses = [
-        CategorySummary(category_id=category_id, total=total, category_name="name")
-        for category_id, total in db.query(
-            Expense.category_id, func.sum(Expense.amount).label("total")
-        )
-        .filter(Expense.user_id == user.id, Expense.date >= start_of_week)
-        .group_by(Expense.category_id)
-        .all()
-    ]
-    for expenses in weekly_expenses:
-        expenses.category_name = (
-            db.query(Category.name)
-            .filter(Category.user_id == user.id, Category.id == expenses.category_id)
-            .first()[0]
-        )
+    CategorySummary(
+        category_id=category_id, 
+        total=total, 
+        category_name=category_name
+    )
+    for category_id, total, category_name in db.query(
+        Expense.category_id, 
+        func.sum(Expense.amount).label("total"), 
+        Category.name
+    )
+    .join(Category, Category.id == Expense.category_id)
+    .filter(
+        Expense.user_id == user.id,
+        Category.user_id == user.id,
+        Expense.date >= start_of_week,
+    )
+    .group_by(Expense.category_id, Category.name)
+    .all()
+]
+
     logger.info(
         f"Weekly expense breakdown successfully generated for user '{user.username}' (ID: {user.id})."
     )
@@ -425,26 +433,26 @@ def get_expense_summary_for_range(
 
     # Expenses by category for the date range
     expenses_by_category = [
-        CategorySummary(category_id=category_id, total=total, category_name="name")
-        for category_id, total in db.query(
-            Expense.category_id, func.sum(Expense.amount).label("total")
-        )
-        .filter(
-            Expense.user_id == user.id,
-            Expense.date >= start_date,
-            Expense.date <= end_date,
-        )
-        .group_by(Expense.category_id)
-        .all()
+    CategorySummary(
+        category_id=category_id, 
+        total=total, 
+        category_name=category_name
+    )
+    for category_id, total, category_name in db.query(
+        Expense.category_id, 
+        func.sum(Expense.amount).label("total"), 
+        Category.name
+    )
+    .join(Category, Category.id == Expense.category_id)
+    .filter(
+        Expense.user_id == user.id,
+        Category.user_id == user.id,
+        Expense.date >= start_date,
+        Expense.date <= end_date,
+    )
+    .group_by(Expense.category_id, Category.name)
+    .all()
     ]
-
-    for expenses in expenses_by_category:
-        expenses.category_name = (
-            db.query(Category.name)
-            .filter(Category.user_id == user.id, Category.id == expenses.category_id)
-            .first()[0]
-        )
-
     overlapping_budgets = (
         db.query(GeneralBudget)
         .filter(
