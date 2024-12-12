@@ -24,7 +24,7 @@ from app.routers import (
 import sentry_sdk
 
 sentry_sdk.init(
-    dsn="https://061e79265e0ff44b4917bd9e341271df@o4508454826082304.ingest.us.sentry.io/4508454828310528",
+    dsn="https://04a0ab15c2e952017cfae042d9b03bd4@o4508454826082304.ingest.us.sentry.io/4508454867435520",
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for tracing.
     traces_sample_rate=1.0,
@@ -35,8 +35,6 @@ sentry_sdk.init(
         "continuous_profiling_auto_start": True,
     },
 )
-
-app = FastAPI()
 
 # Create the FastAPI application
 @asynccontextmanager
@@ -64,6 +62,10 @@ favicon_path = 'expense_tracker.png'
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
     return FileResponse(favicon_path)
+
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0
 
 # Initialize database (create tables if they don't exist)
 Base.metadata.create_all(bind=engine)
