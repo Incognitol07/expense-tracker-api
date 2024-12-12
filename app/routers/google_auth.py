@@ -76,9 +76,12 @@ async def auth_google(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_user)
         db_user = new_user
-    db_user.full_name = name
-    db_user.google_id = google_id
-    db_user.profile_picture = picture
+    if not db_user.full_name:
+        db_user.full_name = name
+    if not db_user.google_id:
+        db_user.google_id = google_id
+    if not db_user.profile_picture:
+        db_user.profile_picture = picture
     db.commit()
     # Generate tokens
     access_token = create_access_token(data={"sub": db_user.username})
