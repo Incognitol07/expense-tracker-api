@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: list = ["*"]
     CORS_ORIGINS: list = ["http://localhost", "http://localhost:3000", "http://localhost:5173"]  # Add frontend URL if applicable
 
+    # Google Authentication
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET")
+    GOOGLE_REDIRECT_URI: str=os.getenv("GOOGLE_REDIRECT_URI")
+
     class Config:
         env_file = ".env"  # Load environment variables from a .env file if available
 

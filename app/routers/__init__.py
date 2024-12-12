@@ -1,4 +1,5 @@
 from .auth import router as auth_router
+from .google_auth import router as google_router
 from .expenses import router as expenses_router
 from .categories import router as categories_router
 from .category_budgets import router as category_budgets_router

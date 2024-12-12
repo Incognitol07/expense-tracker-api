@@ -17,13 +17,13 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now())
-
-    # Profile fields
     full_name = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
+    google_id = Column(String, unique=True, nullable=True)  # Optional Google ID
+    profile_picture = Column(String, nullable=True)  # To store the Google profile picture
 
     # Relationships
     expenses = relationship(

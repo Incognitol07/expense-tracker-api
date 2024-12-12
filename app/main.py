@@ -11,6 +11,7 @@ from app.database import engine, Base
 from app.config import settings  # Configuration settings (e.g., environment variables)
 from app.routers import (
     auth_router,
+    google_router,
     expenses_router,
     categories_router,
     budget_router,
@@ -81,6 +82,7 @@ async def websocket_notifications(websocket: WebSocket, user_id: int):
 
 # Include routers
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(google_router, prefix="/auth", tags=["Authentication"])
 app.include_router(expenses_router, prefix="/expenses", tags=["Expenses"])
 app.include_router(categories_router, prefix="/categories", tags=["Categories"])
 app.include_router(category_budgets_router, prefix="/category_budgets", tags=["Category Budget"])
