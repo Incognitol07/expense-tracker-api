@@ -57,6 +57,13 @@ app = FastAPI(
     debug=settings.DEBUG,  # Enable debug mode if in development
     lifespan=lifespan,
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 favicon_path = 'expense_tracker.png'
 
@@ -93,25 +100,8 @@ app.include_router(groups_router, prefix="/groups", tags=["Groups"])
 app.include_router(debt_router, prefix="/debts", tags=["Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
-app.debug = settings.DEBUG
 # CORS settings
-if settings.ENVIRONMENT == "production":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins in production
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    # Development-specific settings
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+
 
 
 # Root endpoint for health check
