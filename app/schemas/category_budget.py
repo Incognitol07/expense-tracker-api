@@ -79,9 +79,6 @@ class AllCategoryBudgetResponse(CategoryBudgetBase):
         status (str): The current status of the budget (e.g., "active", "deactivated").
         created_at (str): The timestamp when the category budget was created.
     """
-
-    id: int
-    user_id: int
     status: str
     created_at: datetime
     amount_used: float
