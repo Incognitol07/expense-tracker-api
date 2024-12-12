@@ -69,6 +69,27 @@ class CategoryBudgetResponse(CategoryBudgetBase):
         # This allows Pydantic to pull attributes from ORM models
         from_attributes = True
 
+class AllCategoryBudgetResponse(CategoryBudgetBase):
+    """
+    Schema for returning a category budget's details in the response, including the budget ID.
+
+    Attributes:
+        id (int): The unique identifier for the category budget.
+        user_id (int): The ID of the user who owns the category budget.
+        status (str): The current status of the budget (e.g., "active", "deactivated").
+        created_at (str): The timestamp when the category budget was created.
+    """
+
+    id: int
+    user_id: int
+    status: str
+    created_at: datetime
+    amount_used: float
+
+    class Config:
+        # This allows Pydantic to pull attributes from ORM models
+        from_attributes = True
+
 
 # Schema for displaying the current status of a category budget
 class CategoryBudgetStatus(BaseModel):

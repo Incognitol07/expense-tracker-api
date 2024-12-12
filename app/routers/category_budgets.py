@@ -10,6 +10,7 @@ from app.schemas import (
     CategoryBudgetStatus,
     CategoryBudgetHistory,
     DetailResponse,
+    AllCategoryBudgetResponse
 )
 from app.models import (
     CategoryBudget, 
@@ -327,3 +328,57 @@ def retrieve_category_budget_history(
             detail="No budget history found for the specified category.",
         )
     return budgets
+
+@router.get("/", response_model=list[AllCategoryBudgetResponse])
+def retrieve_user_category_budgets(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Retrieve all category budgets for a specific user with details like start date, end date, name, amount limit,
+    amount used, created_at, and status.
+
+    Args: \n
+        user_id (int): ID of the user to retrieve category budgets for.
+        db (Session): Database session dependency.
+        user (User): Authenticated user (check if the requested user is the same).
+
+    Returns:
+        List[CategoryBudgetResponse]: List of category budgets for the specified user.
+    """
+    category_budgets = (
+        db.query(CategoryBudget)
+        .join(Category)
+        .filter(CategoryBudget.user_id == user.id)
+        .all()
+    )
+    if not category_budgets:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No category budgets found for this user.",
+        )
+
+    # Add additional calculations for amount_used if needed (e.g., based on related expenses)
+    for budget in category_budgets:
+        amount_used = sum(
+            expense.amount
+            for expense in budget.owner.expenses
+            if budget.start_date <= expense.date <= budget.end_date
+        )
+        budget.amount_used = amount_used
+
+    # Include category name in response
+    result = [
+        {
+            "category_name": budget.categories.name,
+            "start_date": budget.start_date,
+            "end_date": budget.end_date,
+            "amount_limit": budget.amount_limit,
+            "amount_used": budget.amount_used,
+            "created_at": budget.created_at,
+            "status": budget.status,
+        }
+        for budget in category_budgets
+    ]
+
+    return result
