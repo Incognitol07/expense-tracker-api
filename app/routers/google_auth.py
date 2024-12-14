@@ -19,7 +19,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 router = APIRouter()
 GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
-GOOGLE_REDIRECT_URI = settings.GOOGLE_REDIRECT_URI
+GOOGLE_REDIRECT_URI = "https://sequence-expense-tracker.vercel.app/auth/callback/google"
 
 @router.get("/login/google")
 async def login_google():
