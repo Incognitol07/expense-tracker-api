@@ -21,12 +21,12 @@ class Category(Base):
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, index=True, nullable=False)
-    description = Column(String, nullable=True)
+    description = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
 
     # Unique Constraints
     __table_args__ = (
-        UniqueConstraint('user_id', 'name', name='uq_user_category_name'),
+        UniqueConstraint('user_id', 'name','description', name='uq_user_category_name_description'),
     )
 
     # Relationships

@@ -268,7 +268,7 @@ def retrieve_category_budget_status(
     expenses = [
         expense.amount
         for expense in budget.owner.expenses
-        if budget.start_date <= expense.date <= budget.end_date
+        if budget.start_date <= expense.date <= budget.end_date and expense.category_id == budget.category_id
     ]
     remaining_amount = budget.amount_limit - sum(expenses)
     status_sent = (
@@ -363,7 +363,7 @@ def retrieve_user_category_budgets(
         amount_used = sum(
             expense.amount
             for expense in budget.owner.expenses
-            if budget.start_date <= expense.date <= budget.end_date
+            if budget.start_date <= expense.date <= budget.end_date and expense.category_id == budget.category_id
         )
         budget.amount_used = amount_used
 

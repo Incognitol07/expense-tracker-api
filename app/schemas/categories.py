@@ -13,7 +13,7 @@ class CategoryBase(BaseModel):
         description (Optional[str]): A brief description of the category (optional).
     """
     name: str
-    description: Optional[str] = None
+    description: str
 
 # Schema for creating a new category (inherits from CategoryBase)
 class CategoryCreate(CategoryBase):

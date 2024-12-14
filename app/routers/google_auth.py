@@ -68,7 +68,7 @@ async def auth_google(code: str, db: Session = Depends(get_db)):
         new_user = User(
             username=username,
             email=email,
-            hashed_password="",  # No password needed for Google OAuth
+            hashed_password=None,  # No password needed for Google OAuth
             profile_picture=picture,  # Assuming your User model has this field
             google_id=google_id,  # Optional, if you want to store the Google ID
         )
