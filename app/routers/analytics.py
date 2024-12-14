@@ -223,21 +223,27 @@ def export_expenses(
         f"Starting expense export in '{format.upper()}' format for user '{user.username}' (ID: {user.id})."
     )
     expenses = db.query(Expense).filter(Expense.user_id == user.id).all()
-    data = [
-        {
-            "id": expense.id,
-            "amount": expense.amount,
-            "name": expense.name,
-            "date": str(expense.date),
-            "category_name": db.query(Category.name)
+    export_data = []
+    for expense in expenses:
+        category = (
+            db.query(Category.name)
             .filter(
                 Category.id == expense.category_id, Category.user_id == expense.user_id
             )
-            .first()[0],
-        }
-        for expense in expenses if expenses 
-    ]
-    if not data:
+            .first()
+        )
+        category_name = category[0] if category else "Unknown"
+        export_data.append(
+            {
+                "id": expense.id,
+                "amount": expense.amount,
+                "name": expense.name,
+                "date": str(expense.date),
+                "category_name": category_name,
+            }
+        )
+
+    if not export_data:
         logger.warning(
             f"No data to be exported for user '{user.username}' (ID: {user.id})"
         )
@@ -257,9 +263,9 @@ def export_expenses(
         from io import StringIO
 
         output = StringIO()
-        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer = csv.DictWriter(output, fieldnames=export_data[0].keys())
         writer.writeheader()
-        writer.writerows(data)
+        writer.writerows(export_data)
         output.seek(0)
         logger.info(
             f"Expenses successfully exported in '{format.upper()}' format for user '{user.username}' (ID: {user.id})."
@@ -274,7 +280,7 @@ def export_expenses(
         logger.info(
             f"Expenses successfully exported in '{format.upper()}' format for user '{user.username}' (ID: {user.id})."
         )
-        return JSONResponse(content=data)
+        return JSONResponse(content=export_data)
 
     logger.warning(
         f"Failed to export expenses for user '{user.username}' (ID: {user.id})"

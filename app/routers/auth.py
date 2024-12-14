@@ -209,7 +209,7 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
         .filter(User.email == user.email)
         .first()
     )
-    if db_user and not db_user.hashed_password and db_user.google_id:
+    if db_user and db_user.google_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Sign in with Google"
         )
