@@ -235,7 +235,7 @@ def export_expenses(
             )
             .first()[0],
         }
-        for expense in expenses
+        for expense in expenses if expenses 
     ]
     if not data:
         logger.warning(
