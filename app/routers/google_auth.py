@@ -1,4 +1,4 @@
-# # app/routers/google_auth.py
+# app/routers/google_auth.py
 
 from fastapi import HTTPException, APIRouter, Depends, status
 from app.config import settings
@@ -7,6 +7,7 @@ from app.models import (
     Category,
     CategoryBudget,
 )
+from app.schemas import GoogleLogin,LoginResponse
 from app.database import get_db
 from app.utils import logger, create_access_token, create_refresh_token
 from fastapi.security import OAuth2PasswordBearer
@@ -21,7 +22,7 @@ GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
 GOOGLE_REDIRECT_URI = settings.GOOGLE_REDIRECT_URI
 
-@router.get("/login/google")
+@router.get("/login/google", response_model=GoogleLogin)
 async def login_google():
     return {
         "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=offline"
@@ -29,7 +30,7 @@ async def login_google():
 
 
 
-@router.get("/callback/google")
+@router.get("/callback/google", response_model=LoginResponse)
 async def auth_google(code: str, db: Session = Depends(get_db)):
     token_url = "https://accounts.google.com/o/oauth2/token"
     data = {

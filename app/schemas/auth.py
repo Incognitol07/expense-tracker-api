@@ -74,3 +74,6 @@ class RefreshResponse(BaseModel):
 
 class RefreshToken(BaseModel):
     refresh_token: str
+
+class GoogleLogin(BaseModel):
+    url: str
