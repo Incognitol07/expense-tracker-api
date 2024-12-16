@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Other security settings
     ALLOWED_HOSTS: list = ["*"]
-    CORS_ORIGINS: list = ["http://localhost", "http://localhost:3000", "http://localhost:5173", "https://sequence-expense-tracker.vercel.app", "https://expense-tracker-x8fn.onrender.com"]  # Add frontend URL if applicable
+    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173", "https://sequence-expense-tracker.vercel.app"]  # Add frontend URL if applicable
 
     # Google Authentication
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")

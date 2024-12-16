@@ -28,8 +28,8 @@ class Expense(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
     name = Column(String, nullable=True)
-    date = Column(Date, nullable=False, default=datetime.now().date())
-    user_id = Column(Integer, ForeignKey("users.id"))
+    date = Column(Date, nullable=False, default=datetime.now().date(), index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     category_id = Column(Integer, ForeignKey("categories.id"))  # Link to category
 
     # Relationship back to the user

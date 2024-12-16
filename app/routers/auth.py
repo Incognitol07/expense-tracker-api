@@ -231,6 +231,7 @@ async def user_login(user: UserLogin, db: Session = Depends(get_db)):
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "username": db_user.username,
+        "profile_picture":db_user.profile_picture,
         "user_id": db_user.id,
     }
 

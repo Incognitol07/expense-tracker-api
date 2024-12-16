@@ -63,6 +63,7 @@ class LoginResponse(BaseModel):
     refresh_token: str
     token_type: str
     username:str
+    profile_picture: str | None
     user_id: int
 
 class DetailResponse(BaseModel):
