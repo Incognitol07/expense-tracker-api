@@ -17,6 +17,7 @@ from .expenses import (
     ExpenseResponse,
     CategoryExpenseResponse,
     ExpenseUpdate,
+    GetExpenseResponse
 )  # Expense-related schemas
 from .categories import (
     CategoryCreate,

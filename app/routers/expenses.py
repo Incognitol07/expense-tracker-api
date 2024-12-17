@@ -10,6 +10,7 @@ from app.schemas import (
     ExpenseUpdate,
     CategoryExpenseResponse,
     DetailResponse,
+    GetExpenseResponse
 )
 from app.models import Expense, Category
 from app.routers.auth import get_current_user
@@ -17,6 +18,7 @@ from app.database import get_db
 from app.models import User
 from app.background_tasks import check_budget, check_category_budget
 from app.utils import logger
+from math import ceil
 
 # Create an instance of APIRouter for expense-related routes
 router = APIRouter()
@@ -56,16 +58,13 @@ def create_expense(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Please create the provided category first",
         )
-    category_id = (
-        db.query(Category.id).filter(Category.name == expense.category_name).first()[0]
-    )
     # Proceed with creating the expense if category_id is valid
     new_expense = Expense(
         amount=expense.amount,
         name=expense.name,
         date=expense.date,
         user_id=current_user.id,
-        category_id=category_id,
+        category_id=category.id,
     )
     db.add(new_expense)  # Add the new expense to the session
     db.commit()  # Commit the transaction to the database
@@ -79,7 +78,7 @@ def create_expense(
 
 
 # Route to get all expenses of the authenticated user
-@router.get("/", response_model=list[CategoryExpenseResponse])
+@router.get("/", response_model=GetExpenseResponse)
 def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -108,7 +107,7 @@ def get_expenses(
         keyword (str): Keyword to search in expenses.
 
     Returns:
-        list[CategoryExpenseResponse]: List of retrieved, filtered, or searched expenses.
+        dict: Dictionary containing the list of expenses and pagination metadata.
     """
     logger.info(
         f"Fetching expenses for user '{current_user.username}' (ID: {current_user.id}) with query parameters."
@@ -142,6 +141,9 @@ def get_expenses(
             Expense.name.ilike(f"%{keyword}%") | Category.name.ilike(f"%{keyword}%")
         )
 
+    # Get the total count before applying pagination
+    total_count = query.count()
+
     # Apply ordering, pagination, and execute query
     expenses = (
         query.order_by(desc(Expense.date), desc(Expense.id))
@@ -158,17 +160,33 @@ def get_expenses(
             status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found."
         )
 
-    return [
-        {
-            "id": expense.id,
-            "amount": expense.amount,
-            "name": expense.name,
-            "date": expense.date,
-            "category_id": expense.category_id,
-            "category_name": expense.category_name,
-        }
-        for expense in expenses
-    ]
+    # Calculate pagination metadata
+    total_pages = ceil(total_count / limit)
+    current_page = (offset // limit) + 1
+    prev_page = f"/expenses?limit={limit}&offset={max(0, offset - limit)}" if offset > 0 else None
+    next_page = f"/expenses?limit={limit}&offset={offset + limit}" if offset + limit < total_count else None
+
+    result = {
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "current_page": current_page,
+        "per_page": limit,
+        "next_page": next_page,
+        "prev_page": prev_page,
+        "expenses": [
+            {
+                "id": expense.id,
+                "amount": expense.amount,
+                "name": expense.name,
+                "date": expense.date,
+                "category_id": expense.category_id,
+                "category_name": expense.category_name,
+            }
+            for expense in expenses
+        ],
+    }
+    return result
+
 
 
 # Route to get a specific expense by its ID

@@ -16,7 +16,8 @@ from app.models import (
     CategoryBudget, 
     Category, 
     Notification, 
-    GeneralBudget
+    GeneralBudget,
+    Expense
 )
 from app.database import get_db, SessionLocal
 from app.routers.auth import get_current_user
@@ -28,7 +29,7 @@ from app.utils import logger
 router = APIRouter()
 
 
-@router.get("/{category_name}", response_model=CategoryBudgetResponse)
+@router.get("/{category_name}", response_model=AllCategoryBudgetResponse)
 def retrieve_category_budget(
     category_name: str,
     db: Session = Depends(get_db),
@@ -38,13 +39,14 @@ def retrieve_category_budget(
     Retrieve an active category budget for the specified category.
 
     Args: \n
-        category_name (str): category_name of the category.
+        category_name (str): Name of the category.
         db (Session): Database session dependency.
         user (User): Authenticated user.
 
     Returns:
         CategoryBudgetResponse: The details of the active budget.
     """
+    # Fetch the category by name and user ID
     category = (
         db.query(Category)
         .filter(
@@ -58,6 +60,8 @@ def retrieve_category_budget(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Category name '{category_name}' does not exist",
         )
+
+    # Fetch the active budget associated with the category
     budget = (
         db.query(CategoryBudget)
         .filter(
@@ -72,7 +76,32 @@ def retrieve_category_budget(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active budget for the specified category.",
         )
-    return budget
+
+    # Calculate the amount used from expenses during the budget period
+    amount_used = (
+        db.query(func.sum(Expense.amount))
+        .filter(
+            Expense.user_id == user.id,
+            Expense.category_id == budget.category_id,
+            Expense.date.between(budget.start_date, budget.end_date),
+        )
+        .scalar()
+        or 0  # Default to 0 if no expenses are found
+    )
+
+    # Construct the response object
+    result = {
+        "category_name": budget.categories.name,
+        "start_date": budget.start_date,
+        "end_date": budget.end_date,
+        "amount_limit": budget.amount_limit,
+        "amount_used": amount_used,
+        "created_at": budget.created_at,
+        "status": budget.status,
+    }
+
+    return result
+
 
 
 @router.put("/{category_name}", response_model=CategoryBudgetResponse)

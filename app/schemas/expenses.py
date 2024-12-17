@@ -66,6 +66,15 @@ class CategoryExpenseResponse(ExpenseBase):
     class Config:
         from_attributes = True
 
+class GetExpenseResponse(BaseModel):
+    total_count: int
+    total_pages: int
+    current_page: int
+    per_page: int
+    next_page: str | None
+    prev_page: str | None
+    expenses: list[CategoryExpenseResponse]
+
 
 # Schema for updating an existing expense (optional fields)
 class ExpenseUpdate(BaseModel):
