@@ -299,9 +299,9 @@ def delete_category_by_id(
             status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
         )
 
-    if category.name == "Debt":
+    if category.name == "Group Debts":
         logger.error(
-            f"Attempt to delete restricted category 'Debt' by user '{user.username}' (ID: {user.id})."
+            f"Attempt to delete restricted category 'Group Debts' by user '{user.username}' (ID: {user.id})."
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -352,9 +352,9 @@ def delete_category_by_name(
             status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
         )
 
-    if category.name == "Debt":
+    if category.name == "Group Debts":
         logger.error(
-            f"Attempt to delete restricted category 'Debt' by user '{user.username}' (ID: {user.id})."
+            f"Attempt to delete restricted category 'Group Debts' by user '{user.username}' (ID: {user.id})."
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

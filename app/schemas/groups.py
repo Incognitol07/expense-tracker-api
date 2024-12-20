@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
 # 1. Group Schema
 class GroupBase(BaseModel):
@@ -57,9 +58,17 @@ class GroupExpenseBase(BaseModel):
 class GroupExpenseCreate(GroupExpenseBase):
     pass
 
-class GroupExpenses(GroupExpenseBase):
+class GroupMemberExpenseShare(BaseModel):
+    amount: float
+    total_amount: float
+    description: str
+
+class GroupExpenses(BaseModel):
     id: int
     payer_id: int
+    amount: float
+    description: Optional[str] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

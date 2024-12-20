@@ -88,7 +88,7 @@ async def auth_google(code: str, db: Session = Depends(get_db)):
             .first()
         )
         new_category = Category(
-            name="Debt", description="For all debts", user_id=db_user.id
+            name="Group Debts", description="For all group debts", user_id=db_user.id
         )
 
         db.add(new_category)  # Add the new category to the session

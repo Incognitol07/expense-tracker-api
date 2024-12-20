@@ -6,24 +6,19 @@ from app.schemas import (
     GroupMemberStatus,
     Groups,
     GroupCreate,
-    GroupExpenses,
-    GroupExpenseCreate,
     GroupMembers,
     GroupMemberCreate,
-    ExpenseSplitCreate,
     GroupMemberResponse,
     DetailResponse,
     GroupResponse,
-    GroupDetailResponse
+    GroupDetailResponse,
+    GroupMemberExpenseShare
 )
 from app.models import (
     User,
     Group,
-    GroupExpense,
     GroupMember,
-    ExpenseSplit,
-    Notification,
-    DebtNotification,
+    Notification
 )
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -285,153 +280,8 @@ def update_member_status(
 
 
 # 4. Create a group expense
-@router.post("/{group_id}/expenses", response_model=GroupExpenses)
-def create_and_split_group_expense(
-    group_id: int,
-    expense: GroupExpenseCreate,
-    splits: list[ExpenseSplitCreate],
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    # Ensure user is a member of the group
-    member = (
-        db.query(GroupMember)
-        .filter_by(user_id=current_user.id, group_id=group_id, status="active")
-        .first()
-    )
-    if not member:
-        logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) is not an active member of group ID: {group_id}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be an active group member to add expenses",
-        )
-
-    # Create the expense entry
-    new_expense = GroupExpense(
-        group_id=group_id,
-        payer_id=current_user.id,
-        amount=expense.amount,
-        description=expense.description,
-    )
-    db.add(new_expense)
-    db.commit()
-    db.refresh(new_expense)
-
-    # Validate split total
-    total_split_amount = sum(split.amount for split in splits)
-    if total_split_amount != expense.amount:
-        logger.warning(
-            f"Split total of {total_split_amount} does not match the expense amount {expense.amount} for user '{current_user.username}' (ID: {current_user.id})"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The total split amount must equal the expense amount",
-        )
-
-    # Process each split
-    expense_splits = []
-    for split in splits:
-        group_member_check = (
-            db.query(GroupMember)
-            .filter(
-                GroupMember.user_id == split.user_id,
-                GroupMember.group_id == group_id,
-                GroupMember.status == "active",
-            )
-            .first()
-        )
-        if not group_member_check:
-            logger.warning(
-                f"User '{current_user.username}' (ID: {split.user_id}) is not a member of group ID: {group_id}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"User {split.user_id} is not a member of the group",
-            )
-
-        expense_split = ExpenseSplit(
-            expense_id=new_expense.id, user_id=split.user_id, amount=split.amount
-        )
-        db.add(expense_split)
-        expense_splits.append(expense_split)
-
-        if split.user_id != current_user.id:
-            debt_notification = DebtNotification(
-                amount=split.amount,
-                description=f"You owe '{current_user.username}' {split.amount} for '{new_expense.description}'",
-                debtor_id=split.user_id,
-                creditor_id=current_user.id,
-            )
-            db.add(debt_notification)
-
-            notification = Notification(
-                user_id=split.user_id,
-                message=f"You owe '{current_user.username}' {split.amount} for '{new_expense.description}'",
-            )
-            db.add(notification)
-
-    db.commit()
-
-    logger.info(
-        f"Created and split group expense ID: {new_expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) in group ID: {group_id}"
-    )
-    return {
-        "id": new_expense.id,
-        "group_id": new_expense.group_id,
-        "payer_id": new_expense.payer_id,
-        "amount": new_expense.amount,
-        "description": new_expense.description,
-        "splits": [
-            {
-                "id": split.id,
-                "expense_id": new_expense.id,
-                "user_id": split.user_id,
-                "amount": split.amount,
-            }
-            for split in expense_splits
-        ],
-    }
 
 
-# 6. Get all expenses for a group
-@router.get("/{group_id}/expenses", response_model=list[GroupExpenses])
-def get_group_expenses(
-    group_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    # Check if the current user is a member of the group
-    member = (
-        db.query(GroupMember)
-        .filter_by(user_id=current_user.id, group_id=group_id)
-        .first()
-    )
-    if not member:
-        logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) is not a member of group ID: {group_id}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a member of this group",
-        )
-
-    if member.role != "manager":
-        logger.warning(
-            f"User '{current_user.username}' (ID: {current_user.id}) is not a manager in group ID: {group_id}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view all expenses",
-        )
-
-    expenses = db.query(GroupExpense).filter(GroupExpense.group_id == group_id).all()
-
-    logger.info(
-        f"Fetched all expenses for group ID: {group_id} successfully for user '{current_user.username}' (ID: {current_user.id})"
-    )
-    return expenses
 
 @router.delete("/{group_id}/members/{member_id}", response_model=DetailResponse)
 def remove_member_as_manager(

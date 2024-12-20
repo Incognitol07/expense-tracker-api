@@ -7,6 +7,7 @@ from .budget import router as budget_router
 from .analytics import router as analytics_router
 from .admin import router as admin_router
 from .groups import router as groups_router
-from .debt_notifications import router as debt_router
+from .group_expenses import router as group_expenses_router
+from .group_debt import router as group_debt_router
 from .notifications import router as notifications_router
 from .profile import router as profile_router

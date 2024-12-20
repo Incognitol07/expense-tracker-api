@@ -18,6 +18,8 @@ from app.routers import (
     analytics_router,
     notifications_router,
     groups_router,
+    group_expenses_router,
+    group_debt_router,
     debt_router,
     profile_router,
     category_budgets_router,
@@ -57,6 +59,8 @@ app = FastAPI(
     debug=settings.DEBUG,  # Enable debug mode if in development
     lifespan=lifespan,
 )
+
+# CORS settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -72,6 +76,7 @@ async def favicon():
     return FileResponse(favicon_path)
 
 # Initialize database (create tables if they don't exist)
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 # WebSocket endpoint for real-time notifications
@@ -97,10 +102,11 @@ app.include_router(budget_router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
 app.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 app.include_router(groups_router, prefix="/groups", tags=["Groups"])
+app.include_router(group_expenses_router, prefix="/groups", tags=["Groups"])
+app.include_router(group_debt_router, prefix="/groups", tags=["Groups"])
 app.include_router(debt_router, prefix="/debts", tags=["Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
-# CORS settings
 
 
 

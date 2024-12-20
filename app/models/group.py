@@ -12,3 +12,4 @@ class Group(Base):
     
     group_members = relationship("GroupMember", back_populates="group", cascade="all, delete")
     group_expenses = relationship("GroupExpense", back_populates="group", cascade="all, delete")
+    group_debts = relationship("GroupDebt", back_populates="group", cascade="all, delete")

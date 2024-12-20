@@ -52,14 +52,9 @@ from .groups import (
     GroupMemberResponse,
     GroupResponse,
     GroupDetailResponse,
+    GroupMemberExpenseShare
 )
 from .notifications import NotificationResponse
-from .debt_notifications import (
-    DebtNotifications,
-    DebtNotificationCreate,
-    DebtNotificationStatus,
-    DebtNotificationResponse,
-)
 from .analytics import (
     ExpenseSummary,
     ExportData,
