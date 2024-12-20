@@ -75,7 +75,6 @@ async def favicon():
     return FileResponse(favicon_path)
 
 # Initialize database (create tables if they don't exist)
-Base.metadata.drop_all(bind=engine, cascade=True)
 Base.metadata.create_all(bind=engine)
 
 # WebSocket endpoint for real-time notifications
