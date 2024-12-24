@@ -1,6 +1,11 @@
 # app/main.py
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI, 
+    WebSocket, 
+    WebSocketDisconnect, 
+    Request
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
@@ -23,20 +28,21 @@ from app.routers import (
     profile_router,
     category_budgets_router,
 )
-import sentry_sdk
+from app.utils import logger
+# import sentry_sdk
 
-sentry_sdk.init(
-    dsn="https://04a0ab15c2e952017cfae042d9b03bd4@o4508454826082304.ingest.us.sentry.io/4508454867435520",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
-    traces_sample_rate=1.0,
-    _experiments={
-        # Set continuous_profiling_auto_start to True
-        # to automatically start the profiler on when
-        # possible.
-        "continuous_profiling_auto_start": True,
-    },
-)
+# sentry_sdk.init(
+#     dsn="https://04a0ab15c2e952017cfae042d9b03bd4@o4508454826082304.ingest.us.sentry.io/4508454867435520",
+#     # Set traces_sample_rate to 1.0 to capture 100%
+#     # of transactions for tracing.
+#     traces_sample_rate=1.0,
+#     _experiments={
+#         # Set continuous_profiling_auto_start to True
+#         # to automatically start the profiler on when
+#         # possible.
+#         "continuous_profiling_auto_start": True,
+#     },
+# )
 
 # Create the FastAPI application
 @asynccontextmanager
@@ -100,10 +106,23 @@ app.include_router(budget_router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
 app.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 app.include_router(groups_router, prefix="/groups", tags=["Groups"])
-app.include_router(group_expenses_router, prefix="/group_expenses", tags=["Group Expenses"])
-app.include_router(group_debt_router, prefix="/group_debts", tags=["Group Debts"])
+app.include_router(group_expenses_router, prefix="/group-expenses", tags=["Group Expenses"])
+app.include_router(group_debt_router, prefix="/group-debts", tags=["Group Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
+# Middleware to log route endpoints
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    endpoint = request.url.path
+    method = request.method
+    client_ip = request.client.host
+
+    logger.info(f"Request: {method} {endpoint} from {client_ip}")
+    
+    response = await call_next(request)
+    
+    logger.info(f"Response: {method} {endpoint} returned {response.status_code}")
+    return response
 
 
 

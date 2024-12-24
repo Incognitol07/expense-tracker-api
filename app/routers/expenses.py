@@ -17,7 +17,7 @@ from app.routers.auth import get_current_user
 from app.database import get_db
 from app.models import User
 from app.background_tasks import check_budget, check_category_budget
-from app.utils import logger
+from app.utils import logger, get_expense_model
 from math import ceil
 
 # Create an instance of APIRouter for expense-related routes
@@ -213,18 +213,7 @@ def get_expense(
     logger.info(
         f"Retrieving expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
     )
-    expense = (
-        db.query(Expense)
-        .filter(Expense.id == expense_id, Expense.user_id == current_user.id)
-        .first()
-    )
-    if not expense:
-        logger.warning(
-            f"Failed to retrieve expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Expenses not found"
-        )
+    expense = get_expense_model(db=db, expense_id=expense_id, current_user=current_user, action="retrieve")
     logger.info(
         f"Retrieved expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
     )
@@ -257,18 +246,7 @@ def update_expense(
     logger.info(
         f"Updating expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
     )
-    expense = (
-        db.query(Expense)
-        .filter(Expense.id == expense_id, Expense.user_id == current_user.id)
-        .first()
-    )
-    if not expense:
-        logger.warning(
-            f"Failed to update expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
-        )
+    expense = get_expense_model(db=db, expense_id=expense_id, current_user=current_user, action="update")
 
     # Update expense attributes with new values
     for key, value in expense_update.model_dump(exclude_unset=True).items():
@@ -306,24 +284,13 @@ def delete_expense(
     logger.info(
         f"Deleting expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
     )
-    expense = (
-        db.query(Expense)
-        .filter(Expense.id == expense_id, Expense.user_id == current_user.id)
-        .first()
-    )
-    if not expense:
-        logger.warning(
-            f"Failed to delete expense ID: {expense_id} for user '{current_user.username}' (ID: {current_user.id}) "
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
-        )
+    expense = get_expense_model(db=db, expense_id=expense_id, current_user=current_user, action="delete")
 
+    db.delete(expense)  # Delete the expense from the session
+    db.commit()  # Commit the deletion to the database
     logger.info(
         f"Deleted expense ID: {expense.id} successfully for user '{current_user.username}' (ID: {current_user.id}) "
     )
-    db.delete(expense)  # Delete the expense from the session
-    db.commit()  # Commit the deletion to the database
     return {
         "detail": f"Expense '{expense.name}' of amount {expense.amount} deleted successfully"
     }

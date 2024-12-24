@@ -28,7 +28,7 @@ def create_group_debt(
     current_user: User = Depends(get_current_user),
 ):
     # Check group membership
-    check_group_membership(group_id, current_user.id, db)
+    check_group_membership(group_id, current_user, db)
     
     # Create new debt record
     new_debt = GroupDebt(

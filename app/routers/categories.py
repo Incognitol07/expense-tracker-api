@@ -10,7 +10,12 @@ from app.database import get_db
 from app.routers.auth import get_current_user
 from app.models.user import User
 from app.background_tasks import check_category_budget
-from app.utils import logger
+from app.utils import (
+    logger, 
+    existing_category_attribute,
+    get_category_model_by_name,
+    get_category_model_by_id
+)
 
 # Create an instance of APIRouter for category-related routes
 router = APIRouter()
@@ -29,17 +34,9 @@ def create_category(
 
     db_user = db.query(User).filter(User.email == user.email).first()
 
-    # Check for existing category name and description
-    db_category_name = db.query(Category).filter(Category.user_id == user.id, Category.name == category.name).first()
-    db_category_description = db.query(Category).filter(Category.user_id == user.id, Category.description == category.description).first()
-
-    if db_category_name:
-        logger.warning(f"Category name '{category.name}' already exists for user '{user.username}' (ID: {user.id}).")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category name already exists")
-
-    if db_category_description:
-        logger.warning(f"Category description '{category.description}' already exists for user '{user.username}' (ID: {user.id}).")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category description already exists")
+    # Check for existing category name and description   
+    existing_category_attribute(db=db, user=user, category=category, attribute="name")
+    existing_category_attribute(db=db, user=user, category=category, attribute="description")
 
     # Create the new category
     new_category = Category(
@@ -144,19 +141,7 @@ def get_category_by_id(
     Raises:
         HTTPException: If the category is not found or does not belong to the user.
     """
-    category = (
-        db.query(Category)
-        .filter(Category.id == category_id, Category.user_id == user.id)
-        .first()
-    )
-
-    if not category:
-        logger.error(
-            f"Category {category_id} not found for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+    category = get_category_model_by_id(db=db, user=user, category_id=category_id)
 
     logger.info(
         f"Fetched category {category_id} for user '{user.username}' (ID: {user.id})."
@@ -187,19 +172,7 @@ def update_category_by_id(
     Raises:
         HTTPException: If the category is not found or does not belong to the user.
     """
-    category = (
-        db.query(Category)
-        .filter(Category.id == category_id, Category.user_id == user.id)
-        .first()
-    )
-
-    if not category:
-        logger.error(
-            f"Category {category_id} not found for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+    category = get_category_model_by_id(db=db, user=user, category_id=category_id)
 
     # Update category attributes with new values
     for key, value in category_data.model_dump(exclude_unset=True).items():
@@ -237,19 +210,7 @@ def update_category_by_name(
     Raises:
         HTTPException: If the category is not found or does not belong to the user.
     """
-    category = (
-        db.query(Category)
-        .filter(Category.name == category_name, Category.user_id == user.id)
-        .first()
-    )
-
-    if not category:
-        logger.error(
-            f"Category {category_name} not found for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+    category = get_category_model_by_name(db=db, user=user, category_name=category_name)
 
     # Update category attributes with new values
     for key, value in category_data.model_dump(exclude_unset=True).items():
@@ -285,19 +246,7 @@ def delete_category_by_id(
     Raises:
         HTTPException: If the category is not found or does not belong to the user.
     """
-    category = (
-        db.query(Category)
-        .filter(Category.id == category_id, Category.user_id == user.id)
-        .first()
-    )
-
-    if not category:
-        logger.error(
-            f"Category {category_id} not found for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+    category = get_category_model_by_id(db=db, user=user, category_id=category_id)
 
     if category.name == "Group Debts":
         logger.error(
@@ -338,19 +287,7 @@ def delete_category_by_name(
     Raises:
         HTTPException: If the category is not found or does not belong to the user.
     """
-    category = (
-        db.query(Category)
-        .filter(Category.name == category_name, Category.user_id == user.id)
-        .first()
-    )
-
-    if not category:
-        logger.error(
-            f"Category {category_name} not found for user '{user.username}' (ID: {user.id})."
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+    category = get_category_model_by_name(db=db, user=user, category_name=category_name)
 
     if category.name == "Group Debts":
         logger.error(
