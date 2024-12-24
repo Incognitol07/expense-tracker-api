@@ -1,6 +1,6 @@
 from app.database import SessionLocal
 from app.models import Expense, GeneralBudget, CategoryBudget, Category
-from app.models import Notification
+from app.models import Notification, NotificationType
 from app.websocket_manager import manager
 from app.utils import logger
 
@@ -66,7 +66,11 @@ async def check_budget(user_id: int):
             # Create a new notification if not already present
             if not existing_notification:
                 logger.info(f"Creating notification for user ID: {user_id}")
-                notification = Notification(user_id=user_id, message=message)
+                notification = Notification(
+                    user_id=user_id, 
+                    type = NotificationType.ALERT,
+                    message=message
+                    )
                 db.add(notification)
                 db.commit()
                 await manager.send_notification(user_id, message)
@@ -135,7 +139,11 @@ async def check_category_budget(user_id: int):
                     .first()
                 )
                 if not existing_notification:
-                    notification = Notification(user_id=user_id, message=message)
+                    notification = Notification(
+                        user_id=user_id,
+                         type = NotificationType.ALERT,
+                        message=message
+                        )
                     db.add(notification)
                     db.commit()
                     db.refresh(notification)

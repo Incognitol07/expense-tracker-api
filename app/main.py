@@ -100,8 +100,8 @@ app.include_router(budget_router, prefix="/budget", tags=["Budget"])
 app.include_router(analytics_router, prefix="/analytics", tags=["Analytics"])
 app.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 app.include_router(groups_router, prefix="/groups", tags=["Groups"])
-app.include_router(group_expenses_router, prefix="/group_expenses", tags=["Groups"])
-app.include_router(group_debt_router, prefix="/group_debts", tags=["Groups"])
+app.include_router(group_expenses_router, prefix="/group_expenses", tags=["Group Expenses"])
+app.include_router(group_debt_router, prefix="/group_debts", tags=["Group Debts"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 
 

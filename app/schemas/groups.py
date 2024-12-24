@@ -21,9 +21,8 @@ class Groups(GroupBase):
 class GroupMemberBase(BaseModel):
     group_id: int
 
-class GroupMemberCreate(GroupMemberBase):
+class GroupMemberCreate(BaseModel):
     email: EmailStr
-    pass
 
 class GroupMemberStatus(BaseModel):
     group_id: int
@@ -51,7 +50,6 @@ class GroupMembers(GroupMemberBase):
 
 # 3. Group Expense Schema
 class GroupExpenseBase(BaseModel):
-    group_id: int
     amount: float
     description: Optional[str] = None
 

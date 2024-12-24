@@ -18,7 +18,8 @@ from app.models import (
     User,
     Group,
     GroupMember,
-    Notification
+    Notification,
+    NotificationType
 )
 from app.database import get_db
 from app.routers.auth import get_current_user
@@ -133,6 +134,7 @@ def add_member(
     # Send notification to new member
     notification = Notification(
         user_id=user.id,
+        type=NotificationType.ALERT,
         message=f"You've been invited to join group '{group.name}' by '{current_user.username}'. Please accept or reject the invitation.",
     )
     db.add(notification)
@@ -141,6 +143,7 @@ def add_member(
     # Send notification to manager
     notification = Notification(
         user_id=current_user.id,
+        type = NotificationType.ALERT,
         message=f"You've invited '{user.username}' to join group '{group.name}'.",
     )
     db.add(notification)

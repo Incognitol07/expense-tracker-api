@@ -15,6 +15,7 @@ from app.models import (
     GroupMember,
     ExpenseSplit,
     Notification,
+    NotificationType,
     GroupDebt
 )
 from app.database import get_db
@@ -82,6 +83,12 @@ def create_and_split_group_expense(
         logger.warning(f"User '{current_user.username}' (ID: {current_user.id}) is not an active member of group ID: {group_id}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You must be an active group member to add expenses")
 
+    # Validate split total matches the expense amount
+    total_split_amount = sum(split.amount for split in splits)
+    if total_split_amount != expense.amount:
+        logger.warning(f"Split total of {total_split_amount} does not match the expense amount {expense.amount}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The total split amount must equal the expense amount")
+    
     # Create the expense entry
     new_expense = GroupExpense(
         group_id=group_id,
@@ -91,13 +98,6 @@ def create_and_split_group_expense(
     )
     db.add(new_expense)
     db.commit()
-    db.refresh(new_expense)
-
-    # Validate split total matches the expense amount
-    total_split_amount = sum(split.amount for split in splits)
-    if total_split_amount != expense.amount:
-        logger.warning(f"Split total of {total_split_amount} does not match the expense amount {expense.amount}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The total split amount must equal the expense amount")
 
     # Process each split and track debts
     expense_splits = []
@@ -124,13 +124,14 @@ def create_and_split_group_expense(
                 debtor_id=split.user_id,
                 creditor_id=current_user.id,
                 amount=split.amount,
-                description=f"You owe {current_user.username} {split.amount} for '{new_expense.description}'",
+                description=f"{new_expense.description}",
             )
             db.add(group_debt)
 
             # Create notification for the debtor
             notification = Notification(
                 user_id=split.user_id,
+                type=NotificationType.GROUP_DEBT,
                 message=f"You owe {current_user.username} {split.amount} for '{new_expense.description}'",
             )
             db.add(notification)
@@ -149,6 +150,7 @@ def create_and_split_group_expense(
             {"id": split.id, "expense_id": new_expense.id, "user_id": split.user_id, "amount": split.amount}
             for split in expense_splits
         ],
+        "created_at": new_expense.created_at
     }
 
 # New route to view the debts (People I'm Owing)
@@ -174,8 +176,7 @@ def get_group_debts(
 
     debt_summary = {
         "total_owe": sum(debt.amount for debt in debts),
-        "debts": [{"from_user": debt.debtor_id, "amount": debt.amount, "description": debt.description} for debt in debts],
+        "debts": [{"from_user": debt.creditor_id, "amount": debt.amount, "description": debt.description} for debt in debts],
     }
 
     return debt_summary
-

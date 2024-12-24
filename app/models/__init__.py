@@ -4,7 +4,7 @@ from .category import Category
 from .category_budget import CategoryBudget
 from .budget import GeneralBudget
 from .admin import Admin
-from .notification import Notification
+from .notification import Notification, NotificationType
 from .expense_split import ExpenseSplit
 from .group import Group
 from .group_expense import GroupExpense

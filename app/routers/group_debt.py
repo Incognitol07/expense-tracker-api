@@ -1,27 +1,20 @@
-from datetime import datetime
+# app/routers/group_debt.py
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.models import (
     GroupDebt, 
-    Notification, 
-    User, 
-    Group,
+    Notification,
+    NotificationType, 
+    User,
     Expense,
     Category
 )
 from app.database import get_db
 from app.routers.auth import get_current_user
+from app.utils import check_group_membership
 
 router = APIRouter()
-
-# Utility function to check if the user is part of the group
-def check_group_membership(group_id: int, user_id: int, db: Session):
-    group = db.query(Group).filter(Group.id == group_id).first()
-    if not group:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
-    # Check if the user is a member of the group
-    if not any(member.user_id == user_id for member in group.group_members):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this group")
 
 # Route to create a new debt record
 @router.post("/{group_id}/debts")
@@ -52,7 +45,7 @@ def create_group_debt(
     # Create and send a debt notification
     notification = Notification(
         user_id=creditor_id,
-        type="group_debt",
+        type=NotificationType.GROUP_DEBT,
         message=f"You are owed {amount} by {debtor_id} for {description}"
     )
     db.add(notification)
@@ -163,8 +156,7 @@ def pay_debt(
     # Add a new expense for this debt payment
     new_expense = Expense(
         amount=amount_paid,
-        name=f"Payment for Debt #{debt.id}",
-        date=datetime.now(),
+        name=f"Payment for Debt #{debt.description}",
         user_id=current_user.id,
         category_id=debt_category.id,
     )
@@ -173,7 +165,7 @@ def pay_debt(
     # Notify the creditor about the payment
     notification = Notification(
         user_id=debt.creditor_id,
-        type="group_debt",
+        type=NotificationType.GROUP_DEBT,
         message=f"{current_user.username} has paid {amount_paid} towards your debt"
     )
     db.add(notification)
@@ -212,33 +204,31 @@ def confirm_payment(
     return {"message": "Payment confirmed", "debt": debt}
 
 # Route to get all debts for the debtor
-@router.get("/{user_id}/debts/owed")
+@router.get("/debts/owed")
 def get_debts_owed(
-    user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own debts")
-
-    debts = db.query(GroupDebt).filter(GroupDebt.debtor_id == user_id).all()
+    debts = db.query(GroupDebt).filter(GroupDebt.debtor_id == current_user.id).all()
     if not debts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No debts found")
 
-    return {"debts": debts}
+    return {
+        "total_owed":sum(debt.amount for debt in debts),
+        "debts": debts
+        }
 
 # Route to get all debts for the creditor
-@router.get("/{user_id}/debts/owed-to")
+@router.get("/debts/owed-to")
 def get_debts_owed_to(
-    user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own debts")
-
-    debts = db.query(GroupDebt).filter(GroupDebt.creditor_id == user_id).all()
+    debts = db.query(GroupDebt).filter(GroupDebt.creditor_id == current_user.id).all()
     if not debts:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No debts found")
 
-    return {"debts": debts}
+    return {
+        "total_owed_to": sum(debt.amount for debt in debts),
+        "debts": debts
+        }
