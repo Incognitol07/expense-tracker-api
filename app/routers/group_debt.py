@@ -3,8 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.models import (
-    GroupDebt, 
-    Notification,
+    GroupDebt,
     NotificationType, 
     User,
     Expense,
@@ -12,7 +11,11 @@ from app.models import (
 )
 from app.database import get_db
 from app.routers.auth import get_current_user
-from app.utils import check_group_membership
+from app.utils import (
+    check_group_membership,
+    send_notification,
+    get_debt_model
+)
 
 router = APIRouter()
 
@@ -42,14 +45,13 @@ def create_group_debt(
     db.commit()
     db.refresh(new_debt)
 
-    # Create and send a debt notification
-    notification = Notification(
-        user_id=creditor_id,
-        type=NotificationType.GROUP_DEBT,
+    # Create and send a debt notification)
+    send_notification(
+        db=db, 
+        user_id=creditor_id, 
+        type=NotificationType.GROUP_DEBT, 
         message=f"You are owed {amount} by {debtor_id} for {description}"
     )
-    db.add(notification)
-    db.commit()
 
     return {"message": "Debt created successfully", "debt": new_debt}
 
@@ -60,9 +62,11 @@ def accept_debt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    debt = db.query(GroupDebt).filter(GroupDebt.id == debt_id).first()
-    if not debt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Debt not found")
+    debt = get_debt_model(
+        db=db,
+        user=current_user,
+        debt_id=debt_id
+    )
 
     if debt.debtor_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot accept a debt that is not yours")
@@ -80,9 +84,11 @@ def dispute_debt(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    debt = db.query(GroupDebt).filter(GroupDebt.id == debt_id).first()
-    if not debt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Debt not found")
+    debt = get_debt_model(
+        db=db,
+        user=current_user,
+        debt_id=debt_id
+    )
 
     if debt.debtor_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot dispute a debt that is not yours")
@@ -108,12 +114,11 @@ def pay_debt(
             detail="Invalid payment type"
         )
 
-    debt = db.query(GroupDebt).filter(GroupDebt.id == debt_id).first()
-    if not debt:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Debt not found"
-        )
+    debt = get_debt_model(
+        db=db,
+        user=current_user,
+        debt_id=debt_id
+    )
 
     if debt.debtor_id != current_user.id:
         raise HTTPException(
@@ -163,14 +168,12 @@ def pay_debt(
     db.add(new_expense)
 
     # Notify the creditor about the payment
-    notification = Notification(
-        user_id=debt.creditor_id,
-        type=NotificationType.GROUP_DEBT,
+    send_notification(
+        db=db, 
+        user_id=debt.creditor_id, 
+        type=NotificationType.GROUP_DEBT, 
         message=f"{current_user.username} has paid {amount_paid} towards your debt"
     )
-    db.add(notification)
-
-    db.commit()
     db.refresh(debt)
     db.refresh(new_expense)
 
@@ -187,9 +190,11 @@ def confirm_payment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    debt = db.query(GroupDebt).filter(GroupDebt.id == debt_id).first()
-    if not debt:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Debt not found")
+    debt = get_debt_model(
+        db=db,
+        user=current_user,
+        debt_id=debt_id
+    )
 
     if debt.creditor_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not authorized to confirm payment")

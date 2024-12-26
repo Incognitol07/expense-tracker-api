@@ -15,5 +15,6 @@ from .helpers import (
     get_category_model_by_name,
     get_group_by_id,
     get_member_model,
+    get_debt_model,
     send_notification
 )

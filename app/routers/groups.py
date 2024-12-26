@@ -11,10 +11,14 @@ from app.schemas import (
     GroupMemberResponse,
     DetailResponse,
     GroupResponse,
-    GroupDetailResponse,
-    GroupMemberExpenseShare,
+    GroupDetailResponse
 )
-from app.models import User, Group, GroupMember, Notification, NotificationType
+from app.models import (
+    User, 
+    Group, 
+    GroupMember,
+    NotificationType
+)
 from app.database import get_db
 from app.routers.auth import get_current_user
 from app.utils import (
@@ -72,7 +76,7 @@ def add_member(
     group = get_group_by_id(db=db, current_user=current_user, group_id=group_id)
 
     # Check if current user is manager of the group
-    get_member_model(db=db, current_user=current_user, group_id=group_id, manager=True)
+    get_member_model(db=db, user=current_user, group_id=group_id, manager=True)
 
     # Look up the user by email
     user = db.query(User).filter(User.email == member.email).first()

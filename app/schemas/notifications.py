@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from datetime import datetime
+from app.models import NotificationType
 
 class NotificationResponse(BaseModel):
     """
@@ -14,6 +15,7 @@ class NotificationResponse(BaseModel):
         created_at (str): The timestamp when the notification was created, formatted as a string.
     """
     id: int
+    type: NotificationType
     message: str
     is_read: bool
     created_at: datetime

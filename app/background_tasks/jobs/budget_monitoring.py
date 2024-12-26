@@ -3,6 +3,7 @@ from app.database import SessionLocal
 from app.models import GeneralBudget, Notification, NotificationType
 from app.utils import logger
 from app.websocket_manager import manager
+from app.utils import send_notification
 
 def check_and_deactivate_expired_budgets():
     """
@@ -40,14 +41,13 @@ def check_and_deactivate_expired_budgets():
                     logger.info(
                         f"Creating notification for user ID: {budget.user_id} with message: '{message}'"
                     )
-                    notification = Notification(
-                        user_id=budget.user_id,
-                        type = NotificationType.SYSTEM, 
+                    send_notification(
+                        db=db, 
+                        user_id=budget.user_id, 
+                        type=NotificationType.SYSTEM, 
                         message=message
-                        )
-                    db.add(notification)
-                    db.commit()  # Commit the session to persist the notification in the database
-
+                    )
+                    
                     # Send the notification to the user's WebSocket
                     manager.send_notification(budget.user_id, message)
                 else:

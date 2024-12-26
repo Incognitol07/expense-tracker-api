@@ -20,7 +20,10 @@ from app.models import (
 )
 from app.database import get_db
 from app.routers.auth import get_current_user
-from app.utils import logger
+from app.utils import (
+    logger,
+    send_notification
+)
 
 router = APIRouter()
 
@@ -129,12 +132,12 @@ def create_and_split_group_expense(
             db.add(group_debt)
 
             # Create notification for the debtor
-            notification = Notification(
+            send_notification(
+                db=db,
                 user_id=split.user_id,
                 type=NotificationType.GROUP_DEBT,
-                message=f"You owe {current_user.username} {split.amount} for '{new_expense.description}'",
+                message=f"You owe {current_user.username} {split.amount} for '{new_expense.description}'"
             )
-            db.add(notification)
 
     db.commit()
 

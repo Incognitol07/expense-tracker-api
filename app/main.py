@@ -29,20 +29,20 @@ from app.routers import (
     category_budgets_router,
 )
 from app.utils import logger
-# import sentry_sdk
+import sentry_sdk
 
-# sentry_sdk.init(
-#     dsn="https://04a0ab15c2e952017cfae042d9b03bd4@o4508454826082304.ingest.us.sentry.io/4508454867435520",
-#     # Set traces_sample_rate to 1.0 to capture 100%
-#     # of transactions for tracing.
-#     traces_sample_rate=1.0,
-#     _experiments={
-#         # Set continuous_profiling_auto_start to True
-#         # to automatically start the profiler on when
-#         # possible.
-#         "continuous_profiling_auto_start": True,
-#     },
-# )
+sentry_sdk.init(
+    dsn="https://04a0ab15c2e952017cfae042d9b03bd4@o4508454826082304.ingest.us.sentry.io/4508454867435520",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
+        "continuous_profiling_auto_start": True,
+    },
+)
 
 # Create the FastAPI application
 @asynccontextmanager

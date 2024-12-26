@@ -3,6 +3,7 @@ from app.models import Expense, GeneralBudget, CategoryBudget, Category
 from app.models import Notification, NotificationType
 from app.websocket_manager import manager
 from app.utils import logger
+from app.utils import send_notification
 
 
 # Background task to check thresholds
@@ -66,13 +67,12 @@ async def check_budget(user_id: int):
             # Create a new notification if not already present
             if not existing_notification:
                 logger.info(f"Creating notification for user ID: {user_id}")
-                notification = Notification(
-                    user_id=user_id, 
-                    type = NotificationType.ALERT,
+                send_notification(
+                    db=db,
+                    user_id=user_id,
+                    type=NotificationType.ALERT,
                     message=message
-                    )
-                db.add(notification)
-                db.commit()
+                )
                 await manager.send_notification(user_id, message)
             logger.info(f"Budget check completed for user ID: {user_id}")
     finally:
@@ -139,15 +139,13 @@ async def check_category_budget(user_id: int):
                     .first()
                 )
                 if not existing_notification:
-                    notification = Notification(
-                        user_id=user_id,
-                         type = NotificationType.ALERT,
+                    send_notification(
+                        db=db, 
+                        user_id=user_id, 
+                        type=NotificationType.ALERT, 
                         message=message
-                        )
-                    db.add(notification)
-                    db.commit()
-                    db.refresh(notification)
-                    logger.info(f"Notification created: {notification.message}")
+                    )
+                    logger.info(f"Notification created: '{message}'")
                     await manager.send_notification(user_id, message)
         logger.info(f"Category budget check completed for user ID: {user_id}")
     except Exception as e:
