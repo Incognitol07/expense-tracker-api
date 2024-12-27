@@ -77,27 +77,6 @@ app.add_middleware(
 db = SessionLocal()
 users = db.query(User).all()
 for user in users:
-    
-    group_members = (
-            db.query(GroupMember)
-            .filter(GroupMember.user_id == user.id, GroupMember.role == "manager")
-            .all()
-        )
-    if group_members:
-        for group_member in group_members:
-            groups = db.query(Group).filter(Group.id == group_member.group_id).all()
-            for group in groups:
-                db.delete(group)
-                db.commit()
-    group_debts = (
-            db.query(GroupDebt)
-            .filter(GroupDebt.creditor_id == user.id)
-            .all()
-        )
-    if group_debts:
-        for group_debt in group_debts:
-            db.delete(group_debt)
-            db.commit()
     user_id = (
         db.query(User.id)
         .filter(User.username == user.username, User.email == user.email)
