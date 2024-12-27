@@ -38,6 +38,3 @@ class GroupDebt(Base):
     group = relationship("Group", back_populates="group_debts")
     debtor = relationship("User", foreign_keys=[debtor_id])
     creditor = relationship("User", foreign_keys=[creditor_id])
-
-    def get_remaining_debt(self):
-        return self.amount - self.amount_paid

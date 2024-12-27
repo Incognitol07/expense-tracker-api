@@ -14,7 +14,8 @@ from app.utils import (
     logger, 
     existing_category_attribute,
     get_category_model_by_name,
-    get_category_model_by_id
+    get_category_model_by_id,
+    create_new_category
 )
 
 # Create an instance of APIRouter for category-related routes
@@ -38,45 +39,11 @@ def create_category(
     existing_category_attribute(db=db, user=user, category=category, attribute="name")
     existing_category_attribute(db=db, user=user, category=category, attribute="description")
 
-    # Create the new category
-    new_category = Category(
-        name=category.name,
-        description=category.description,
-        user_id=db_user.id,
+    new_category = create_new_category(
+        db=db,
+        category=category,
+        db_user=db_user
     )
-    db.add(new_category)
-    db.commit()
-    db.refresh(new_category)
-
-    # Generate default category budget for the current month
-    today = date.today()
-    start_date = today.replace(day=1)  # Start of current month
-    end_date = today.replace(day=monthrange(today.year, today.month)[1])  # End of current month
-
-    # Check if a default budget exists for the category
-    existing_budget = db.query(CategoryBudget).filter(
-        CategoryBudget.category_id == new_category.id,
-        CategoryBudget.user_id == db_user.id,
-        CategoryBudget.status == "active",
-        CategoryBudget.start_date <= end_date,
-        CategoryBudget.end_date >= start_date,
-    ).first()
-
-    if existing_budget:
-        logger.warning(f"An active budget already exists for category '{category.name}' (ID: {new_category.id}).")
-    else:
-        # Create a new default budget
-        new_budget = CategoryBudget(
-            category_id=new_category.id,
-            amount_limit=0,
-            start_date=start_date,
-            end_date=end_date,
-            user_id=db_user.id
-        )
-        db.add(new_budget)
-        db.commit()
-        db.refresh(new_budget)
-        logger.info(f"Default budget created for category '{category.name}' with ID {new_budget.id}.")
 
     background_tasks.add_task(check_category_budget, user.id)
 

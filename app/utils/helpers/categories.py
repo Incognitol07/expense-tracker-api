@@ -2,10 +2,14 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models import (
     User,
-    Category
+    Category,
+    CategoryBudget
 )
 from app.schemas import CategoryCreate
 from .notifications import log_exception
+from calendar import monthrange
+from datetime import date
+from app.utils import logger
 
 def existing_category_attribute(db:Session, user: User, category:CategoryCreate, attribute:str):
     # Check for existing category attribute
@@ -55,3 +59,55 @@ def get_category_model_by_name(db:Session, user:User, category_name:str):
         )
     
     return category
+
+
+def create_new_category_budget(db: Session, new_category: Category, db_user: User):
+    # Generate default category budget for the current month
+    today = date.today()
+    start_date = today.replace(day=1)  # Start of current month
+    end_date = today.replace(day=monthrange(today.year, today.month)[1])  # End of current month
+
+    # Check if a default budget exists for the category
+    existing_budget = db.query(CategoryBudget).filter(
+        CategoryBudget.category_id == new_category.id,
+        CategoryBudget.user_id == db_user.id,
+        CategoryBudget.status == "active",
+        CategoryBudget.start_date <= end_date,
+        CategoryBudget.end_date >= start_date,
+    ).first()
+
+    if existing_budget:
+        logger.warning(f"An active budget already exists for category '{new_category.name}' (ID: {new_category.id}).")
+    else:
+        # Create a new default budget
+        new_budget = CategoryBudget(
+            category_id=new_category.id,
+            amount_limit=0,
+            start_date=start_date,
+            end_date=end_date,
+            user_id=db_user.id
+        )
+        db.add(new_budget)
+        db.commit()
+        db.refresh(new_budget)
+        logger.info(f"Default budget created for category '{new_category.name}' with ID {new_budget.id}.")
+
+
+def create_new_category(db:Session, category:CategoryCreate, db_user: User):
+    # Create the new category
+    new_category = Category(
+        name=category.name,
+        description=category.description,
+        user_id=db_user.id,
+    )
+    db.add(new_category)
+    db.commit()
+    db.refresh(new_category)
+
+    create_new_category_budget(
+        db=db,
+        new_category=new_category,
+        db_user=db_user
+    )
+    
+    return new_category

@@ -45,7 +45,7 @@ SECRET_KEY = os.getenv(
     "JWT_SECRET_KEY"
 )  # Ensure the JWT_SECRET_KEY is set in the environment
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Expiry time in minutes for access token
+ACCESS_TOKEN_EXPIRE_MINUTES = 15  # Expiry time in minutes for access token
 
 
 # Create an access token with expiration time

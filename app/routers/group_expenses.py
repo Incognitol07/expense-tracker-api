@@ -10,11 +10,11 @@ from app.schemas import (
 )
 from app.models import (
     User,
-    Group,
+    Expense,
     GroupExpense,
     GroupMember,
     ExpenseSplit,
-    Notification,
+    Category,
     NotificationType,
     GroupDebt
 )
@@ -24,6 +24,7 @@ from app.utils import (
     logger,
     send_notification
 )
+from datetime import date, datetime
 
 router = APIRouter()
 
@@ -101,6 +102,34 @@ def create_and_split_group_expense(
     )
     db.add(new_expense)
     db.commit()
+    
+    category = (
+        db.query(Category)
+        .filter(
+            Category.user_id == current_user.id,
+            Category.name == "Group Expenses"
+            )
+        .first()
+    )
+    if not category:
+        logger.warning(
+            f"Failed to create expense: Category 'Group Expenses' not found for user '{current_user.username}' (ID: {current_user.id}) "
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Please create the provided category first",
+        )
+    
+    # Proceed with creating the expense if category_id is valid
+    expense_create = Expense(
+        amount=expense.amount,
+        name=expense.description,
+        date=datetime.now().date(),
+        user_id=current_user.id,
+        category_id=category.id,
+    )
+    db.add(expense_create)  # Add the new expense to the session
+    db.commit()  # Commit the transaction to the database
 
     # Process each split and track debts
     expense_splits = []

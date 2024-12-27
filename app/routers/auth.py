@@ -12,25 +12,28 @@ from app.schemas import (
     LoginResponse,
     DetailResponse,
     RefreshResponse,
-    RefreshToken
+    RefreshToken,
+    CategoryCreate
 )
 from app.models import (
     User, 
-    Category, 
     GroupMember, 
     Group,
-    CategoryBudget
+    GroupDebt,
+    GroupExpense
 )
-from app.utils.security import (
+from app.utils import (
+    logger,
     hash_password,
     verify_password,
     create_access_token,
     verify_access_token,
     create_refresh_token,
-    verify_refresh_token
+    verify_refresh_token,
+    create_new_category,
+    log_exception
 )
 from app.database import get_db
-from app.utils.logging_config import logger
 
 # Create an instance of APIRouter to handle authentication routes
 router = APIRouter()
@@ -107,19 +110,20 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     """
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
-        logger.warning(
-            f"Attempt to register with an existing username: {user.username}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered",
+        log_exception(
+            log_level="warning",
+            log_message=f"Attempt to register with an existing username: {user.username}",
+            status_raised=status.HTTP_400_BAD_REQUEST,
+            exception_message="Username already registered"
         )
 
     db_email = db.query(User).filter(User.email == user.email).first()
     if db_email:
-        logger.warning(f"Attempt to register with an existing email: {user.email}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        log_exception(
+            log_level="warning",
+            log_message=f"Attempt to register with an existing email: {user.email}",
+            status_raised=status.HTTP_400_BAD_REQUEST,
+            exception_message="Email already registered"
         )
 
     # Hash the password before storing
@@ -135,46 +139,30 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
 
     db_user = (
         db.query(User)
-        .filter(User.username == user.username, User.hashed_password == hashed_password)
+        .filter(
+            User.username == user.username, 
+            User.hashed_password == hashed_password
+        )
         .first()
     )
-    new_category = Category(
-        name="Group Debts", description="For all debts in groups", user_id=db_user.id
+    debt_category = CategoryCreate(
+        name="Group Debts", 
+        description="For all debts in groups"
     )
-
-    db.add(new_category)  # Add the new category to the session
-    db.commit()  # Commit the changes to the database
-    db.refresh(new_category)  # Refresh to get the latest state of the category
-
-    # Generate default category budget for the current month
-    today = date.today()
-    start_date = today.replace(day=1)  # Start of current month
-    end_date = today.replace(day=monthrange(today.year, today.month)[1])  # End of current month
-
-    # Check if a default budget exists for the category
-    existing_budget = db.query(CategoryBudget).filter(
-        CategoryBudget.category_id == new_category.id,
-        CategoryBudget.user_id == db_user.id,
-        CategoryBudget.status == "active",
-        CategoryBudget.start_date <= end_date,
-        CategoryBudget.end_date >= start_date,
-    ).first()
-
-    if existing_budget:
-        logger.warning(f"An active budget already exists for category '{new_category.name}' (ID: {new_category.id}).")
-    else:
-        # Create a new default budget
-        new_budget = CategoryBudget(
-            category_id=new_category.id,
-            amount_limit=0,
-            start_date=start_date,
-            end_date=end_date,
-            user_id=db_user.id
-        )
-        db.add(new_budget)
-        db.commit()
-        db.refresh(new_budget)
-        logger.info(f"Default budget created for category '{new_category.name}' with ID {new_budget.id}.")
+    group_debt_category = create_new_category(
+        db=db,
+        category=debt_category,
+        db_user=db_user
+    )
+    expense_category = CategoryCreate(
+        name="Group Expenses", 
+        description="For all expenses in groups"
+    )
+    group_expense_category = create_new_category(
+        db=db,
+        category=expense_category,
+        db_user=db_user
+    )
 
     logger.info(
         f"New user registered successfully: {new_user.username} ({new_user.email})."
@@ -308,15 +296,33 @@ def delete_account(
     """
     group_members = (
         db.query(GroupMember)
-        .filter(GroupMember.user_id == user.id, GroupMember.role == "admin")
+        .filter(GroupMember.user_id == user.id, GroupMember.role == "manager")
         .all()
     )
     if group_members:
         for group_member in group_members:
-            groups = db.query(Group).filter(Group.id == group_member.id).all()
+            groups = db.query(Group).filter(Group.id == group_member.group_id).all()
             for group in groups:
                 db.delete(group)
                 db.commit()
+    creditor_group_debts = (
+            db.query(GroupDebt)
+            .filter(GroupDebt.creditor_id == user.id)
+            .all()
+        )
+    if creditor_group_debts:
+        for group_debt in creditor_group_debts:
+            db.delete(group_debt)
+            db.commit()
+    debtor_group_debts = (
+            db.query(GroupDebt)
+            .filter(GroupDebt.debtor_id == user.id)
+            .all()
+        )
+    if debtor_group_debts:
+        for group_debt in debtor_group_debts:
+            db.delete(group_debt)
+            db.commit()
     user_id = (
         db.query(User.id)
         .filter(User.username == user.username, User.email == user.email)

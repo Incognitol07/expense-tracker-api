@@ -12,8 +12,9 @@ from contextlib import asynccontextmanager
 import asyncio
 from app.websocket_manager import manager
 from app.background_tasks import scheduler, start_scheduler
-from app.database import engine, Base
-from app.config import settings  # Configuration settings (e.g., environment variables)
+from app.database import engine, Base, SessionLocal
+from app.config import settings
+from app.models import User, Group, GroupMember, GroupDebt
 from app.routers import (
     auth_router,
     google_router,
@@ -73,6 +74,51 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+db = SessionLocal()
+users = db.query(User).all()
+for user in users:
+    
+    group_members = (
+            db.query(GroupMember)
+            .filter(GroupMember.user_id == user.id, GroupMember.role == "manager")
+            .all()
+        )
+    if group_members:
+        for group_member in group_members:
+            groups = db.query(Group).filter(Group.id == group_member.group_id).all()
+            for group in groups:
+                db.delete(group)
+                db.commit()
+    group_debts = (
+            db.query(GroupDebt)
+            .filter(GroupDebt.creditor_id == user.id)
+            .all()
+        )
+    if group_debts:
+        for group_debt in group_debts:
+            db.delete(group_debt)
+            db.commit()
+    user_id = (
+        db.query(User.id)
+        .filter(User.username == user.username, User.email == user.email)
+        .first()[0]
+    )
+    target_user = db.query(User).filter(User.id == user_id).first()
+
+    if not target_user:
+        logger.warning(
+            f"Attempted deletion of account with ID: {user_id} by user '{user.username}'."
+        )
+
+    db.delete(target_user)
+    db.commit()
+    logger.info(f"User '{user.username}' deleted account (ID: {user_id}).")
+
+groups = db.query(Group).all()
+for group in groups:
+    db.delete(group)
+    db.commit()
+
 
 favicon_path = 'expense_tracker.png'
 

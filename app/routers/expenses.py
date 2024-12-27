@@ -49,7 +49,14 @@ def create_expense(
         f"Creating expense for user '{current_user.username}' (ID: {current_user.id}) "
     )
     # Check if the category_id exists in the category table
-    category = db.query(Category).filter(Category.name == expense.category_name).first()
+    category = (
+        db.query(Category)
+        .filter(
+            Category.user_id == current_user.id,
+            Category.name == expense.category_name
+            )
+        .first()
+    )
     if not category:
         logger.warning(
             f"Failed to create expense: Category '{expense.category_name}' not found for user '{current_user.username}' (ID: {current_user.id}) "
