@@ -93,10 +93,6 @@ for user in users:
     db.commit()
     logger.info(f"User '{user.username}' deleted account (ID: {user_id}).")
 
-groups = db.query(Group).all()
-for group in groups:
-    db.delete(group)
-    db.commit()
 
 
 favicon_path = 'expense_tracker.png'
