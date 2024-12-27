@@ -74,26 +74,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-db = SessionLocal()
-users = db.query(User).all()
-for user in users:
-    user_id = (
-        db.query(User.id)
-        .filter(User.username == user.username, User.email == user.email)
-        .first()[0]
-    )
-    target_user = db.query(User).filter(User.id == user_id).first()
-
-    if not target_user:
-        logger.warning(
-            f"Attempted deletion of account with ID: {user_id} by user '{user.username}'."
-        )
-
-    db.delete(target_user)
-    db.commit()
-    logger.info(f"User '{user.username}' deleted account (ID: {user_id}).")
-
-
 
 favicon_path = 'expense_tracker.png'
 
