@@ -35,13 +35,16 @@ Managing personal finances can be overwhelming. This API simplifies the process 
 ## Installation
 
 ### Prerequisites
+
 - **Python 3.12+** (if you're not using Docker)  
 - **Docker** (if you're using Docker to run the app)
 
 ### Installation Steps  
 
 #### 1. Clone the Repository  
+
 Clone the repository to your local machine:  
+
 ```bash  
 git clone https://github.com/Incognitol07/expense-tracker-api.git  
 cd expense-tracker-api  
@@ -52,6 +55,7 @@ cd expense-tracker-api
 To isolate your project dependencies, set up a Python virtual environment:
 
 1. **Create the virtual environment**:  
+
    ```bash
    python -m venv venv
    ```
@@ -59,26 +63,31 @@ To isolate your project dependencies, set up a Python virtual environment:
 2. **Activate the virtual environment**:  
 
    - **Command Prompt (Windows)**:  
+
      ```cmd
      .\venv\Scripts\activate
      ```
 
    - **PowerShell (Windows)**:  
+
      ```powershell
      .\venv\Scripts\Activate.ps1
      ```
 
    - **Bash (Linux/Mac)**:  
+
      ```bash
      source venv/bin/activate
      ```
 
 3. **Install dependencies**:  
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Deactivate the virtual environment (when done)**:  
+
    ```bash
    deactivate
    ```
@@ -86,21 +95,29 @@ To isolate your project dependencies, set up a Python virtual environment:
 ---
 
 #### 3. Set Up Environment Variables  
+
 Create a `.env` file by copying the provided example file:  
+
 - **Mac/Linux**:  
+
   ```bash  
   cp .env.example .env  
   ```  
+
 - **Windows (Command Prompt)**:  
+
   ```cmd  
   copy .env.example .env  
   ```  
+
 - **Windows (PowerShell)**:  
+
   ```powershell  
   Copy-Item .env.example .env  
   ```  
 
 Edit the `.env` file and update the variables with your configuration:  
+
 ```plaintext  
 ENVIRONMENT=development 
 DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<dbname> 
@@ -116,10 +133,13 @@ By default, the project uses **PostgreSQL** for the database. However, you can e
 
 1. Open the `app/config.py` file.
 2. By default, the PostgreSQL database URL is set to be used:
+
    ```python
    DATABASE_URL: str = os.getenv("DATABASE_URL")
    ```
+
 3. If you prefer to use **SQLite** instead, **uncomment the following line** and **comment out** the PostgreSQL line:
+
    ```python
    # DATABASE_URL: str = os.getenv("DATABASE_URL")  # Use PostgreSQL by default
    DATABASE_URL: str = 'sqlite:///expense.db'  # Use SQLite instead
@@ -132,10 +152,13 @@ This allows you to quickly switch between PostgreSQL and SQLite based on your pr
 ### Running the Application  
 
 #### Using Docker (Recommended)  
+
 1. **Create and start the containers**:  
+
    ```bash  
    docker-compose up --build  
    ```  
+
    This builds and starts the application and database services.  
 
 2. **Access the application**:  
@@ -143,6 +166,7 @@ This allows you to quickly switch between PostgreSQL and SQLite based on your pr
 
 3. **Stop the containers**:  
    When done, stop the services with:  
+
    ```bash  
    docker-compose down  
    ```  
@@ -151,9 +175,11 @@ This allows you to quickly switch between PostgreSQL and SQLite based on your pr
 
 1. **Activate the virtual environment** (see instructions above).  
 2. **Run the application**:  
+
    ```bash  
    uvicorn app.main:app --reload  
    ```  
+
    The app will be available at `http://127.0.0.1:8000`.  
 
 ---
@@ -190,6 +216,7 @@ Logging is configured in the `app/utils/logging_config.py` file and integrates w
 #### Example Log Structure
 
 Here is an example of a log entry:
+
 ```plaintext
 [2024-11-20 14:32:15,123] - INFO - Budget alert triggered for user_id=101: Budget 'Monthly Groceries' exceeded 90% threshold.
 ```
@@ -245,12 +272,9 @@ To test real-time notifications via WebSocket:
 1. Connect to `http://127.0.0.1:8000/ws/notifications/{user_id}`.
 2. Upon spending updates or threshold alerts, the connected WebSocket will receive messages in real time.
 
-
 ## Conclusion
 
 The Expense Tracking and Budgeting API offers a robust system for managing personal finances, automating budget management, and visualizing financial data. With features like real-time alerts, secure authentication, group expense tracking, debt notifications, and comprehensive data tracking, this API helps users make informed decisions about their finances.
-
-
 
 ## License
 
