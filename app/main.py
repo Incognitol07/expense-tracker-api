@@ -12,9 +12,8 @@ from contextlib import asynccontextmanager
 import asyncio
 from app.websocket_manager import manager
 from app.background_tasks import scheduler, start_scheduler
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base
 from app.config import settings
-from app.models import User, Group, GroupMember, GroupDebt
 from app.routers import (
     auth_router,
     google_router,
